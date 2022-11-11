@@ -1,0 +1,12 @@
+.header{
+    color: var(--color--background);
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    left: 3.125vw;
+    height: 3.125vw;
+    width: 93.75vw;
+    z-index: 1000;
+    mix-blend-mode: difference;
+}

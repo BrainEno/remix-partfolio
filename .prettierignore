@@ -1,0 +1,11 @@
+node_modules
+
+/server/build
+/public/build
+preferences.arc
+sam.json
+sam.yaml
+.env
+
+
+/netlify/functions/server
