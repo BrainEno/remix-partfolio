@@ -1,9 +1,10 @@
 import type {
   LinksFunction,
   LoaderArgs,
+  LoaderFunction,
   MetaFunction,
-} from "@remix-run/node";
-import { json } from "@remix-run/node";
+} from '@remix-run/node';
+import { json } from '@remix-run/node';
 import {
   Links,
   LiveReload,
@@ -11,40 +12,84 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-} from "@remix-run/react";
+  useCatch,
+} from '@remix-run/react';
 
-import globalStylesUrl from "./styles/global.css";
-import { getUser } from "./session.server";
+import globalStylesUrl from '~/styles/global.css';
+import interFont from '@fontsource/inter/index.css';
+import { getUser } from './session.server';
+
+export const links: LinksFunction = () => [
+  { rel: 'stylesheet', href: interFont },
+  { rel: 'stylesheet', href: globalStylesUrl },
+];
 
 export const meta: MetaFunction = () => {
-  return { title: "Portfolio" };
+  return {
+    charset: 'utf-8',
+    title: 'Sydney Zhao',
+    viewport: 'width=device-width,initial-scale=1',
+  };
 };
 
-export const links: LinksFunction = () => {
-  return [{ rel: "stylesheet", href: globalStylesUrl }];
-};
-
-export async function loader({ request }: LoaderArgs) {
+export const loader: LoaderFunction = async ({ request }: LoaderArgs) => {
   return json({
     user: await getUser(request),
   });
 };
 
-export default function App() {
+function Document({
+  children,
+  title = `Sydney Zhao`,
+}: {
+  children: React.ReactNode;
+  title?: string;
+}) {
   return (
-    <html lang="en" className="h-full">
+    <html lang='en'>
       <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width,initial-scale=1" />
         <Meta />
         <Links />
       </head>
-      <body className="h-full">
-        <Outlet />
+      <body>
+        {children}
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
       </body>
     </html>
+  );
+}
+
+export default function App() {
+  return (
+    <Document>
+      <Outlet />
+    </Document>
+  );
+}
+
+export function CatchBoundary() {
+  const caught = useCatch();
+
+  return (
+    <Document title={`${caught.status} ${caught.statusText}`}>
+      <div className='error-container'>
+        <h1>
+          {caught.status} {caught.statusText}
+        </h1>
+      </div>
+    </Document>
+  );
+}
+
+export function ErrorBoundary({ error }: { error: Error }) {
+  return (
+    <Document title='Uh-oh!'>
+      <div className='error-container'>
+        <h1>App Error</h1>
+        <pre>{error.message}</pre>
+      </div>
+    </Document>
   );
 }

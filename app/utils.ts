@@ -3,6 +3,7 @@ import { useMatches } from "@remix-run/react";
 import type { User } from "./models/user.server";
 
 export function useMatchesData(id: string) {
+  console.log("id:",id)
   const matchingRoutes = useMatches();
   const route = useMemo(
     () => matchingRoutes.find((route) => route.id === id),

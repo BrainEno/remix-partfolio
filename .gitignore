@@ -1,10 +1,6 @@
 node_modules
+
 /.cache
-/netlify/functions/server/index.js
 /public/build
 /.netlify
-
-
-/app/styles/tailwind.css
-
-cypress/videos/
+.env

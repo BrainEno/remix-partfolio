@@ -1,14 +1,10 @@
 [build]
-  command = "npm run build"
-  functions = "netlify/functions"
+  command = "remix build"
+  functions ="netlify/functions"
   publish = "public"
 
   [build.environment]
-    # cache Cypress binary in local "node_modules" folder
-    # so Netlify caches it
-    CYPRESS_CACHE_FOLDER = "./node_modules/CypressBinary"
-    # set TERM variable for terminal output
-    TERM = "xterm"
+  TERM = "xterm"
 
 [dev]
   command = "remix watch"
@@ -23,9 +19,3 @@
   for = "/build/*"
   [headers.values]
     "Cache-Control" = "public, max-age=31536000, s-maxage=31536000"
-
-[[plugins]]
-  package = "netlify-plugin-cypress"
-  [plugins.inputs]
-    record = true
-    group = "Testing Built Site"

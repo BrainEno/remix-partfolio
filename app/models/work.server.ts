@@ -13,7 +13,7 @@ export type Work = {
 export async function getWorkListItems({ userId }: { userId: User["id"] }) {
   const { data } = await supabase
     .from("works")
-    .select("id, title image desc")
+    .select("id, title image desc video")
     .eq("profile_id", userId);
 
   return data;
@@ -44,7 +44,7 @@ export async function deleteWork({
 }: Pick<Work, "id"> & { userId: User["id"] }) {
   const { error } = await supabase
     .from("works")
-    .delete({ returning: "minimal" })
+    .delete()
     .match({ id, profile_id: userId });
 
   if (!error) {
