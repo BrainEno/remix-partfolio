@@ -1,12 +1,81 @@
-.header{
-    color: var(--color--background);
-    display: flex !important;
-    justify-content: space-between;
-    align-items: center;
-    position: fixed;
-    left: 3.125vw;
-    height: 3.125vw;
-    width: 93.75vw;
-    z-index: 1000;
-    mix-blend-mode: difference;
+@import "./global.css";
+
+.page-home {
+  display: block;
+}
+
+.header {
+  color: var(--color-background);
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  position: fixed;
+  left: 3.125vw;
+  height: 3.125vw;
+  width: 93.75vw;
+  z-index: 1000;
+  mix-blend-mode: difference;
+}
+
+.header-link {
+  font-family: "inter,sans-serif";
+  display: flex;
+  position: relative;
+  color: #bbbbbb;
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 0.5;
+  text-transform: uppercase;
+}
+
+.nav {
+  display: flex;
+}
+
+.nav-entry {
+  position: relative;
+  text-transform: uppercase;
+  margin-left: 40px;
+  cursor: pointer;
+}
+
+.nav-active {
+  color: var(--color-links);
+}
+
+.nav-entry-bg {
+  width: calc(100% + 30px);
+  height: calc(100% + 14px);
+  left: -15px;
+  top: -7px;
+  opacity: 0;
+  position: absolute;
+  background-color: var(--color-background);
+  border-radius: 50px;
+  transform: scale(0);
+  transition: transform 0.15s ease-out;
+}
+
+.nav-active .nav-entry-bg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .nav-entry:not(.nav-active):hover .nav-entry-bg {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+}
+.nav-entry-text {
+  position: relative;
+  font-size: 14px;
+}
+
+.home {
+  top: 6.25vw;
+}
+
+.section {
+  display: flex;
 }

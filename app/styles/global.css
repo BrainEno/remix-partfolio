@@ -1,17 +1,18 @@
 @font-face {
   font-family: "aeonik,Arial,sans-serif";
+  src: url("/fonts/aeonik/aeonik.otf") format("opnetype");
   font-weight: normal;
   font-style: normal;
 }
 
-:root{
---color-foreground:#1e1e1e;
---color-background:#b8b8b8;
---color-links:#000000;
---color-links-hover:#1e1e1e;
+:root {
+  --color-foreground: #1e1e1e;
+  --color-background: #b8b8b8;
+  --color-links: #000000;
+  --color-links-hover: #1e1e1e;
 }
 
-html{
+html {
   box-sizing: border-box;
 }
 
@@ -32,18 +33,18 @@ html{
 
 html,
 body {
+  font-family: "aeonik,Arial,sans-serif";
   padding: 0;
   margin: 0;
   color: var(--color-foreground);
   background-color: var(--color-background);
 }
 
-a{
-  color:var(--color-links);
+a {
+  color: var(--color-links);
   text-decoration: none;
 }
 
-a:hover{
-  color:var(--color-links-hover);
-  text-decoration: underline;
+a:hover {
+  color: var(--color-links-hover);
 }
