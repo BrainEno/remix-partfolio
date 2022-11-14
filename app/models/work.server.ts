@@ -1,34 +1,71 @@
 import type { User } from "./user.server";
 import { supabase } from "./user.server";
 
+export type MediaType = "image" | "video";
+
 export type Work = {
   id: string;
-  title: string;
-  image?: string;
-  video?: string;
-  desc: string;
-  profile_id: string;
+  name: string; //en
+  title: string; //zh
+  date: string; //year
+  groupName: string; //en
+  groupTitle: string; //zh
+  mediaType: MediaType;
+  imageUri: string;
+  videoUri?: string;
+  description: string;
+  userId: string;
 };
+
+export type CreateWorkInput = Omit<Work, "id"> & { userId: User["id"] };
+
+export async function getInfroListItems() {
+  console.log();
+  const { data, error } = await supabase
+    .from("works")
+    .select("id, name, title, date, groupName, groupTitle");
+  if (error) console.log("error",error);
+  console.log("data", data);
+  return data;
+}
 
 export async function getWorkListItems({ userId }: { userId: User["id"] }) {
   const { data } = await supabase
     .from("works")
-    .select("id, title image desc video")
-    .eq("profile_id", userId);
+    .select(
+      "id,name,title,date,imageUri,description,videoUri,groupName,groupTitle"
+    )
+    .eq("userId", userId);
 
   return data;
 }
 
 export async function createWork({
+  name,
   title,
-  image='',
-  video='',
-  desc,
+  imageUri,
+  videoUri = "",
+  description,
+  groupName,
+  groupTitle,
+  date,
   userId,
-}: Pick<Work, "image" | "title" | "video" | "desc"> & { userId: User["id"] }) {
+}: CreateWorkInput) {
   const { data, error } = await supabase
     .from("works")
-    .insert([{ title, image, video, desc, profile_id: userId }])
+    .insert([
+      {
+        name,
+        title,
+        imageUri,
+        videoUri,
+        description,
+        groupName,
+        groupTitle,
+        date,
+        userId,
+      },
+    ])
     .single();
 
   if (!error) {
@@ -67,12 +104,14 @@ export async function getWork({
 
   if (!error) {
     return {
-      userId: data.profile_id,
+      userId: data.userId,
       id: data.id,
       title: data.title,
-      desc: data.desc,
-      image: data.image,
-      video: data.video,
+      name: data.name,
+      description: data.description,
+      imageUri: data.imageUri,
+      videoUri: data.videoUri,
+      date: data.date,
     };
   }
 
