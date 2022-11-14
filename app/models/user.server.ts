@@ -17,10 +17,21 @@ invariant(
   "SUPABASE_ANON_KEY must be set in your environment variables."
 );
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const options = {
+  db: {
+    schema: "public",
+  },
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+  },
+};
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, options);
 
 export async function createUser(email: string, password: string) {
-  const { data} = await supabase.auth.signUp({
+  const { data,error } = await supabase.auth.signUp({
     email,
     password,
   });
@@ -33,8 +44,8 @@ export async function createUser(email: string, password: string) {
 
 export async function getProfileById(id: string) {
   const { data, error } = await supabase
-    .from("profiles")
-    .select("email, id")
+    .from("Users")
+    .select("email, id,profile,photo")
     .eq("id", id)
     .single();
 
@@ -44,8 +55,8 @@ export async function getProfileById(id: string) {
 
 export async function getProfileByEmail(email?: string) {
   const { data, error } = await supabase
-    .from("profiles")
-    .select("email, id")
+    .from("users")
+    .select("email, id, profile, photo")
     .eq("email", email)
     .single();
 
