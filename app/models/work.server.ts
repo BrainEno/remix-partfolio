@@ -20,12 +20,10 @@ export type Work = {
 export type CreateWorkInput = Omit<Work, "id"> & { userId: User["id"] };
 
 export async function getInfroListItems() {
-  console.log();
   const { data, error } = await supabase
     .from("works")
     .select("id, name, title, date, groupName, groupTitle");
   if (error) console.log("error",error);
-  console.log("data", data);
   return data;
 }
 

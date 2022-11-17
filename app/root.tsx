@@ -3,8 +3,8 @@ import type {
   LoaderArgs,
   LoaderFunction,
   MetaFunction,
-} from '@remix-run/node';
-import { json } from '@remix-run/node';
+} from "@remix-run/node";
+import { json } from "@remix-run/node";
 import {
   Links,
   LiveReload,
@@ -13,22 +13,24 @@ import {
   Scripts,
   ScrollRestoration,
   useCatch,
-} from '@remix-run/react';
+} from "@remix-run/react";
 
-import globalStylesUrl from '~/styles/global.css';
-import interFont from '@fontsource/inter/index.css';
-import { getUser } from './session.server';
+import globalStylesUrl from "~/styles/global.css";
+import interFont from "@fontsource/inter/index.css";
+import notoSansTC from '@fontsource/noto-sans-tc/index.css'
+import { getUser } from "./session.server";
 
 export const links: LinksFunction = () => [
-  { rel: 'stylesheet', href: interFont },
-  { rel: 'stylesheet', href: globalStylesUrl },
+  { rel: "stylesheet", href: interFont },
+  { rel: "stylesheet", href: notoSansTC },
+  { rel: "stylesheet", href: globalStylesUrl },
 ];
 
 export const meta: MetaFunction = () => {
   return {
-    charset: 'utf-8',
-    title: 'Sydney Zhao',
-    viewport: 'width=device-width,initial-scale=1',
+    charset: "utf-8",
+    title: "Sydney Zhao",
+    viewport: "width=device-width,initial-scale=1",
   };
 };
 
@@ -46,7 +48,7 @@ function Document({
   title?: string;
 }) {
   return (
-    <html lang='en'>
+    <html lang="en">
       <head>
         <Meta />
         <Links />
@@ -74,7 +76,7 @@ export function CatchBoundary() {
 
   return (
     <Document title={`${caught.status} ${caught.statusText}`}>
-      <div className='error-container'>
+      <div className="error-container">
         <h1>
           {caught.status} {caught.statusText}
         </h1>
@@ -85,9 +87,10 @@ export function CatchBoundary() {
 
 export function ErrorBoundary({ error }: { error: Error }) {
   return (
-    <Document title='Uh-oh!'>
-      <div className='error-container'>
-        <h1>App Error</h1>
+    <Document title="Uh-oh!">
+      <div className="error-container">
+        <h1>\(o_o)/</h1>
+        <h2>Something went wrong. Please try again soon.</h2>
         <pre>{error.message}</pre>
       </div>
     </Document>

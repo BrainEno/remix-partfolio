@@ -1,4 +1,4 @@
-import bcrypt from "bcryptjs";
+// import bcrypt from "bcryptjs";
 import { createClient } from "@supabase/supabase-js";
 import invariant from "tiny-invariant";
 
@@ -36,6 +36,7 @@ export async function createUser(email: string, password: string) {
     password,
   });
 
+  if(error) console.warn(`error${error}`)
   // get the user profile after created
   const profile = await getProfileByEmail(data.user?.email);
 
