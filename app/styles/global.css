@@ -8,8 +8,14 @@
 :root {
   --color-foreground: #1e1e1e;
   --color-background: #b8b8b8;
+  --main-color:#000000;
   --color-links: #000000;
   --color-links-hover: #1e1e1e;
+}
+
+::-webkit-scrollbar {
+  display: none;
+  width: 0px;
 }
 
 html {
@@ -50,6 +56,11 @@ h5,
 h6 {
   font-size: 100%;
   font-weight: 400;
+  cursor: default;
+}
+
+p{
+  cursor:default;
 }
 
 a {
@@ -59,4 +70,8 @@ a {
 
 a:hover {
   color: var(--color-links-hover);
+}
+
+.zh{
+  font-family: "Noto Sans TC",sans-serif;
 }

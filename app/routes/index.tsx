@@ -1,22 +1,33 @@
-import type { LinksFunction } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import type { ActionArgs, LinksFunction, LoaderArgs } from "@remix-run/node";
+import { useLoaderData, useLocation } from "@remix-run/react";
 import type { MouseEvent } from "react";
+import { useRef } from "react";
 import { useState } from "react";
 import { useOptionalUser } from "~/utils";
 import type { LoaderFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import homeStylesUrl from "~/styles/index.css";
+import locomotiveStyles from "locomotive-scroll/dist/locomotive-scroll.css";
 import Intro from "../components/Intro";
 import Header from "../components/Header";
 import { getInfroListItems } from "../models/work.server";
+import { useContext } from "react";
+import {
+  LocomotiveScrollProvider,
+  useLocomotiveScroll,
+} from "react-locomotive-scroll";
+import Partifolio from "../components/Partfolio";
+import Contact from "../components/Contact";
+import { lngCookie } from "../cookies";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: homeStylesUrl },
+  { rel: "stylesheet", href: locomotiveStyles },
 ];
 
 export type Language = "zh" | "en";
 export type SectionOptions = "intro" | "partfolio" | "contact";
-type IntroItem = {
+export type IntroItem = {
   id: string;
   name: string;
   title: string;
@@ -25,40 +36,68 @@ type IntroItem = {
   groupTitle: string;
 };
 
-type LoaderData = {
+export type LoaderData = {
   lng: Language;
   works: IntroItem[];
 };
 
-export const loader: LoaderFunction = async () => {
-  const works = await getInfroListItems();
-  console.log("works in loader", works);
-  return json({ lng: "zh", works });
+export const loader: LoaderFunction = async ({ request }: LoaderArgs) => {
+  const works = (await getInfroListItems()) ?? [];
+  const cookieHeader = request.headers.get("Cookie");
+  const { lng } = (await lngCookie.parse(cookieHeader)) || { lng: "zh" };
+  return json({ lng, works });
+};
+
+export const action = async ({ request }: ActionArgs) => {
+  const cookieHeader = request.headers.get("Cookie");
+  const cookie = (await lngCookie.parse(cookieHeader)) || { lng: "zh" };
+  const formData = await request.formData();
+
+  console.log("formData:", Object.fromEntries(formData));
+
+  if (formData.get("lng")) {
+    cookie.lng = formData.get("lng");
+  }
+
+  return redirect("/", {
+    headers: {
+      "Set-Cookie": await lngCookie.serialize(cookie),
+    },
+  });
 };
 
 export default function Index() {
   const user = useOptionalUser();
+  const { pathname } = useLocation();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scroll } = useLocomotiveScroll();
   const [section, setSection] = useState<SectionOptions>("intro");
   const { lng } = useLoaderData<LoaderData>();
 
   const handleIntro = (e: MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
-
+    scroll && scroll.scrollTo("#intro");
     setSection("intro");
   };
   const handlePartfolio = (e: MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
-    console.log("first");
+    scroll && scroll.scrollTo("#partfolio");
     setSection("partfolio");
   };
   const handleContact = (e: MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
+    scroll && scroll.scrollTo("#contact");
     setSection("contact");
   };
 
   return (
-    <div className="page-home">
-      <div>
+    <LocomotiveScrollProvider
+      options={{ smooth: true }}
+      watch={[pathname]}
+      containerRef={containerRef}
+      onUpdate={() => console.log("Updated,but not on location change!")}
+    >
+      <div className="page-home">
         <Header
           lng={lng}
           section={section}
@@ -66,8 +105,12 @@ export default function Index() {
           handlePartfolio={handlePartfolio}
           handleContact={handleContact}
         />
-        <Intro lng={lng} />
+        <div data-scroll-container ref={containerRef}>
+          <Intro lng={lng} />
+          <Partifolio />
+          <Contact />
+        </div>
       </div>
-    </div>
+    </LocomotiveScrollProvider>
   );
 }
