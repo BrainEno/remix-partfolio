@@ -32,6 +32,7 @@ export type IntroItem = {
   name: string;
   title: string;
   date: string;
+  imageUri:string;
   groupName: string;
   groupTitle: string;
 };
@@ -43,6 +44,7 @@ export type LoaderData = {
 
 export const loader: LoaderFunction = async ({ request }: LoaderArgs) => {
   const works = (await getInfroListItems()) ?? [];
+  console.log(works[0].imageUri);
   const cookieHeader = request.headers.get("Cookie");
   const { lng } = (await lngCookie.parse(cookieHeader)) || { lng: "zh" };
   return json({ lng, works });
@@ -73,6 +75,7 @@ export default function Index() {
   const { scroll } = useLocomotiveScroll();
   const [section, setSection] = useState<SectionOptions>("intro");
   const { lng } = useLoaderData<LoaderData>();
+  const [language,setLanguage]=useState<Language>(lng??"zh")
 
   const handleIntro = (e: MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -99,14 +102,15 @@ export default function Index() {
     >
       <div className="page-home">
         <Header
-          lng={lng}
+          lng={language}
+          setLanguage={setLanguage}
           section={section}
           handleIntro={handleIntro}
           handlePartfolio={handlePartfolio}
           handleContact={handleContact}
         />
         <div data-scroll-container ref={containerRef}>
-          <Intro lng={lng} />
+          <Intro lng={language} />
           <Partifolio />
           <Contact />
         </div>
