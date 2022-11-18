@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 
 interface HeaderProps {
   lng: Language;
+  setLanguage:React.Dispatch<React.SetStateAction<Language>>;
   section: SectionOptions;
   handleIntro: (e: MouseEvent<HTMLDivElement>) => void;
   handlePartfolio: (e: MouseEvent<HTMLDivElement>) => void;
@@ -15,6 +16,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({
   lng,
+  setLanguage,
   section,
   handleContact,
   handleIntro,
@@ -44,6 +46,7 @@ const Header: React.FC<HeaderProps> = ({
             type="submit"
             name="lng"
             value="zh"
+            onClick={()=>setLanguage('zh')}
             className={classNames("lng zh", { "lng-selected": lng === "zh" })}
           >
             中文
@@ -53,6 +56,7 @@ const Header: React.FC<HeaderProps> = ({
             type="submit"
             name="lng"
             value="en"
+            onClick={()=>setLanguage('en')}
             className={classNames("lng", { "lng-selected": lng === "en" })}
           >
             English

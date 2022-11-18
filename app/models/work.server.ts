@@ -22,9 +22,12 @@ export type CreateWorkInput = Omit<Work, "id"> & { userId: User["id"] };
 export async function getInfroListItems() {
   const { data, error } = await supabase
     .from("works")
-    .select("id, name, title, date, groupName, groupTitle");
-  if (error) console.log("error",error);
-  return data;
+    .select("id, name, title, imageUri, date, groupName, groupTitle");
+  if (error) console.log("error", error);
+  
+  const filteredData=data?.filter((d) => d.imageUri)
+  console.log(filteredData)
+  return filteredData;
 }
 
 export async function getWorkListItems({ userId }: { userId: User["id"] }) {

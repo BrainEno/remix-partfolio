@@ -79,7 +79,7 @@ const Intro = ({ lng }: { lng: string }) => {
       </div>
       <div className="intro-list">
         <div className="intro-list-text">
-          <p className={classNames({ "zh": isZh })}>
+          <p className={classNames({ zh: isZh })}>
             &nbsp;&nbsp;&nbsp;&nbsp;
             {isZh
               ? `趙悉尼是⻑駐武漢的演員和⾏為藝術家，畢業於美國賓夕法尼亞州狄⾦森學院並獲得經湾學學⼠學位，亦曾就讀美國戲劇學院劇院。曾在多部影視和戲劇作品中參與創作和表演，在多個藝術節進⾏⾏為藝術表演。主要表演經歷包括舞台劇《⿏疫（英⽂版）》（⾹港藝術節），《⽑猿》（江湖戲班），《武漢拼圖》（那甚麽實驗剑作⼩組）和電影《划過江⽔看⾒你》（⼭⼀⼥性電影展作品）。⾏為藝術作品曾參與「穀⾬⾏動」中國當代⾏為藝術城市聯合展演和「⽔泥公園」⾏為藝術節，擔任策展⼈策劃2020年⽔泥公園藝術節。`
@@ -95,7 +95,7 @@ const Intro = ({ lng }: { lng: string }) => {
                 Festival (Sowerart), where at the latter she also worked as a
                 curator.`}
           </p>
-          <p className={classNames({ "zh": isZh })}>
+          <p className={classNames({ zh: isZh })}>
             &nbsp;&nbsp;&nbsp;&nbsp;
             {isZh
               ? `趙悉尼以過程導向式的戲劇、影像和表演藝術，循着探索藝術、身體⾏為和⼼靈的旅程前進。⽬前正在計畫⼀項⻑期個⼈⾏為藝術項⽬，當中運⽤了⼯程師和物理學家費登奎斯的學說和依莎兰按摩艺术的部分理論。`
@@ -110,9 +110,15 @@ const Intro = ({ lng }: { lng: string }) => {
           <>
             {works.map((work) => (
               <div key={work.id} className="intro-list-item">
+                <div className="intro-list-item-pic-box">
+                  <img 
+                  className="intro-list-item-pic"
+                  loading="eager"
+                  src={work.imageUri} alt="cover" />
+                </div>
                 <div className="intro-list-item-line">
                   <div className="intro-list-item-bg"></div>
-                  <div
+                   <div
                     className={classNames(
                       "intro-list-item-name intro-list-item-col",
                       { zh: isZh }
@@ -134,15 +140,15 @@ const Intro = ({ lng }: { lng: string }) => {
                     )}
                   >
                     {isZh ? work.groupTitle : work.groupName}
-                  </div>
-                </div>
-                <div className="intro-list-item-hov-box">
-                  {/* <div className="runningtext-bufferdiv intro-list-item-rt">
-                      <div className="runningtext">
-                        <div className="runningtext-11">{work.title}</div>
-                        <div className="runningtext-12">{work.title}</div>
+                  </div> 
+                  {/* <div className="intro-list-item-hov-box">
+                    <div className="running-text-bufferdiv intro-list-item-rt">
+                      <div className="running-text">
+                        <div className="running-text-11">{work.title}</div>
+                        <div className="running-text-12">{work.title}</div>
                       </div>
-                    </div> */}
+                    </div>
+                  </div> */}
                 </div>
               </div>
             ))}
