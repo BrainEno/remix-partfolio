@@ -17,8 +17,13 @@ import {
 
 import globalStylesUrl from "~/styles/global.css";
 import interFont from "@fontsource/inter/index.css";
-import notoSansTC from '@fontsource/noto-sans-tc/index.css'
+import notoSansTC from "@fontsource/noto-sans-tc/index.css";
 import { getUser } from "./session.server";
+import {
+  LocomotiveScrollProvider,
+  useLocomotiveScroll,
+} from "react-locomotive-scroll";
+import { useRef } from "react";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: interFont },
@@ -47,18 +52,26 @@ function Document({
   children: React.ReactNode;
   title?: string;
 }) {
+  const containerRef = useRef<HTMLBodyElement>(null);
   return (
     <html lang="en">
       <head>
         <Meta />
         <Links />
       </head>
-      <body>
-        {children}
-        <ScrollRestoration />
-        <Scripts />
-        <LiveReload />
-      </body>
+      <LocomotiveScrollProvider
+        options={{ smooth: true }}
+        watch={[]}
+        containerRef={containerRef}
+        onUpdate={() => console.log("Updated,but not on location change!")}
+      >
+        <body data-scroll-container ref={containerRef}>
+          {children}
+          <ScrollRestoration />
+          <Scripts />
+          <LiveReload />
+        </body>
+      </LocomotiveScrollProvider>
     </html>
   );
 }
