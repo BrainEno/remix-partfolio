@@ -1,6 +1,6 @@
 import type { ActionArgs, LinksFunction, LoaderArgs } from "@remix-run/node";
 import { useLoaderData, useLocation } from "@remix-run/react";
-import type { MouseEvent } from "react";
+import { MouseEvent, ReactNode, RefObject, useEffect } from "react";
 import { useRef } from "react";
 import { useState } from "react";
 import { useOptionalUser } from "~/utils";
@@ -11,14 +11,15 @@ import locomotiveStyles from "locomotive-scroll/dist/locomotive-scroll.css";
 import Intro from "../components/Intro";
 import Header from "../components/Header";
 import { getInfroListItems } from "../models/work.server";
-import { useContext } from "react";
 import {
   LocomotiveScrollProvider,
   useLocomotiveScroll,
+  Scroll,
 } from "react-locomotive-scroll";
 import Partifolio from "../components/Partfolio";
 import Contact from "../components/Contact";
 import { lngCookie } from "../cookies";
+import { useForwardedRef } from "~/hooks/useForwardedRef";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: homeStylesUrl },
@@ -32,7 +33,7 @@ export type IntroItem = {
   name: string;
   title: string;
   date: string;
-  imageUri:string;
+  imageUri: string;
   groupName: string;
   groupTitle: string;
 };
@@ -44,7 +45,6 @@ export type LoaderData = {
 
 export const loader: LoaderFunction = async ({ request }: LoaderArgs) => {
   const works = (await getInfroListItems()) ?? [];
-  console.log(works[0].imageUri);
   const cookieHeader = request.headers.get("Cookie");
   const { lng } = (await lngCookie.parse(cookieHeader)) || { lng: "zh" };
   return json({ lng, works });
@@ -54,8 +54,6 @@ export const action = async ({ request }: ActionArgs) => {
   const cookieHeader = request.headers.get("Cookie");
   const cookie = (await lngCookie.parse(cookieHeader)) || { lng: "zh" };
   const formData = await request.formData();
-
-  console.log("formData:", Object.fromEntries(formData));
 
   if (formData.get("lng")) {
     cookie.lng = formData.get("lng");
@@ -70,51 +68,58 @@ export const action = async ({ request }: ActionArgs) => {
 
 export default function Index() {
   const user = useOptionalUser();
-  const { pathname } = useLocation();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scroll } = useLocomotiveScroll();
+  const { scroll, isReady } = useLocomotiveScroll();
   const [section, setSection] = useState<SectionOptions>("intro");
   const { lng } = useLoaderData<LoaderData>();
-  const [language,setLanguage]=useState<Language>(lng??"zh")
+  const [language, setLanguage] = useState<Language>(lng ?? "zh");
+  const introRef = useRef<HTMLDivElement | null>(null);
+  const partfolioRef = useRef<HTMLDivElement | null>(null);
+  const contactRef = useRef<HTMLDivElement | null>(null);
 
   const handleIntro = (e: MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
-    scroll && scroll.scrollTo("#intro");
+    const introSec = introRef.current;
+    isReady && scroll.scrollTo(introSec);
     setSection("intro");
   };
+
   const handlePartfolio = (e: MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
-    scroll && scroll.scrollTo("#partfolio");
+    const partfolioSec = partfolioRef.current;
+    isReady && scroll.scrollTo(partfolioSec);
     setSection("partfolio");
   };
+
   const handleContact = (e: MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
-    scroll && scroll.scrollTo("#contact");
+    const contactSec = contactRef.current;
+    isReady && scroll.scrollTo(contactSec);
     setSection("contact");
   };
 
+  useEffect(() => {
+    if (isReady) {
+      scroll.on("call", (args: any) => {
+        console.log("scroll args", args);
+      });
+    }
+  });
+
   return (
-    <LocomotiveScrollProvider
-      options={{ smooth: true }}
-      watch={[pathname]}
-      containerRef={containerRef}
-      onUpdate={() => console.log("Updated,but not on location change!")}
-    >
-      <div className="page-home">
-        <Header
-          lng={language}
-          setLanguage={setLanguage}
-          section={section}
-          handleIntro={handleIntro}
-          handlePartfolio={handlePartfolio}
-          handleContact={handleContact}
-        />
-        <div data-scroll-container ref={containerRef}>
-          <Intro lng={language} />
-          <Partifolio />
-          <Contact />
-        </div>
+    <div className="page-home">
+      <Header
+        lng={language}
+        setLanguage={setLanguage}
+        section={section}
+        handleIntro={handleIntro}
+        handlePartfolio={handlePartfolio}
+        handleContact={handleContact}
+      />
+      <div>
+        <Intro lng={language} ref={introRef} setSection={setSection} />
+        <Partifolio lng={lng} ref={partfolioRef} />
+        <Contact ref={contactRef} />
       </div>
-    </LocomotiveScrollProvider>
+    </div>
   );
 }
