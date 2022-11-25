@@ -29,7 +29,6 @@
   display: inline-block;
   margin-left: -0.5vw;
   z-index: 2;
-  mix-blend-mode: difference;
   width: max-content;
   line-height: 0em;
   height: 18vw;

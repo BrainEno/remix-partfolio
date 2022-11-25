@@ -2,28 +2,31 @@ import { useLoaderData } from "@remix-run/react";
 import classNames from "classnames";
 import React from "react";
 import { useForwardedRef } from "~/hooks/useForwardedRef";
-import { Language, LoaderData } from "~/routes";
+import type { Language, LoaderData } from "~/routes";
 
 interface PartfolioProps {
-  lng: Language;
+  lang: Language;
 }
 
 const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
-  ({ lng }, ref) => {
-    const isZh = lng === "zh";
+  function Partfolio({ lang }, ref) {
+    const isZh = lang === "zh";
     const { works } = useLoaderData<LoaderData>();
     const partfolioRef = useForwardedRef(ref);
     return (
       <section
+        id="partfolio"
         data-scroll
         data-scroll-id="partfolio"
+        data-scroll-call="partfolio"
+        data-scroll-repeat
         data-scroll-section
-        id="partfolio"
         ref={partfolioRef}
-        style={{ height: 800, width: "100%", background: "black" }}
+        style={{ height: "100vh", width: "100%", background: "black" }}
       >
         <div className="tv-box">
           <img src="/images/tv.webp" alt="tv" />
+          <div className="tv-screen"></div>
         </div>
         <>
           {works.map((work) => (

@@ -6,7 +6,7 @@ import type { Language, SectionOptions } from "../routes";
 import { motion } from "framer-motion";
 
 interface HeaderProps {
-  lng: Language;
+  lang: Language;
   setLanguage:React.Dispatch<React.SetStateAction<Language>>;
   section: SectionOptions;
   handleIntro: (e: MouseEvent<HTMLDivElement>) => void;
@@ -15,14 +15,14 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({
-  lng,
+  lang,
   setLanguage,
   section,
   handleContact,
   handleIntro,
   handlePartfolio,
 }) => {
-  const isZh = lng === "zh";
+  const isZh = lang === "zh";
 
   return (
     <header className="header">
@@ -41,23 +41,23 @@ const Header: React.FC<HeaderProps> = ({
             SydeyZhao
           </motion.span>
         </NavLink>
-        <Form method="post" className="lng-switch">
+        <Form method="post" className="lang-switch">
           <button
             type="submit"
-            name="lng"
+            name="lang"
             value="zh"
             onClick={()=>setLanguage('zh')}
-            className={classNames("lng zh", { "lng-selected": lng === "zh" })}
+            className={classNames("lang zh", { "lang-selected": lang === "zh" })}
           >
             中文
           </button>
           <span> | </span>
           <button
             type="submit"
-            name="lng"
+            name="lang"
             value="en"
             onClick={()=>setLanguage('en')}
-            className={classNames("lng", { "lng-selected": lng === "en" })}
+            className={classNames("lang", { "lang-selected": lang === "en" })}
           >
             English
           </button>

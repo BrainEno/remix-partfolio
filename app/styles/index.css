@@ -24,23 +24,23 @@
   align-items: flex-end;
 }
 
-.header-left .lng-switch {
+.header-left .lang-switch {
   margin-left: 13px;
   color: #bbbbbb;
 }
 
-.lng {
+.lang {
   cursor: pointer;
   color: #4b4b4b;
   background-color: transparent;
   border: none;
 }
 
-.lng.zh {
+.lang.zh {
   letter-spacing: 1px;
 }
 
-.lng.lng-selected {
+.lang.lang-selected {
   color: #bbbbbb;
   border-bottom: 1px solid #bbbbbb;
   padding-bottom: 2px;

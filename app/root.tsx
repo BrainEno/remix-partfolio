@@ -13,34 +13,38 @@ import {
   Scripts,
   ScrollRestoration,
   useCatch,
+  useLoaderData,
 } from "@remix-run/react";
 
 import globalStylesUrl from "~/styles/global.css";
 import interFont from "@fontsource/inter/index.css";
 import notoSansTC from "@fontsource/noto-sans-tc/index.css";
 import { getUser } from "./session.server";
-import {
-  LocomotiveScrollProvider,
-  useLocomotiveScroll,
-} from "react-locomotive-scroll";
+import { lngCookie } from "./cookies";
+import { LocomotiveScrollProvider } from "react-locomotive-scroll";
 import { useRef } from "react";
-
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: interFont },
   { rel: "stylesheet", href: notoSansTC },
   { rel: "stylesheet", href: globalStylesUrl },
 ];
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = ({ data }) => {
+  const { lang } = data;
+  const title = lang === "zh" ? "趙 悉 尼" : "Sydney Zhao";
   return {
     charset: "utf-8",
-    title: "Sydney Zhao",
+    title,
     viewport: "width=device-width,initial-scale=1",
   };
 };
 
 export const loader: LoaderFunction = async ({ request }: LoaderArgs) => {
+  const cookieHeader = request.headers.get("Cookie");
+  const { lang } = (await lngCookie.parse(cookieHeader)) || { lang: "zh" };
+
   return json({
+    lang,
     user: await getUser(request),
   });
 };
@@ -52,9 +56,11 @@ function Document({
   children: React.ReactNode;
   title?: string;
 }) {
+  const { lang } = useLoaderData();
   const containerRef = useRef<HTMLBodyElement>(null);
+
   return (
-    <html lang="en">
+    <html lang={lang}>
       <head>
         <Meta />
         <Links />

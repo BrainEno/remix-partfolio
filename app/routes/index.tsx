@@ -1,29 +1,25 @@
 import type { ActionArgs, LinksFunction, LoaderArgs } from "@remix-run/node";
-import { useLoaderData, useLocation } from "@remix-run/react";
-import { MouseEvent, ReactNode, RefObject, useEffect } from "react";
-import { useRef } from "react";
-import { useState } from "react";
+import { useLoaderData } from "@remix-run/react";
+import { MouseEvent, useLayoutEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useOptionalUser } from "~/utils";
 import type { LoaderFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import homeStylesUrl from "~/styles/index.css";
-import locomotiveStyles from "locomotive-scroll/dist/locomotive-scroll.css";
 import Intro from "../components/Intro";
 import Header from "../components/Header";
 import { getInfroListItems } from "../models/work.server";
-import {
-  LocomotiveScrollProvider,
-  useLocomotiveScroll,
-  Scroll,
-} from "react-locomotive-scroll";
 import Partifolio from "../components/Partfolio";
 import Contact from "../components/Contact";
 import { lngCookie } from "../cookies";
-import { useForwardedRef } from "~/hooks/useForwardedRef";
+import { gsap } from "gsap";
+import ScrollTrigger from "gsap/dist/ScrollTrigger";
+import ScrollToPlugin from "gsap/dist/ScrollToPlugin";
+import { useInView } from "framer-motion";
+import { useLocomotiveScroll } from "react-locomotive-scroll";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: homeStylesUrl },
-  { rel: "stylesheet", href: locomotiveStyles },
 ];
 
 export type Language = "zh" | "en";
@@ -39,24 +35,24 @@ export type IntroItem = {
 };
 
 export type LoaderData = {
-  lng: Language;
+  lang: Language;
   works: IntroItem[];
 };
 
 export const loader: LoaderFunction = async ({ request }: LoaderArgs) => {
   const works = (await getInfroListItems()) ?? [];
   const cookieHeader = request.headers.get("Cookie");
-  const { lng } = (await lngCookie.parse(cookieHeader)) || { lng: "zh" };
-  return json({ lng, works });
+  const { lang } = (await lngCookie.parse(cookieHeader)) || { lang: "zh" };
+  return json({ lang, works });
 };
 
 export const action = async ({ request }: ActionArgs) => {
   const cookieHeader = request.headers.get("Cookie");
-  const cookie = (await lngCookie.parse(cookieHeader)) || { lng: "zh" };
+  const cookie = (await lngCookie.parse(cookieHeader)) || { lang: "zh" };
   const formData = await request.formData();
 
-  if (formData.get("lng")) {
-    cookie.lng = formData.get("lng");
+  if (formData.get("lang")) {
+    cookie.lang = formData.get("lang");
   }
 
   return redirect("/", {
@@ -67,48 +63,61 @@ export const action = async ({ request }: ActionArgs) => {
 };
 
 export default function Index() {
-  const user = useOptionalUser();
   const { scroll, isReady } = useLocomotiveScroll();
   const [section, setSection] = useState<SectionOptions>("intro");
-  const { lng } = useLoaderData<LoaderData>();
-  const [language, setLanguage] = useState<Language>(lng ?? "zh");
+  const { lang } = useLoaderData<LoaderData>();
+  const [language, setLanguage] = useState<Language>(lang ?? "zh");
   const introRef = useRef<HTMLDivElement | null>(null);
   const partfolioRef = useRef<HTMLDivElement | null>(null);
   const contactRef = useRef<HTMLDivElement | null>(null);
 
   const handleIntro = (e: MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const introSec = introRef.current;
-    isReady && scroll.scrollTo(introSec);
+    isReady && scroll.scrollTo("#intro");
     setSection("intro");
   };
 
   const handlePartfolio = (e: MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const partfolioSec = partfolioRef.current;
-    isReady && scroll.scrollTo(partfolioSec);
+    isReady && scroll.scrollTo("#partfolio");
     setSection("partfolio");
   };
 
   const handleContact = (e: MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const contactSec = contactRef.current;
-    isReady && scroll.scrollTo(contactSec);
+    isReady && scroll.scrollTo("#contact");
     setSection("contact");
   };
 
   useEffect(() => {
+    if (gsap) {
+      gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+    }
+  }, []);
+
+  useEffect(() => {
     if (isReady) {
-      scroll.on("call", (args: any) => {
-        console.log("scroll args", args);
+      scroll.on("call", (sec: any) => {
+        console.log(sec);
+        switch (sec) {
+          case "intro":
+            setSection("intro");
+            break;
+          case "partfolio":
+            setSection("partfolio");
+            break;
+          case "contact":
+            setSection("contact");
+            break;
+        }
       });
     }
-  });
+  }, [isReady, scroll]);
 
   return (
     <div className="page-home">
       <Header
-        lng={language}
+        lang={language}
         setLanguage={setLanguage}
         section={section}
         handleIntro={handleIntro}
@@ -116,8 +125,8 @@ export default function Index() {
         handleContact={handleContact}
       />
       <div>
-        <Intro lng={language} ref={introRef} setSection={setSection} />
-        <Partifolio lng={lng} ref={partfolioRef} />
+        <Intro lang={language} ref={introRef}/>
+        <Partifolio lang={language} ref={partfolioRef} />
         <Contact ref={contactRef} />
       </div>
     </div>

@@ -24,9 +24,8 @@ export async function getInfroListItems() {
     .from("works")
     .select("id, name, title, imageUri, date, groupName, groupTitle");
   if (error) console.log("error", error);
-  
-  const filteredData=data?.filter((d) => d.imageUri)
-  console.log(filteredData)
+
+  const filteredData = data?.filter((d) => d.imageUri);
   return filteredData;
 }
 
