@@ -21,8 +21,14 @@ import interFont from "@fontsource/inter/index.css";
 import notoSansTC from "@fontsource/noto-sans-tc/index.css";
 import { getUser } from "./session.server";
 import { lngCookie } from "./cookies";
-import { LocomotiveScrollProvider } from "react-locomotive-scroll";
-import { useRef } from "react";
+import {
+  LocomotiveScrollProvider,
+  useLocomotiveScroll,
+} from "react-locomotive-scroll";
+import { useEffect, useRef } from "react";
+import { gsap } from "gsap";
+import ScrollTrigger from "gsap/dist/ScrollTrigger";
+
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: interFont },
   { rel: "stylesheet", href: notoSansTC },
@@ -49,6 +55,44 @@ export const loader: LoaderFunction = async ({ request }: LoaderArgs) => {
   });
 };
 
+const ScrollTriggerProxy = () => {
+  const { scroll } = useLocomotiveScroll();
+
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+    if (scroll && scroll.el) {
+      console.log(scroll);
+      const element = scroll.el;
+
+      scroll.on("scroll", ScrollTrigger.update);
+
+      ScrollTrigger.scrollerProxy(element, {
+        scrollTop(value) {
+          return arguments.length
+            ? scroll.scrollTo(value, 0, 0)
+            : scroll.scroll.instance.scroll.y;
+        },
+        getBoundingClientRect() {
+          return {
+            top: 0,
+            left: 0,
+            width: window.innerWidth,
+            height: window.innerHeight,
+          };
+        },
+        pinType: element.style.transform ? "transform" : "fixed",
+      });
+
+      return () => {
+        ScrollTrigger.addEventListener("refresh", () => scroll?.update());
+        ScrollTrigger.refresh();
+      };
+    }
+  }, [scroll]);
+
+  return null;
+};
+
 function Document({
   children,
   title = `Sydney Zhao`,
@@ -57,7 +101,7 @@ function Document({
   title?: string;
 }) {
   const { lang } = useLoaderData();
-  const containerRef = useRef<HTMLBodyElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   return (
     <html lang={lang}>
@@ -71,8 +115,11 @@ function Document({
         containerRef={containerRef}
         onUpdate={() => console.log("Updated,but not on location change!")}
       >
-        <body data-scroll-container ref={containerRef}>
-          {children}
+        <ScrollTriggerProxy />
+        <body>
+          <div id="container" data-scroll-container ref={containerRef}>
+            {children}
+          </div>
           <ScrollRestoration />
           <Scripts />
           <LiveReload />

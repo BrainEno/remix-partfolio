@@ -1,6 +1,6 @@
-.intro {
+#intro {
   position: relative;
-  padding: 7.29167vw 3.125vw 8.3333vw;
+  padding: 6vw 3.125vw 8vw;
   display: flex;
   flex-direction: column;
   height: max-content;
@@ -25,7 +25,7 @@
 }
 
 .intro-headline-word {
-  font-size: 12vw;
+  font-size: 12.38vw;
   display: inline-block;
   margin-left: -0.5vw;
   z-index: 2;
@@ -38,8 +38,8 @@
   position: absolute;
   right: -4.2vw;
   top: 0;
-  width: 52vw;
-  height: 100%;
+  width: 39.8vw;
+  height: 98%;
   padding: 0;
 }
 
@@ -48,14 +48,16 @@
   height: 100%;
   overflow: hidden;
   position: relative;
+  aspect-ratio: 1/2;
 }
 
 .intro-photo-wrapper .intro-photo {
   position: absolute;
   width: 100%;
-  height: 120%;
+  height: 150%;
   top: -100px;
   object-fit: cover;
+  mix-blend-mode: difference;
 }
 
 .intro-subheadline-box {
@@ -74,152 +76,4 @@
 
 .intro-subheadline-box .intro-subheadline-word {
   font-size: 30px;
-}
-
-.intro-list {
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-}
-
-.intro-list-text {
-  width: 50%;
-  padding: 0 8vw;
-  font-size: 20px;
-  z-index: 2;
-}
-
-.intro-list-text .zh {
-  /*to change*/
-}
-
-.intro-list-items {
-  width: 50%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  padding: 24px;
-}
-
-.intro-list-item {
-  pointer-events: none;
-  position: relative;
-}
-
-.intro-list-item-pic-box {
-  position: absolute;
-  left: -30%;
-  top: calc(50% - 8vw);
-  opacity: 0;
-  display: none;
-  width: 16vw;
-  height: 16vw;
-  overflow: hidden;
-  border-radius: 50%;
-}
-
-.intro-list-item-pic {
-  width: 100%;
-  height: 100%;
-  border: 0;
-  vertical-align: middle;
-  opacity: 0;
-  display: none;
-  will-change: transform;
-  transform: translate3d(0.0009vw, -0.0004vw, 0px) scale3d(1, 1, 1)
-    rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg);
-  transform-style: preserve-3d;
-  object-fit: cover;
-}
-
-.intro-list-item:hover .intro-list-item-pic-box {
-  display: block;
-  opacity: 100;
-}
-
-.intro-list-item:hover .intro-list-item-pic {
-  opacity: 100;
-  display: block;
-}
-
-.intro-list-item:first-of-type {
-  border-top: 1px solid var(--main-color);
-}
-
-.intro-list-item-line {
-  pointer-events: all;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  position: relative;
-  width: 100%;
-  border-bottom: 1px solid var(--main-color);
-  overflow: hidden;
-  height: 50px;
-  cursor: pointer;
-  line-height: 1em;
-}
-
-.intro-list-item-bg {
-  position: absolute;
-  width: 100%;
-  height: calc(100%+1px);
-  bottom: -1px;
-  left: 0;
-  background-color: var(--main-color);
-  transform: scaleY(0);
-  transition: transform 0.2s cubic-bezier(0.33, 1, 0.68, 1);
-  transform-origin: bottom;
-}
-
-.intro-list-item-col {
-  display: block;
-  position: relative;
-  flex-grow: 1;
-  width: 100%;
-  text-transform: uppercase;
-  transition: all 0.2s cubic-bezier(0.33, 1, 0.68, 1);
-}
-
-.intro-list-item-date {
-  text-align: center;
-  display: inline-block;
-  width: auto;
-  padding: 0 2.08333vw;
-}
-
-.intro-list-item-group {
-  text-align: right;
-}
-
-.intro-list-item-hov-box {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  font-size: 40px;
-  transform: translateY(100%);
-  transition: transform 0.2s cubic-bezier(0.33, 1, 0.68, 1);
-}
-
-.running-text,
-.running-text-bufferdiv {
-  width: 100%;
-  height: 100%;
-}
-
-.running-text {
-  overflow: hidden;
-  position: relative;
-  display: flex;
-  flex-direction: row;
-}
-
-.running-text-11,
-.running-text-12 {
-  flex-wrap: nowrap;
-  display: inline-flex;
-  align-items: center;
-  flex-direction: row;
-  line-height: 1em;
 }

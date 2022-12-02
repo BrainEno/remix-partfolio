@@ -1,4 +1,4 @@
-import { Form, NavLink} from "@remix-run/react";
+import { Form, NavLink } from "@remix-run/react";
 import classNames from "classnames";
 import type { MouseEvent } from "react";
 import React from "react";
@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 
 interface HeaderProps {
   lang: Language;
-  setLanguage:React.Dispatch<React.SetStateAction<Language>>;
+  setLanguage: React.Dispatch<React.SetStateAction<Language>>;
   section: SectionOptions;
   handleIntro: (e: MouseEvent<HTMLDivElement>) => void;
   handlePartfolio: (e: MouseEvent<HTMLDivElement>) => void;
@@ -46,8 +46,10 @@ const Header: React.FC<HeaderProps> = ({
             type="submit"
             name="lang"
             value="zh"
-            onClick={()=>setLanguage('zh')}
-            className={classNames("lang zh", { "lang-selected": lang === "zh" })}
+            onClick={() => setLanguage("zh")}
+            className={classNames("lang zh", {
+              "lang-selected": lang === "zh",
+            })}
           >
             中文
           </button>
@@ -56,7 +58,7 @@ const Header: React.FC<HeaderProps> = ({
             type="submit"
             name="lang"
             value="en"
-            onClick={()=>setLanguage('en')}
+            onClick={() => setLanguage("en")}
             className={classNames("lang", { "lang-selected": lang === "en" })}
           >
             English

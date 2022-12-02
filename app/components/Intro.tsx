@@ -22,7 +22,7 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
       data-scroll-call="intro"
       data-scroll-repeat
       data-scroll-section
-      className="intro section"
+      className="section"
       ref={introRef}
     >
       <div className="intro-headline-box">
@@ -43,7 +43,7 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
               data-scroll
               data-scroll-speed="4"
               className="intro-photo"
-              src="/images/SydneyZhao_profilephoto.JPG"
+              src="/images/figure.webp"
               alt="Sydney Zhao"
             />
           </div>
@@ -96,4 +96,4 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
   );
 });
 
-export default React.memo(Intro);
+export default Intro;

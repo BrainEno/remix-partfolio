@@ -1,8 +1,10 @@
 @import "./global.css";
 @import "./intro.css";
+@import "./partfolio.css";
 
 .page-home {
   display: block;
+  height: 100%;
 }
 
 .header {
@@ -106,13 +108,16 @@
     transform: scale(1);
   }
 }
+
 .nav-entry-text {
   position: relative;
   font-size: 14px;
 }
 
-.home {
+#home {
   top: 6.25vw;
+  display: flex;
+  flex-direction: column;
 }
 
 .section {

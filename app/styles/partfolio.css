@@ -1,0 +1,150 @@
+#partfolio {
+  width: 100vw;
+  height: 100vw;
+  background-color: black;
+  mix-blend-mode: multiply;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tv-box {
+  width: 100vw;
+  height: 76.82vw;
+  display: block;
+  position: relative;
+}
+
+.tv-box-stickytainer {
+  bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.tv {
+  width: 56%;
+  object-fit: cover;
+  position: absolute;
+  top: 29vw;
+  left: 25vw;
+  z-index: 100;
+}
+
+.screen-box {
+  position: absolute;
+  top: 36.8vw;
+  left: 36.4vw;
+  width: 27vw;
+  height: 20.5vw;
+  overflow: hidden;
+}
+
+.screen-pic {
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  opacity: 0.9;
+  object-fit: cover;
+  will-change: transform;
+  transform: translate3d(0.0009vw, -0.0004vw, 0px) scale3d(1, 1, 1)
+    rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg);
+  transform-style: preserve-3d;
+  object-fit: cover;
+}
+
+.work-list-items {
+  position: absolute;
+  top: 10vw;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 24px;
+}
+
+.work-list-item {
+  pointer-events: none;
+  position: relative;
+  line-height: 0.9rem;
+  width: 100%;
+  height: 6vw;
+}
+
+.work-list-item:hover .work-list-item-pic-box {
+  display: block;
+  opacity: 100;
+}
+
+.work-list-item:hover .screen-pic {
+  opacity: 100;
+  display: block;
+}
+
+.work-list-item:first-of-type {
+  border-top: 1px solid var(--black);
+}
+
+.work-list-item-line {
+  pointer-events: all;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  border-bottom: 1px solid var(--black);
+  overflow: hidden;
+  height: 100%;
+  cursor: pointer;
+  line-height: 1em;
+}
+
+.work-list-item:hover .work-list-item-line {
+  border-bottom: 1px solid var(--white);
+  border-top: 1px solid var(--white);
+}
+
+.work-list-item-bg {
+  position: absolute;
+  width: 100%;
+  height: calc(100%+1px);
+  bottom: -1px;
+  left: 0;
+  background-color: var(--black);
+  transform: scaleY(0);
+  transition: transform 0.2s cubic-bezier(0.33, 1, 0.68, 1);
+  transform-origin: bottom;
+}
+
+.work-list-item-col {
+  display: block;
+  position: relative;
+  flex-grow: 1;
+  width: 100%;
+  height: 100%;
+  text-transform: uppercase;
+  transition: all 0.2s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.work-list-item-name {
+  color: var(--white);
+  font-size: 4.16vw;
+  width: 80%;
+}
+
+.work-list-item-info {
+  text-align: right;
+  font-size: 0.5vw;
+  color: var(--white);
+}
+
+.work-list-item-hov-box {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  font-size: 40px;
+  transform: translateY(100%);
+  transition: transform 0.2s cubic-bezier(0.33, 1, 0.68, 1);
+}

@@ -1,11 +1,11 @@
 import type { ActionArgs, LinksFunction, LoaderArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { MouseEvent, useLayoutEffect } from "react";
-import { useEffect, useRef, useState } from "react";
-import { useOptionalUser } from "~/utils";
+import type { MouseEvent } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { LoaderFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import homeStylesUrl from "~/styles/index.css";
+import locomotiveStylesUrl from "locomotive-scroll/dist/locomotive-scroll.css";
 import Intro from "../components/Intro";
 import Header from "../components/Header";
 import { getInfroListItems } from "../models/work.server";
@@ -20,6 +20,7 @@ import { useLocomotiveScroll } from "react-locomotive-scroll";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: homeStylesUrl },
+  { rel: "stylesheet", href: locomotiveStylesUrl },
 ];
 
 export type Language = "zh" | "en";
@@ -63,31 +64,49 @@ export const action = async ({ request }: ActionArgs) => {
 };
 
 export default function Index() {
-  const { scroll, isReady } = useLocomotiveScroll();
+  const { scroll } = useLocomotiveScroll();
   const [section, setSection] = useState<SectionOptions>("intro");
   const { lang } = useLoaderData<LoaderData>();
   const [language, setLanguage] = useState<Language>(lang ?? "zh");
   const introRef = useRef<HTMLDivElement | null>(null);
   const partfolioRef = useRef<HTMLDivElement | null>(null);
   const contactRef = useRef<HTMLDivElement | null>(null);
+  const introInView = useInView(introRef, {
+    margin: "20px",
+  });
+  const partfolioInView = useInView(partfolioRef, {
+    margin: "0px",
+  });
+  const contactInView = useInView(contactRef, {
+    margin: "0px",
+  });
 
-  const handleIntro = (e: MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    isReady && scroll.scrollTo("#intro");
-    setSection("intro");
-  };
+  const handleIntro = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setSection("intro");
+      scroll && scroll.scrollTo("#intro");
+    },
+    [scroll]
+  );
 
-  const handlePartfolio = (e: MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    isReady && scroll.scrollTo("#partfolio");
-    setSection("partfolio");
-  };
+  const handlePartfolio = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setSection("partfolio");
+      scroll && scroll.scrollTo("#partfolio");
+    },
+    [scroll]
+  );
 
-  const handleContact = (e: MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    isReady && scroll.scrollTo("#contact");
-    setSection("contact");
-  };
+  const handleContact = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setSection("contact");
+      scroll && scroll.scrollTo("#contact");
+    },
+    [scroll]
+  );
 
   useEffect(() => {
     if (gsap) {
@@ -96,23 +115,19 @@ export default function Index() {
   }, []);
 
   useEffect(() => {
-    if (isReady) {
-      scroll.on("call", (sec: any) => {
-        console.log(sec);
-        switch (sec) {
-          case "intro":
-            setSection("intro");
-            break;
-          case "partfolio":
-            setSection("partfolio");
-            break;
-          case "contact":
-            setSection("contact");
-            break;
+    if (scroll) {
+      scroll.on("scroll", () => {
+        console.log(introInView);
+        if (introInView && !partfolioInView) {
+          setSection("intro");
+        } else if (partfolioInView && !contactInView) {
+          setSection("partfolio");
+        } else if (contactInView) {
+          setSection("contact");
         }
       });
     }
-  }, [isReady, scroll]);
+  }, [contactInView, introInView, partfolioInView, scroll]);
 
   return (
     <div className="page-home">
@@ -124,8 +139,8 @@ export default function Index() {
         handlePartfolio={handlePartfolio}
         handleContact={handleContact}
       />
-      <div>
-        <Intro lang={language} ref={introRef}/>
+      <div id="home">
+        <Intro lang={language} ref={introRef} />
         <Partifolio lang={language} ref={partfolioRef} />
         <Contact ref={contactRef} />
       </div>
