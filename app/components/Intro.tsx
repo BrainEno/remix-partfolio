@@ -2,6 +2,9 @@ import classNames from "classnames";
 import React from "react";
 import { useForwardedRef } from "~/hooks/useForwardedRef";
 import type { Language } from "../routes";
+import { ClientOnly } from "remix-utils";
+import Banana from "../3d/Banana.client";
+import CanvasWrapper from "../3d/CanvasWrapper.client";
 
 interface IntroProps {
   lang: Language;
@@ -49,18 +52,6 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
           </div>
         </div>
       </div>
-      {/* <div className="intro-subheadline-box">
-          <div className="intro-subheadline">
-            <span className="intro-subheadline-word">
-              {isZh ? "简介" : "INTRO"}
-            </span>
-          </div>
-          <div className="intro-subheadline">
-            <span className="intro-subheadline-word">
-              {isZh ? "作品" : "WORKS"}
-            </span>
-          </div>
-        </div> */}
       <div className="intro-list">
         <div className="intro-list-text">
           <p className={classNames({ zh: isZh })}>

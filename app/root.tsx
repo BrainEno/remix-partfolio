@@ -20,7 +20,7 @@ import globalStylesUrl from "~/styles/global.css";
 import interFont from "@fontsource/inter/index.css";
 import notoSansTC from "@fontsource/noto-sans-tc/index.css";
 import { getUser } from "./session.server";
-import { lngCookie } from "./cookies";
+import { langCookie } from "./cookies";
 import {
   LocomotiveScrollProvider,
   useLocomotiveScroll,
@@ -35,6 +35,16 @@ export const links: LinksFunction = () => [
   { rel: "stylesheet", href: globalStylesUrl },
 ];
 
+export const loader: LoaderFunction = async ({ request }: LoaderArgs) => {
+  const cookieHeader = request.headers.get("Cookie");
+  const { lang } = (await langCookie.parse(cookieHeader)) || { lang: "zh" };
+
+  return json({
+    lang,
+    user: await getUser(request),
+  });
+};
+
 export const meta: MetaFunction = ({ data }) => {
   const { lang } = data;
   const title = lang === "zh" ? "趙 悉 尼" : "Sydney Zhao";
@@ -43,16 +53,6 @@ export const meta: MetaFunction = ({ data }) => {
     title,
     viewport: "width=device-width,initial-scale=1",
   };
-};
-
-export const loader: LoaderFunction = async ({ request }: LoaderArgs) => {
-  const cookieHeader = request.headers.get("Cookie");
-  const { lang } = (await lngCookie.parse(cookieHeader)) || { lang: "zh" };
-
-  return json({
-    lang,
-    user: await getUser(request),
-  });
 };
 
 const ScrollTriggerProxy = () => {
@@ -100,11 +100,10 @@ function Document({
   children: React.ReactNode;
   title?: string;
 }) {
-  const { lang } = useLoaderData();
   const containerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <html lang={lang}>
+    <html lang="en">
       <head>
         <Meta />
         <Links />

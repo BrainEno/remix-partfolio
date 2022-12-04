@@ -11,7 +11,7 @@ import Header from "../components/Header";
 import { getInfroListItems } from "../models/work.server";
 import Partifolio from "../components/Partfolio";
 import Contact from "../components/Contact";
-import { lngCookie } from "../cookies";
+import { langCookie } from "../cookies";
 import { gsap } from "gsap";
 import ScrollTrigger from "gsap/dist/ScrollTrigger";
 import ScrollToPlugin from "gsap/dist/ScrollToPlugin";
@@ -43,13 +43,21 @@ export type LoaderData = {
 export const loader: LoaderFunction = async ({ request }: LoaderArgs) => {
   const works = (await getInfroListItems()) ?? [];
   const cookieHeader = request.headers.get("Cookie");
-  const { lang } = (await lngCookie.parse(cookieHeader)) || { lang: "zh" };
+  let lang: string = "zh";
+  try {
+    const cookie = await langCookie.parse(cookieHeader);
+    if (cookie.lang) {
+      lang = cookie.lang;
+    }
+  } catch (error) {
+    return json({ lang, works });
+  }
   return json({ lang, works });
 };
 
 export const action = async ({ request }: ActionArgs) => {
   const cookieHeader = request.headers.get("Cookie");
-  const cookie = (await lngCookie.parse(cookieHeader)) || { lang: "zh" };
+  const cookie = (await langCookie.parse(cookieHeader)) || { lang: "zh" };
   const formData = await request.formData();
 
   if (formData.get("lang")) {
@@ -58,7 +66,7 @@ export const action = async ({ request }: ActionArgs) => {
 
   return redirect("/", {
     headers: {
-      "Set-Cookie": await lngCookie.serialize(cookie),
+      "Set-Cookie": await langCookie.serialize(cookie),
     },
   });
 };
