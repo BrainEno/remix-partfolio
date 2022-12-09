@@ -5,12 +5,11 @@ import { useForwardedRef } from "~/hooks/useForwardedRef";
 import type { Language, LoaderData } from "~/routes";
 
 interface PartfolioProps {
-  lang: Language;
+  isZh:boolean;
 }
 
 const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
-  function Partfolio({ lang }, ref) {
-    const isZh = lang === "zh";
+  function Partfolio({ isZh }, ref) {
     const { works } = useLoaderData<LoaderData>();
     const partfolioRef = useForwardedRef(ref);
     const [workImg, setWorkImg] = useState<string>(works[0].imageUri);
@@ -24,10 +23,10 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
       <section
         id="partfolio"
         data-scroll
+        data-scroll-section
         data-scroll-id="partfolio"
         data-scroll-call="partfolio"
         data-scroll-repeat
-        data-scroll-section
         ref={partfolioRef}
       >
         <div className="tv-box">
@@ -51,7 +50,10 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
                 onMouseEnter={handleHover(work.imageUri) as any}
               >
                 <div className="work-name-mask">
-                  <h1 className={classNames("work-name", { zh: isZh })}>
+                  <h1
+                  data-scroll
+                  data-scroll-speed="1"
+                  className={classNames("work-name", { zh: isZh })}>
                     {isZh
                       ? `《${work.title}》${
                           work.title === "⿏疫" ? "英语版" : ""

@@ -1,6 +1,7 @@
 @import "./global.css";
 @import "./intro.css";
 @import "./partfolio.css";
+@import "./contact.css";
 
 .page-home {
   display: block;

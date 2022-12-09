@@ -13,7 +13,6 @@ import {
   Scripts,
   ScrollRestoration,
   useCatch,
-  useLoaderData,
 } from "@remix-run/react";
 
 import globalStylesUrl from "~/styles/global.css";
@@ -58,13 +57,18 @@ export const meta: MetaFunction = ({ data }) => {
 const ScrollTriggerProxy = () => {
   const { scroll } = useLocomotiveScroll();
 
+  gsap.registerPlugin(ScrollTrigger);
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    if (scroll && scroll.el) {
+    if (scroll) {
       console.log(scroll);
-      const element = scroll.el;
+      console.log(gsap);
+      const element = scroll?.el;
 
       scroll.on("scroll", ScrollTrigger.update);
+
+      // ScrollTrigger.create({
+      //   scroller: element,
+      // });
 
       ScrollTrigger.scrollerProxy(element, {
         scrollTop(value) {
@@ -85,6 +89,7 @@ const ScrollTriggerProxy = () => {
 
       return () => {
         ScrollTrigger.addEventListener("refresh", () => scroll?.update());
+
         ScrollTrigger.refresh();
       };
     }
@@ -100,7 +105,7 @@ function Document({
   children: React.ReactNode;
   title?: string;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null!);
 
   return (
     <html lang="en">

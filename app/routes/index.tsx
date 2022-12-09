@@ -14,9 +14,10 @@ import Contact from "../components/Contact";
 import { langCookie } from "../cookies";
 import { gsap } from "gsap";
 import ScrollTrigger from "gsap/dist/ScrollTrigger";
-import ScrollToPlugin from "gsap/dist/ScrollToPlugin";
 import { useInView } from "framer-motion";
 import { useLocomotiveScroll } from "react-locomotive-scroll";
+import ScrollToPlugin from "gsap/dist/ScrollToPlugin";
+import { ClientOnly } from "remix-utils";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: homeStylesUrl },
@@ -72,6 +73,7 @@ export const action = async ({ request }: ActionArgs) => {
 };
 
 export default function Index() {
+  gsap.registerPlugin([ScrollToPlugin]);
   const { scroll } = useLocomotiveScroll();
   const [section, setSection] = useState<SectionOptions>("intro");
   const { lang } = useLoaderData<LoaderData>();
@@ -88,6 +90,8 @@ export default function Index() {
   const contactInView = useInView(contactRef, {
     margin: "0px",
   });
+
+  const isZh = language === "zh";
 
   const handleIntro = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
@@ -117,15 +121,8 @@ export default function Index() {
   );
 
   useEffect(() => {
-    if (gsap) {
-      gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
-    }
-  }, []);
-
-  useEffect(() => {
     if (scroll) {
       scroll.on("scroll", () => {
-        console.log(introInView);
         if (introInView && !partfolioInView) {
           setSection("intro");
         } else if (partfolioInView && !contactInView) {
@@ -136,6 +133,8 @@ export default function Index() {
       });
     }
   }, [contactInView, introInView, partfolioInView, scroll]);
+
+  useEffect(() => {});
 
   return (
     <div className="page-home">
@@ -148,9 +147,9 @@ export default function Index() {
         handleContact={handleContact}
       />
       <div id="home">
-        <Intro lang={language} ref={introRef} />
-        <Partifolio lang={language} ref={partfolioRef} />
-        <Contact ref={contactRef} />
+        <Intro isZh={isZh} ref={introRef} />
+        <Partifolio isZh={isZh} ref={partfolioRef} />
+        <Contact isZh={isZh} ref={contactRef} />
       </div>
     </div>
   );

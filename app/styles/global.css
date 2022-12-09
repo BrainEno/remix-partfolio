@@ -69,6 +69,10 @@ a {
   text-decoration: none;
 }
 
+div{
+  border: none;
+}
+
 a:hover {
   color: var(--color-links-hover);
 }
