@@ -66,10 +66,6 @@ const ScrollTriggerProxy = () => {
 
       scroll.on("scroll", ScrollTrigger.update);
 
-      // ScrollTrigger.create({
-      //   scroller: element,
-      // });
-
       ScrollTrigger.scrollerProxy(element, {
         scrollTop(value) {
           return arguments.length
