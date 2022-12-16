@@ -10,10 +10,12 @@ const Banana = (props: ThreeElements["mesh"]) => {
   const gltf = useGLTF("/gltfs/banana.gltf");
 
   return (
-      <primitive
-      position={[0,0,0]}
-//    rotation={[Math.PI / 2, 0, 0]}
-      scale={0.1} object={gltf.scene} />
+    <primitive
+      position={[0, 0, 0]}
+      rotation={[0,Math.PI / 2,, 0]}
+      scale={0.1}
+      object={gltf.scene}
+    />
   );
 };
 

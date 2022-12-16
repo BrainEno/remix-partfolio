@@ -2,7 +2,6 @@
   padding: 2vw 3.125vw 8vw;
   display: flex;
   flex-direction: column;
-  /* height: max-content; */
   background-color: var(--black);
 }
 
@@ -224,7 +223,7 @@
   width: 20vw;
   position: relative;
   overflow: hidden;
-  mix-blend-mode: darken;
+  mix-blend-mode: multiply;
   z-index: 2;
 }
 
@@ -254,7 +253,7 @@
 .intro-subheadline-title {
   position: absolute;
   top: -4vw;
-  left: 43vw;
+  left: 48vw;
   font-size: 8vw;
   line-height: 0;
   color: var(--white);

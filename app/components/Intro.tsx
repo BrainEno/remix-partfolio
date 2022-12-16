@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { useForwardedRef } from "~/hooks/useForwardedRef";
 import { gsap } from "gsap";
 import ScrollTrigger from "gsap/dist/ScrollTrigger";
@@ -13,12 +13,10 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
   ref
 ) {
   const introRef = useForwardedRef<HTMLDivElement>(ref);
-  const subheadlineRef = useRef<HTMLDivElement | null>(null);
-  const horizontalRef = useRef<HTMLDivElement | null>(null);
-
   gsap.registerPlugin(ScrollTrigger);
 
   useEffect(() => {
+    ScrollTrigger.refresh();
     setTimeout(() => {
       const t1 = gsap.timeline({
         scrollTrigger: {
@@ -235,11 +233,11 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
                 />
               </div>
             </div>
-            <div className="intro-subheadline-slider" ref={subheadlineRef}>
+            <div className="intro-subheadline-slider">
               <div className="intro-subheadline-title">
                 <h1>Intro</h1>
               </div>
-              <div className="intro-subheadline-text-box1" ref={horizontalRef}>
+              <div className="intro-subheadline-text-box1">
                 <p
                   className={classNames(
                     "intro-subheadline-text intro-subheadline-text1",
