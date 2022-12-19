@@ -81,6 +81,7 @@ export default function Index() {
   const introRef = useRef<HTMLDivElement | null>(null);
   const partfolioRef = useRef<HTMLDivElement | null>(null);
   const contactRef = useRef<HTMLDivElement | null>(null);
+  
   const introInView = useInView(introRef, {
     margin: "20px",
   });

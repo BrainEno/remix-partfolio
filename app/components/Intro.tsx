@@ -138,7 +138,10 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
             x: "-=100vw",
           },
           "<"
-        );
+        )
+        .to("#intro", {
+          backgroundColor: "#013171",
+        });
     }, 1000);
     ScrollTrigger.refresh();
   }, []);

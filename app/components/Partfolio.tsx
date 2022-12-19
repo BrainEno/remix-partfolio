@@ -26,14 +26,14 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
 
     useEffect(() => {
       setTimeout(() => {
-        ScrollTrigger.refresh();
         const t3 = gsap.timeline({
           scrollTrigger: {
-            trigger: ".tv-box",
+            trigger: ".tv-box-pinner",
             scroller: "#container",
             start: "top top",
-            end: "4000vw",
+            end: "100vw",
             toggleActions: "play pause pause reverse",
+            markers:true,
             scrub: true,
             pin: true,
             pinType: "transform",
@@ -41,15 +41,14 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
           defaults: { duration: 20, ease: "none" },
         });
 
-        t3.to(".tv-bg", {
-          scale: 2,
-        }).to(
-          ".tv",
-          {
-            scale: 2,
-          },
-          "<"
-        );
+        t3
+        .to('.tv-box-sticktainer',{
+          height:'+=200vw'
+        })
+        .to(".tv-box-mask-bg", {
+          scale: 1,
+        });
+        ScrollTrigger.refresh();
       }, 1000);
     }, []);
 
@@ -63,82 +62,78 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
         data-scroll-repeat
         ref={partfolioRef}
       >
+        <div className="tv-nav-activer"></div>
+        <div className="tv-animation-trigger"></div>
         <div className="tv-box-stickytainer">
-          <div className="tv-box-pinner"></div>
-          <div className="tv-box-mask">
-            <div className="tv-box">
-              <div className="tv-all-vids">
-                <div
-                  className="tv-blackscreen"
-                  style={{ display: "block" }}
-                ></div>
-                <div className="tv-showreel"></div>
-                {/* <iframe
-                  src="https://player.vimeo.com/video/673878812?background=1"
-                  frameBorder="0"
-                  
-                  muted=''
-                  allowfullscreen=""
-                  disablepictureinpicture=""
-                  class="po-showreel"
-                  style={{display: 'block'}}
-                ></iframe> */}
+          <div className="tv-box-pinner">
+            <div className="tv-box-mask">
+              <div className="tv-box">
+                <div className="tv-box-mask-bg">
+                  <img src="/images/tv-bg2.jpg" alt="" className="tv-box-mask-pic" />
+                </div>
+                <div className="tv-all-vids">
+                  <div
+                    className="tv-blackscreen"
+                    style={{ display: "block" }}
+                  ></div>
+                  <div className="tv-showreel">
+                    <img loading="eager" src={workImg} alt="cover" />
+                  </div>
+                  <div className="tv-vids-container">
+                    <div className="tv-video-box"></div>
+                  </div>
+                </div>
               </div>
             </div>
-            <img className="tv-bg" src="/images/bg.jpg" alt="tv-bg" />
-            <img className="tv" src="/images/tv1.png" alt="tv" />
+          </div>
+          <div className="work-items-box">
+            <h2 className="work-items-headline">Involved Works 2020 - 2022</h2>
+            {works.map((work) => (
+              <div
+                key={work.id}
+                className="work-item"
+                onMouseEnter={handleHover(work.imageUri) as any}
+              >
+                <div className="work-item-entry">
+                  <div className="work-item-topline"></div>
+                <div className="work-name-mask">
+                  <h1 className={classNames("work-name", { zh: isZh })}>
+                    {isZh
+                      ? `《${work.title}》${
+                          work.title === "⿏疫" ? "英语版" : ""
+                        }`
+                      : `${work.name}`}
+                  </h1>
+                  <h1 className={classNames("work-name-hover", { zh: isZh })}>
+                    {isZh
+                      ? `《${work.title}》${
+                          work.title === "⿏疫" ? "英语版" : ""
+                        }`
+                      : `${work.name}`}
+                  </h1>
+                </div>
+                  <div className="work-item-botline"></div>
+                </div>  
+                <div className="work-teaser">
+                  <div className="work-teaser-mask">
+                    <span className="work-teaser-date">{work.date}</span>
+                  </div>
+                  <div className="work-teaser-mask">
+                    <span className="work-teaser-seperator">
+                      &nbsp;&nbsp;/&nbsp;&nbsp;
+                    </span>
+                  </div>
+                  <div className="work-teaser-mask">
+                    <span className="work-teaser-group">
+                      {isZh ? work.groupTitle : work.groupName}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="screen-box">
-          <img
-            className="screen-pic"
-            loading="eager"
-            src={workImg}
-            alt="cover"
-          />
-        </div>
-        <div className="work-list">
-          {works.map((work) => (
-            <div
-              key={work.id}
-              className="work-item"
-              onMouseEnter={handleHover(work.imageUri) as any}
-            >
-              <div className="work-name-mask">
-                <h1 className={classNames("work-name", { zh: isZh })}>
-                  {isZh
-                    ? `《${work.title}》${
-                        work.title === "⿏疫" ? "英语版" : ""
-                      }`
-                    : `${work.name}`}
-                </h1>
-
-                <h1 className={classNames("work-name-hover", { zh: isZh })}>
-                  {isZh
-                    ? `《${work.title}》${
-                        work.title === "⿏疫" ? "英语版" : ""
-                      }`
-                    : `${work.name}`}
-                </h1>
-              </div>
-              <div className="work-teaser">
-                <div className="work-teaser-mask">
-                  <span className="work-teaser-date">{work.date}</span>
-                </div>
-                <div className="work-teaser-mask">
-                  <span className="work-teaser-seperator">
-                    &nbsp;&nbsp;/&nbsp;&nbsp;
-                  </span>
-                </div>
-                <div className="work-teaser-mask">
-                  <span className="work-teaser-group">
-                    {isZh ? work.groupTitle : work.groupName}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <div className="screen-box"></div>
       </section>
     );
   }
