@@ -259,6 +259,10 @@
   color: var(--white);
 }
 
+.intro-subheadline-title.zh{
+  font-size: 7vw;
+}
+
 .intro-subheadline-text-box1 {
   width: 100vw;
   height: 100vh;

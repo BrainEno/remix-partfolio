@@ -16,7 +16,6 @@ import { gsap } from "gsap";
 import ScrollTrigger from "gsap/dist/ScrollTrigger";
 import { useInView } from "framer-motion";
 import { useLocomotiveScroll } from "react-locomotive-scroll";
-import ScrollToPlugin from "gsap/dist/ScrollToPlugin";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: homeStylesUrl },
@@ -72,7 +71,6 @@ export const action = async ({ request }: ActionArgs) => {
 };
 
 export default function Index() {
-  gsap.registerPlugin([ScrollToPlugin]);
   const { scroll } = useLocomotiveScroll();
   const [section, setSection] = useState<SectionOptions>("intro");
   const { lang } = useLoaderData<LoaderData>();
@@ -134,6 +132,8 @@ export default function Index() {
     }
   }, [contactInView, introInView, partfolioInView, scroll]);
 
+  gsap.registerPlugin(ScrollTrigger);
+
   useEffect(() => {
     setTimeout(() => {
       const t1 = gsap.timeline({
@@ -176,7 +176,7 @@ export default function Index() {
           ".intro-subheadline-title",
           {
             left: "12vw",
-            top: "31vw",
+            top: "32vw",
             ease: "sine.out",
           },
           "<3"
@@ -256,17 +256,21 @@ export default function Index() {
           },
           "<"
         )
-        .to('.intro-subheadline-text2',{
-          marginBottom:'8vw'
+        .to(".intro-subheadline-text2", {
+          marginBottom: "8vw",
         })
-        .to(".intro-subheadline-text2-pic2", {
-          top: '5vw',
-          duration: 15,
-        },'<+=2')
+        .to(
+          ".intro-subheadline-text2-pic2",
+          {
+            top: "5vw",
+            duration: 15,
+          },
+          "<+=2"
+        )
         .to(
           ".intro-subheadline-text2-pic1",
           {
-            top: '-8vw',
+            top: "-8vw",
             duration: 20,
           },
           "<+=2"
@@ -294,7 +298,7 @@ export default function Index() {
       });
 
       t3.to(".tv-box-pinner", {
-        top: '50vh',
+        top: "500",
       });
 
       const t4 = gsap.timeline({
@@ -302,9 +306,9 @@ export default function Index() {
           trigger: ".tv-transition-trigger",
           scroller: "#container",
           start: "top center",
-          end: '200vh',
+          end: "200vh",
           scrub: true,
-          immediateRender:false
+          immediateRender: false,
         },
         defaults: { duration: 2, ease: "none" },
       });

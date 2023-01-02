@@ -1,9 +1,7 @@
 /* eslint-disable jsx-a11y/iframe-has-title */
 import { useLoaderData } from "@remix-run/react";
 import classNames from "classnames";
-import gsap from "gsap";
-import ScrollTrigger from "gsap/dist/ScrollTrigger";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useForwardedRef } from "~/hooks/useForwardedRef";
 import type { LoaderData } from "~/routes";
 
@@ -21,65 +19,6 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
       e.preventDefault();
       setWorkImg(src);
     };
-
-    gsap.registerPlugin(ScrollTrigger);
-
-    // useEffect(() => {
-    //   setTimeout(() => {
-    //     const t3 = gsap.timeline({
-    //       scrollTrigger: {
-    //         trigger: ".tv-box-pinner",
-    //         scroller: "#container",
-    //         start: "50 top",
-    //         end: "3173",
-    //         scrub: true,
-    //         pin: true,
-    //         pinType: "transform",
-    //         pinSpacing: false,
-    //       },
-    //       defaults: { duration: 20, ease: "none" },
-    //     });
-
-    //     t3.to(".tv-box-pinner", {
-    //       top: 50,
-    //     });
-
-    //     const t4 = gsap.timeline({
-    //       scrollTrigger: {
-    //         trigger: ".tv-transition-trigger",
-    //         scroller: "#container",
-    //         start: "top bottom-=100",
-    //         end: "1000",
-    //         scrub: true,
-    //         immediateRender: false,
-    //       },
-    //       defaults: { duration: 2, ease: "none" },
-    //     });
-
-    //     t4.to(".tv-cover", {
-    //       display: "none",
-    //       opacity: 0,
-    //       duration: 0.1,
-    //     })
-    //       .to(
-    //         ".tv-box",
-    //         {
-    //           scale: 16,
-    //           rotation: 45,
-    //         },
-    //         ">"
-    //       )
-    //       .to(
-    //         ".tv-bg",
-    //         {
-    //           opacity: 0,
-    //         },
-    //         "<"
-    //       );
-    //   }, 1000);
-
-    //   ScrollTrigger.refresh();
-    // }, []);
 
     return (
       <section
@@ -114,7 +53,7 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
                 <div className="tv-bg-box">
                   <img
                     className="tv-bg"
-                    src="/images/tv-bg21.png"
+                    src="/images/tv-bg.png"
                     alt="tv-bg"
                   />
                 </div>
@@ -122,7 +61,9 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
             </div>
           </div>
           <div className="work-items-box">
-            <h2 className="work-items-headline">Involved Works 2020 - 2022</h2>
+            <h2 className={classNames("work-items-headline", { zh: isZh })}>
+              {isZh ? "參與作品  " : "Involved Works"} 2020 - 2022
+            </h2>
             {works.map((work) => (
               <div
                 key={work.id}

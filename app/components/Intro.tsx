@@ -1,8 +1,6 @@
 import classNames from "classnames";
-import React, { useEffect } from "react";
+import React from "react";
 import { useForwardedRef } from "~/hooks/useForwardedRef";
-import { gsap } from "gsap";
-import ScrollTrigger from "gsap/dist/ScrollTrigger";
 
 interface IntroProps {
   isZh: boolean;
@@ -13,152 +11,6 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
   ref
 ) {
   const introRef = useForwardedRef<HTMLDivElement>(ref);
-  gsap.registerPlugin(ScrollTrigger);
-
-  // useEffect(() => {
-
-  //   setTimeout(() => {
-  //     const t1 = gsap.timeline({
-  //       scrollTrigger: {
-  //         trigger: ".intro-subheadline-stickytainer",
-  //         scroller: "#container",
-  //         start: "top-=100 top",
-  //         end: "4000",
-  //         scrub: true,
-  //         pin: true,
-  //         pinType: "transform",
-  //       },
-  //       defaults: { duration: 20, ease: "none" },
-  //     });
-
-  //     const t2 = gsap.timeline({
-  //       scrollTrigger: {
-  //         trigger: ".intro-subheadline-stickytainer2",
-  //         scroller: "#container",
-  //         start: "top top",
-  //         end: "4000",
-  //         scrub: true,
-  //         pin: true,
-  //         pinType: "transform",
-  //       },
-  //       defaults: { duration: 20, ease: "none" },
-  //     });
-
-  //     t1.to(".intro-subheadline-photo-box", {
-  //       translateY: "4vw",
-  //       translateX: "10vw",
-  //       rotation: -18.75,
-  //       scale: 1.2,
-  //       autoAlpha: 0.8,
-  //       ease: "slow(0.7,0.7,false)",
-  //       filter: "grayscale(10%)",
-  //     })
-  //       .to(
-  //         ".intro-subheadline-title",
-  //         {
-  //           left: "12vw",
-  //           top: "31vw",
-  //           ease: "sine.out",
-  //         },
-  //         "<3"
-  //       )
-  //       .to(
-  //         ".intro-subheadline-photo-ghost-mask",
-  //         {
-  //           autoAlpha: 0,
-  //           rotation: 18.15,
-  //         },
-  //         "<"
-  //       )
-  //       .to(
-  //         ".intro-subheadline-pic-info",
-  //         {
-  //           autoAlpha: 1,
-  //           ease: "power1.out",
-  //           scale: 1,
-  //         },
-  //         "+=5"
-  //       )
-  //       .to(
-  //         ".intro-subheadline-photo-mask",
-  //         {
-  //           width: "+=20vw",
-  //           borderTopLeftRadius: "14vw",
-  //           filter: "grayscale(0%)",
-  //         },
-  //         ">5"
-  //       )
-  //       .to(
-  //         ".intro-subheadline-title",
-  //         {
-  //           left: "+=20vw",
-  //         },
-  //         "<"
-  //       )
-  //       .to(
-  //         ".intro-subheadline-text-box1",
-  //         {
-  //           left: "0",
-  //         },
-  //         ">5"
-  //       )
-  //       .to(
-  //         ".intro-subheadline-photo-box",
-  //         {
-  //           left: "-100%",
-  //         },
-  //         "<9"
-  //       )
-  //       .to(
-  //         ".intro-subheadline-title",
-  //         {
-  //           left: "-66vw",
-  //         },
-  //         "<"
-  //       );
-
-  //     t2.to(".intro-subheadline-photo-box2", {
-  //       x: "-=130vw",
-  //     })
-  //       .to(
-  //         ".intro-subheadline-photo-mask2",
-  //         {
-  //           marginRight: "5.5vw",
-  //         },
-  //         "<"
-  //       )
-  //       .to(".intro-subheadline-slider2", {
-  //         x: "-100vw",
-  //       })
-  //       .to(
-  //         ".intro-subheadline-photo-box2",
-  //         {
-  //           x: "-=100vw",
-  //         },
-  //         "<"
-  //       )
-  //       .to(".intro-subheadline-text2-pic2", {
-  //         top: 100,
-  //         duration: 15,
-  //       })
-  //       .to(
-  //         ".intro-subheadline-text2-pic1",
-  //         {
-  //           top: -100,
-  //           duration: 20,
-  //         },
-  //         "<+=2"
-  //       )
-  //       .to(
-  //         "#intro",
-  //         {
-  //           backgroundColor: "#013171",
-  //         },
-  //         "<-=2"
-  //       );
-  //   }, 1000);
-  //   ScrollTrigger.refresh();
-  // }, []);
 
   return (
     <section
@@ -251,8 +103,10 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
               </div>
             </div>
             <div className="intro-subheadline-slider">
-              <div className="intro-subheadline-title">
-                <h1>Intro</h1>
+              <div
+                className={classNames("intro-subheadline-title", { zh: isZh })}
+              >
+                <h1>{isZh ? "簡介" : "Intro"}</h1>
               </div>
               <div className="intro-subheadline-text-box1">
                 <p

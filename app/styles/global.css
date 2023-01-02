@@ -7,11 +7,11 @@
 
 :root {
   --color-foreground: #1e1e1e;
-  --color-background: #b8b8b8;
+  /* --color-background: #b8b8b8; */
+  --color-background:#fff;
   --black:#000;
   --white:#fff;
   --color-links: #000000;
-  --color-links-hover: #1e1e1e;
 }
 
 ::-webkit-scrollbar {
@@ -73,9 +73,6 @@ div{
   border: none;
 }
 
-a:hover {
-  color: var(--color-links-hover);
-}
 
 .zh{
   font-family: "Noto Sans TC",sans-serif;

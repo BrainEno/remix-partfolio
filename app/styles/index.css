@@ -21,6 +21,14 @@
   mix-blend-mode: difference;
 }
 
+.header-link{
+  overflow: hidden;
+}
+
+.header-link span {
+  display: block;
+}
+
 .header-left {
   display: inline-flex;
   flex-direction: row;

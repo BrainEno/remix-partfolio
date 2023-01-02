@@ -14,3 +14,57 @@
   padding-top: 35vh;
   overflow: hidden;
 }
+
+.contact-link {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+.runningtext-bufferdiv {
+  font-size: 5.2vw;
+  line-height: 1em;
+  display: block;
+}
+
+.runningtext-bufferdiv,
+.runningtext {
+  width: 100%;
+  height: 100%;
+}
+
+.runningtext {
+  overflow: hidden;
+  position: relative;
+  display: flex;
+}
+
+.runningtext-l1,
+.runningtext-l2 {
+  display: inline-block;
+  flex-wrap: nowrap;
+  display: -webkit-inline-box;
+  display: inline-flex;
+  -webkit-box-align: center;
+  align-items: center;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  flex-direction: row;
+  line-height: 1em;
+  cursor: pointer;
+}
+
+.runningtext-word {
+  text-transform: uppercase;
+  margin-right: 1.5vw;
+  display: inline-block;
+  white-space: nowrap;
+  position: relative;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pinter: fine) {
+  .contact-link:hover .runningtext-word{
+    color: #f4c900;
+  }
+}
