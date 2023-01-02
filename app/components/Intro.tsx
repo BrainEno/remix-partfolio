@@ -15,136 +15,150 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
   const introRef = useForwardedRef<HTMLDivElement>(ref);
   gsap.registerPlugin(ScrollTrigger);
 
-  useEffect(() => {
-    ScrollTrigger.refresh();
-    setTimeout(() => {
-      const t1 = gsap.timeline({
-        scrollTrigger: {
-          trigger: ".intro-subheadline-stickytainer",
-          scroller: "#container",
-          start: "top-=100 top",
-          end: "4000vw",
-          toggleActions: "play pause pause reverse",
-          scrub: true,
-          pin: true,
-          pinType: "transform",
-        },
-        defaults: { duration: 20, ease: "none" },
-      });
+  // useEffect(() => {
 
-      const t2 = gsap.timeline({
-        scrollTrigger: {
-          trigger: ".intro-subheadline-stickytainer2",
-          scroller: "#container",
-          start: "top top",
-          end: "4000vw",
-          toggleActions: "play pause pause reverse",
-          scrub: true,
-          pin: true,
-          pinType: "transform",
-        },
-        defaults: { duration: 20, ease: "none" },
-      });
+  //   setTimeout(() => {
+  //     const t1 = gsap.timeline({
+  //       scrollTrigger: {
+  //         trigger: ".intro-subheadline-stickytainer",
+  //         scroller: "#container",
+  //         start: "top-=100 top",
+  //         end: "4000",
+  //         scrub: true,
+  //         pin: true,
+  //         pinType: "transform",
+  //       },
+  //       defaults: { duration: 20, ease: "none" },
+  //     });
 
-      t1.to(".intro-subheadline-photo-box", {
-        translateY: "4vw",
-        translateX: "10vw",
-        rotation: -18.75,
-        scale: 1.2,
-        autoAlpha: 0.8,
-        ease: "slow(0.7,0.7,false)",
-        filter: "grayscale(10%)",
-      })
-        .to(
-          ".intro-subheadline-title",
-          {
-            left: "12vw",
-            top: "31vw",
-            ease: "sine.out",
-          },
-          "<3"
-        )
-        .to(
-          ".intro-subheadline-photo-ghost-mask",
-          {
-            autoAlpha: 0,
-            rotation: 18.15,
-          },
-          "<"
-        )
-        .to(
-          ".intro-subheadline-pic-info",
-          {
-            autoAlpha: 1,
-            ease: "power1.out",
-            scale: 1,
-          },
-          "+=5"
-        )
-        .to(
-          ".intro-subheadline-photo-mask",
-          {
-            width: "+=20vw",
-            borderTopLeftRadius: "14vw",
-            filter: "grayscale(0%)",
-          },
-          ">5"
-        )
-        .to(
-          ".intro-subheadline-title",
-          {
-            left: "+=20vw",
-          },
-          "<"
-        )
-        .to(
-          ".intro-subheadline-text-box1",
-          {
-            left: "0",
-          },
-          ">5"
-        )
-        .to(
-          ".intro-subheadline-photo-box",
-          {
-            left: "-100%",
-          },
-          "<9"
-        )
-        .to(
-          ".intro-subheadline-title",
-          {
-            left: "-66vw",
-          },
-          "<"
-        );
+  //     const t2 = gsap.timeline({
+  //       scrollTrigger: {
+  //         trigger: ".intro-subheadline-stickytainer2",
+  //         scroller: "#container",
+  //         start: "top top",
+  //         end: "4000",
+  //         scrub: true,
+  //         pin: true,
+  //         pinType: "transform",
+  //       },
+  //       defaults: { duration: 20, ease: "none" },
+  //     });
 
-      t2.to(".intro-subheadline-photo-box2", {
-        x: "-=130vw",
-      })
-        .to(
-          ".intro-subheadline-photo-mask2",
-          {
-            marginRight: "5.5vw",
-          },
-          "<"
-        )
-        .to(".intro-subheadline-slider2", {
-          x: "-100vw",
-        })
-        .to(
-          ".intro-subheadline-photo-box2",
-          {
-            x: "-=100vw",
-          },
-          "<"
-        )
-        .to("#intro", {
-          backgroundColor: "#013171",
-        });
-    }, 1000);
-    ScrollTrigger.refresh();
-  }, []);
+  //     t1.to(".intro-subheadline-photo-box", {
+  //       translateY: "4vw",
+  //       translateX: "10vw",
+  //       rotation: -18.75,
+  //       scale: 1.2,
+  //       autoAlpha: 0.8,
+  //       ease: "slow(0.7,0.7,false)",
+  //       filter: "grayscale(10%)",
+  //     })
+  //       .to(
+  //         ".intro-subheadline-title",
+  //         {
+  //           left: "12vw",
+  //           top: "31vw",
+  //           ease: "sine.out",
+  //         },
+  //         "<3"
+  //       )
+  //       .to(
+  //         ".intro-subheadline-photo-ghost-mask",
+  //         {
+  //           autoAlpha: 0,
+  //           rotation: 18.15,
+  //         },
+  //         "<"
+  //       )
+  //       .to(
+  //         ".intro-subheadline-pic-info",
+  //         {
+  //           autoAlpha: 1,
+  //           ease: "power1.out",
+  //           scale: 1,
+  //         },
+  //         "+=5"
+  //       )
+  //       .to(
+  //         ".intro-subheadline-photo-mask",
+  //         {
+  //           width: "+=20vw",
+  //           borderTopLeftRadius: "14vw",
+  //           filter: "grayscale(0%)",
+  //         },
+  //         ">5"
+  //       )
+  //       .to(
+  //         ".intro-subheadline-title",
+  //         {
+  //           left: "+=20vw",
+  //         },
+  //         "<"
+  //       )
+  //       .to(
+  //         ".intro-subheadline-text-box1",
+  //         {
+  //           left: "0",
+  //         },
+  //         ">5"
+  //       )
+  //       .to(
+  //         ".intro-subheadline-photo-box",
+  //         {
+  //           left: "-100%",
+  //         },
+  //         "<9"
+  //       )
+  //       .to(
+  //         ".intro-subheadline-title",
+  //         {
+  //           left: "-66vw",
+  //         },
+  //         "<"
+  //       );
+
+  //     t2.to(".intro-subheadline-photo-box2", {
+  //       x: "-=130vw",
+  //     })
+  //       .to(
+  //         ".intro-subheadline-photo-mask2",
+  //         {
+  //           marginRight: "5.5vw",
+  //         },
+  //         "<"
+  //       )
+  //       .to(".intro-subheadline-slider2", {
+  //         x: "-100vw",
+  //       })
+  //       .to(
+  //         ".intro-subheadline-photo-box2",
+  //         {
+  //           x: "-=100vw",
+  //         },
+  //         "<"
+  //       )
+  //       .to(".intro-subheadline-text2-pic2", {
+  //         top: 100,
+  //         duration: 15,
+  //       })
+  //       .to(
+  //         ".intro-subheadline-text2-pic1",
+  //         {
+  //           top: -100,
+  //           duration: 20,
+  //         },
+  //         "<+=2"
+  //       )
+  //       .to(
+  //         "#intro",
+  //         {
+  //           backgroundColor: "#013171",
+  //         },
+  //         "<-=2"
+  //       );
+  //   }, 1000);
+  //   ScrollTrigger.refresh();
+  // }, []);
 
   return (
     <section
@@ -313,6 +327,16 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
             </div>
             <div className="intro-subheadline-slider2">
               <div className="intro-subheadline-text-box2">
+                <img
+                  src="/images/hairyApe.png"
+                  alt="pic6"
+                  className="intro-subheadline-text2-pic1"
+                />
+                <img
+                  src="/images/show.png"
+                  alt="pic7"
+                  className="intro-subheadline-text2-pic2"
+                />
                 <p
                   className={classNames(
                     "intro-subheadline-text intro-subheadline-text2",

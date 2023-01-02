@@ -17,6 +17,7 @@ import {
 
 import globalStylesUrl from "~/styles/global.css";
 import interFont from "@fontsource/inter/index.css";
+import inria from "@fontsource/inria-serif/index.css"
 import notoSansTC from "@fontsource/noto-sans-tc/index.css";
 import { getUser } from "./session.server";
 import { langCookie } from "./cookies";
@@ -30,6 +31,7 @@ import ScrollTrigger from "gsap/dist/ScrollTrigger";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: interFont },
+  { rel: "stylesheet", href: inria },
   { rel: "stylesheet", href: notoSansTC },
   { rel: "stylesheet", href: globalStylesUrl },
 ];
@@ -60,8 +62,8 @@ const ScrollTriggerProxy = () => {
   gsap.registerPlugin(ScrollTrigger);
   useEffect(() => {
     if (scroll) {
-      console.log(scroll);
-      console.log(gsap);
+      // console.log(scroll);
+      // console.log(gsap);
       const element = scroll?.el;
 
       scroll.on("scroll", ScrollTrigger.update);

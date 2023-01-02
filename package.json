@@ -21,6 +21,7 @@
     "/server/build"
   ],
   "dependencies": {
+    "@fontsource/inria-serif": "^4.5.8",
     "@fontsource/inter": "^4.5.14",
     "@fontsource/noto-sans-tc": "^4.5.11",
     "@netlify/functions": "^1.3.0",

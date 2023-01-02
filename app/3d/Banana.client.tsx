@@ -12,7 +12,7 @@ const Banana = (props: ThreeElements["mesh"]) => {
   return (
     <primitive
       position={[0, 0, 0]}
-      rotation={[0,Math.PI / 2,, 0]}
+      rotation={[0, Math.PI / 2, 0]}
       scale={0.1}
       object={gltf.scene}
     />

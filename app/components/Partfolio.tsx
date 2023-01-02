@@ -24,33 +24,62 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
 
     gsap.registerPlugin(ScrollTrigger);
 
-    useEffect(() => {
-      setTimeout(() => {
-        const t3 = gsap.timeline({
-          scrollTrigger: {
-            trigger: ".tv-box-pinner",
-            scroller: "#container",
-            start: "top top",
-            end: "100vw",
-            toggleActions: "play pause pause reverse",
-            markers:true,
-            scrub: true,
-            pin: true,
-            pinType: "transform",
-          },
-          defaults: { duration: 20, ease: "none" },
-        });
+    // useEffect(() => {
+    //   setTimeout(() => {
+    //     const t3 = gsap.timeline({
+    //       scrollTrigger: {
+    //         trigger: ".tv-box-pinner",
+    //         scroller: "#container",
+    //         start: "50 top",
+    //         end: "3173",
+    //         scrub: true,
+    //         pin: true,
+    //         pinType: "transform",
+    //         pinSpacing: false,
+    //       },
+    //       defaults: { duration: 20, ease: "none" },
+    //     });
 
-        t3
-        .to('.tv-box-sticktainer',{
-          height:'+=200vw'
-        })
-        .to(".tv-box-mask-bg", {
-          scale: 1,
-        });
-        ScrollTrigger.refresh();
-      }, 1000);
-    }, []);
+    //     t3.to(".tv-box-pinner", {
+    //       top: 50,
+    //     });
+
+    //     const t4 = gsap.timeline({
+    //       scrollTrigger: {
+    //         trigger: ".tv-transition-trigger",
+    //         scroller: "#container",
+    //         start: "top bottom-=100",
+    //         end: "1000",
+    //         scrub: true,
+    //         immediateRender: false,
+    //       },
+    //       defaults: { duration: 2, ease: "none" },
+    //     });
+
+    //     t4.to(".tv-cover", {
+    //       display: "none",
+    //       opacity: 0,
+    //       duration: 0.1,
+    //     })
+    //       .to(
+    //         ".tv-box",
+    //         {
+    //           scale: 16,
+    //           rotation: 45,
+    //         },
+    //         ">"
+    //       )
+    //       .to(
+    //         ".tv-bg",
+    //         {
+    //           opacity: 0,
+    //         },
+    //         "<"
+    //       );
+    //   }, 1000);
+
+    //   ScrollTrigger.refresh();
+    // }, []);
 
     return (
       <section
@@ -68,20 +97,26 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
           <div className="tv-box-pinner">
             <div className="tv-box-mask">
               <div className="tv-box">
-                <div className="tv-box-mask-bg">
-                  <img src="/images/tv-bg2.jpg" alt="" className="tv-box-mask-pic" />
-                </div>
                 <div className="tv-all-vids">
-                  <div
-                    className="tv-blackscreen"
-                    style={{ display: "block" }}
-                  ></div>
+                  <div className="tv-blackscreen"></div>
                   <div className="tv-showreel">
-                    <img loading="eager" src={workImg} alt="cover" />
+                    <img
+                      loading="eager"
+                      className="tv-cover"
+                      src={workImg}
+                      alt="cover"
+                    />
                   </div>
                   <div className="tv-vids-container">
                     <div className="tv-video-box"></div>
                   </div>
+                </div>
+                <div className="tv-bg-box">
+                  <img
+                    className="tv-bg"
+                    src="/images/tv-bg21.png"
+                    alt="tv-bg"
+                  />
                 </div>
               </div>
             </div>
@@ -91,29 +126,29 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
             {works.map((work) => (
               <div
                 key={work.id}
-                className="work-item"
+                className={classNames("work-item", { zh: isZh })}
                 onMouseEnter={handleHover(work.imageUri) as any}
               >
                 <div className="work-item-entry">
                   <div className="work-item-topline"></div>
-                <div className="work-name-mask">
-                  <h1 className={classNames("work-name", { zh: isZh })}>
-                    {isZh
-                      ? `《${work.title}》${
-                          work.title === "⿏疫" ? "英语版" : ""
-                        }`
-                      : `${work.name}`}
-                  </h1>
-                  <h1 className={classNames("work-name-hover", { zh: isZh })}>
-                    {isZh
-                      ? `《${work.title}》${
-                          work.title === "⿏疫" ? "英语版" : ""
-                        }`
-                      : `${work.name}`}
-                  </h1>
-                </div>
+                  <div className="work-name-mask">
+                    <h1 className={classNames("work-name", { zh: isZh })}>
+                      {isZh
+                        ? `《${work.title}》${
+                            work.title === "⿏疫" ? "英语版" : ""
+                          }`
+                        : `${work.name}`}
+                    </h1>
+                    <h1 className={classNames("work-name-hover", { zh: isZh })}>
+                      {isZh
+                        ? `《${work.title}》${
+                            work.title === "⿏疫" ? "英语版" : ""
+                          }`
+                        : `${work.name}`}
+                    </h1>
+                  </div>
                   <div className="work-item-botline"></div>
-                </div>  
+                </div>
                 <div className="work-teaser">
                   <div className="work-teaser-mask">
                     <span className="work-teaser-date">{work.date}</span>
@@ -132,8 +167,8 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
               </div>
             ))}
           </div>
+          <div className="tv-transition-trigger"></div>
         </div>
-        <div className="screen-box"></div>
       </section>
     );
   }

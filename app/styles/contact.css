@@ -1,12 +1,16 @@
 #contact {
-  width: 100vw;
-  background-color: #f6f7fb;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: block;
+  position: relative;
 }
 
-.canvas-container {
-  height: 100vh;
-  width: 100%;
+.contact-inner {
+  position: relative;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  flex-direction: column;
+  -webkit-box-align: center;
+  align-items: center;
+  padding-top: 35vh;
+  overflow: hidden;
 }

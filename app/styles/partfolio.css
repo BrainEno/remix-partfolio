@@ -1,12 +1,12 @@
 #partfolio {
   z-index: 1;
-  background-color: var(--black);
   display: block;
   position: relative;
   pointer-events: none;
+  height: 320vh;
 }
 
-.tv-nav-activator {
+.tv-nav-activer {
   position: absolute;
   height: calc(100% - 120vh);
   width: 0;
@@ -24,9 +24,9 @@
 }
 
 .tv-box-stickytainer {
-  width: 100vw;
-  border: 1px solid coral;
   position: relative;
+  width: 100vw;
+  display: block;
 }
 
 .tv-box-pinner {
@@ -38,21 +38,7 @@
   position: relative;
   overflow: hidden;
   width: 100vw;
-  top: -2px;
-}
-
-.tv-box-mask-bg {
-  position: absolute;
-  top: -2px;
-  width: 100%;
-  height: 100%;
-}
-
-.tv-box-mask-pic {
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  object-fit: cover;
+  top: -14vw;
 }
 
 .tv-box {
@@ -60,13 +46,63 @@
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  transform-origin: 50% 66%;
+  transform-origin: 50% 64%;
+  width: 100%;
+}
+
+.tv-all-vids {
+  position: absolute;
+  width: 16vw;
+  height: 16%;
+  bottom: 27%;
+  left: 41.3vw;
+  margin-left: -0.1vw;
+  opacity: 1;
+}
+
+.tv-blackscreen,
+.tv-showreel,
+.tv-glitch {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
+
+.tv-blackscreen {
+  top: 0;
+  left: 0;
+}
+
+.tv-showreel {
+  overflow: hidden;
+}
+
+.tv-showreel img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: screen;
+}
+
+.tv-bg-box {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  mix-blend-mode: darken;
+}
+
+.tv-bg {
+  pointer-events: none;
+  object-fit: cover;
+  object-position: 50% 50%;
+  mix-blend-mode: screen;
 }
 
 .work-items-box {
   position: relative;
   pointer-events: all;
-  margin-top: 10px;
+  margin-top: 40vh;
+  height: 80vh;
 }
 
 .work-items-headline {
@@ -75,14 +111,14 @@
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  margin-left: 0.2vw;
+  margin-left: 0.5vw;
   margin-bottom: 3vw;
   color: var(--white);
 }
 
 .work-item {
   margin-top: -1px;
-  height: 5vw;
+  height: 4vw;
   display: -webkit-box;
   display: flex;
   -webkit-box-orient: vertical;
@@ -93,9 +129,13 @@
   position: relative;
 }
 
+.work-item.zh {
+  height: 5vw;
+}
+
 .work-item-topline,
 .work-item-botline {
-  /* opacity: 0; */
+  opacity: 0;
   width: 100%;
   height: 1px;
   background-color: var(--white);
@@ -106,31 +146,93 @@
   overflow: hidden;
   position: relative;
   cursor: pointer;
+  margin-left: 0.2vw;
 }
 
 .work-name {
+  cursor: pointer;
+  margin-top: 0.07vw;
+  margin-bottom: -0.07vw;
   color: var(--white);
   text-transform: uppercase;
   position: relative;
-  font-size: 5vw;
-  line-height: 1.3em;
+  line-height: 0.9em;
+  font-size: 3.6979166667vw;
   width: 100vw;
 }
 
-.work-name-hover{
-  font-family: 'Inter,serif';
+.work-name-hover {
+  cursor: pointer;
+  font-family: "Inria Serif", serif;
   font-style: normal;
   position: absolute;
   text-transform: uppercase;
-  line-height: 1.1em;
+  font-weight: 400;
+  line-height: 0.9em;
   width: 100vw;
   padding-top: 10px;
-  font-size: 4.5vw;
+  font-size: 4vw;
+  margin: 0;
+  color: var(--white);
+}
+
+.work-name.zh,
+.work-name-hover.zh {
+  line-height: 1.2em;
+}
+
+.work-item:hover .work-item-topline,
+.work-item:hover .work-item-botline {
+  opacity: 1;
+  transition: ease-in 200ms all;
+}
+
+.work-item:hover .work-name,
+.work-item:hover .work-name-hover {
+  transform: translate(0%, -100%);
+  transition: ease-in 200ms all;
 }
 
 .work-teaser {
-  text-align: right;
-  font-size: 0.5vw;
+  pointer-events: none;
+  text-transform: uppercase;
+  margin-top: 0.4vw;
+  line-height: 1.1em;
+  margin-right: 0.4vw;
+  position: absolute;
+  display: flex;
+  right: 0;
   color: var(--white);
-  display: none;
+}
+
+.work-teaser-mask {
+  overflow: hidden;
+}
+
+.work-teaser-date,
+.work-teaser-seperator,
+.work-teaser-group {
+  display: block;
+  opacity: 0;
+}
+
+.work-teaser-date {
+  transform: translate(0px, 32.05%);
+}
+
+.work-teaser-group {
+  transform: translate(0px, 78%);
+}
+
+.work-item:hover .work-teaser-date,
+.work-item:hover .work-teaser-seperator,
+.work-item:hover .work-teaser-group {
+  transition: ease-in 200ms all;
+  transform: translate(0px, 0%);
+  opacity: 1;
+}
+
+.tv-transition-trigger {
+  height: 200vh;
+  margin-bottom: -200vh;
 }
