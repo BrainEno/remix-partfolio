@@ -2,8 +2,8 @@ import { motion } from "framer-motion";
 import React from "react";
 import { ClientOnly } from "remix-utils";
 import { useForwardedRef } from "~/hooks/useForwardedRef";
-import Banana from "../3d/Banana.client";
 import CanvasWrapper from "../3d/CanvasWrapper.client";
+import Telephone from "../3d/Telephone";
 
 interface Props {
   isZh: boolean;
@@ -26,15 +26,15 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
       ref={contactRef}
     >
       <div className="contact-inner">
-        {/* <div className="canvas-container">
+        <div className="canvas-container">
         <ClientOnly fallback={null}>
           {() => (
             <CanvasWrapper>
-              <Banana />
+              <Telephone />
             </CanvasWrapper>
           )}
         </ClientOnly>
-      </div> */}
+      </div>
         <div className="contact-text-box"></div>
         <p>+86 - 1897 - 111 - 3243</p>
         <div>
