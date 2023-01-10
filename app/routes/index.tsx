@@ -270,7 +270,7 @@ export default function Index() {
         .to(
           ".intro-subheadline-text2-pic1",
           {
-            top: "-8vw",
+            top: "-6vw",
             duration: 20,
           },
           "<+=2"
@@ -321,7 +321,7 @@ export default function Index() {
         .to(
           ".tv-box",
           {
-            scale: 16,
+            scale: 4,
             rotation: 45,
           },
           ">"
@@ -330,10 +330,12 @@ export default function Index() {
           ".tv-bg",
           {
             opacity: 0,
+            display: "none",
           },
           "<"
         );
     }, 1000);
+
     return () => ScrollTrigger.refresh();
   }, []);
 

@@ -11,14 +11,20 @@
   flex-direction: column;
   -webkit-box-align: center;
   align-items: center;
-  padding-top: 35vh;
+  padding-top: 0;
   overflow: hidden;
 }
 
-.canvas-container{
+.contact-inner p,
+.contact-inner h1 {
+  color: var(--black);
+}
+
+.canvas-container {
   display: block;
   z-index: 3;
   height: 100vh;
+  background-color: transparent;
 }
 
 .contact-link {
@@ -67,10 +73,10 @@
   white-space: nowrap;
   position: relative;
   cursor: pointer;
+  color: var(--black);
+  font-weight: 500;
 }
 
-@media (hover: hover) and (pinter: fine) {
-  .contact-link:hover .runningtext-word{
-    color: #f4c900;
-  }
+.contact-link:hover .runningtext-word {
+  color: #f4c900;
 }
