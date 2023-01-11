@@ -52,11 +52,10 @@
 
 .tv-all-vids {
   position: absolute;
-  width: 16vw;
+  width: 18vw;
   height: 16%;
   bottom: 27%;
-  left: 41.3vw;
-  margin-left: -0.1vw;
+  left: 40.5vw;
   opacity: 1;
 }
 
@@ -101,7 +100,7 @@
 .work-items-box {
   position: relative;
   pointer-events: all;
-  margin-top: 40vh;
+  margin-top: 100vh;
   height: 80vh;
 }
 

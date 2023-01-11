@@ -287,18 +287,23 @@ export default function Index() {
         scrollTrigger: {
           trigger: ".tv-box-pinner",
           scroller: "#container",
-          start: "50 top",
+          start: "190 top",
           end: "3173",
           scrub: true,
           pin: true,
           pinType: "transform",
           pinSpacing: false,
         },
-        defaults: { duration: 20, ease: "none" },
+        defaults: { duration: 2, ease: "none" },
       });
 
       t3.to(".tv-box-pinner", {
-        top: "500",
+        position: "fixed",
+        top: "0",
+        margin: "0px",
+        maxHeight: "1px",
+        padding: 0,
+        boxSizing: "border-box",
       });
 
       const t4 = gsap.timeline({
@@ -308,32 +313,56 @@ export default function Index() {
           start: "top center",
           end: "200vh",
           scrub: true,
-          immediateRender: false,
         },
         defaults: { duration: 2, ease: "none" },
       });
 
       t4.to(".tv-cover", {
         display: "none",
-        opacity: 0,
         duration: 0.1,
       })
         .to(
           ".tv-box",
           {
-            scale: 4,
-            rotation: 45,
+            rotation: -11,
           },
           ">"
         )
         .to(
+          ".tv-box",
+          {
+            scale: 4,
+            zIndex: 1,
+          },
+          "<+=0.1"
+        )
+        .to(
           ".tv-bg",
           {
+            zIndex: 1,
             opacity: 0,
             display: "none",
           },
           "<"
         );
+
+      const t5 = gsap.timeline({
+        scrollTrigger: {
+          trigger: ".contact-inner",
+          scroller: "#container",
+          start: "top center",
+          end: "bottom bottom",
+          scrub: true,
+          immediateRender: false,
+        },
+        defaults: { duration: 30, ease: "none" },
+      });
+
+      t5.to(".canvas-container", {
+        top: "78vw",
+        left: "80vw",
+        scale: 1.3,
+      });
     }, 1000);
 
     return () => ScrollTrigger.refresh();

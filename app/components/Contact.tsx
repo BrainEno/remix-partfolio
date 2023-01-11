@@ -25,7 +25,13 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
       data-scroll-repeat
       ref={contactRef}
     >
+      <div className="contact-text-box">
+        <p className="contact-number">+86 - 1897 - 111 - 3243</p>
+      </div>
       <div className="contact-inner">
+        <h2 className="contact-headline contact-hl1">CALL ME</h2>
+        <h2 className="contact-headline">FOR THE</h2>
+        <h2 className="contact-headline contact-hl3">MARQUEE MOON</h2>
         <div className="canvas-container">
           <ClientOnly fallback={null}>
             {() => (
@@ -34,9 +40,6 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
               </CanvasWrapper>
             )}
           </ClientOnly>
-        </div>
-        <div className="contact-text-box">
-          <p>+86 - 1897 - 111 - 3243</p>
         </div>
         <a
           href="mailto:sydzhao@outlook.com"
@@ -69,7 +72,7 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
                 <span className="runningtext-word">Contact me —</span>
                 <span className="runningtext-word">Contact me —</span>
                 <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
+                <span className="runningtext-word">Contact me </span>
               </motion.div>
               <motion.div
                 className="runningtext-l2"
@@ -96,14 +99,33 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
                 <span className="runningtext-word">Contact me —</span>
                 <span className="runningtext-word">Contact me —</span>
                 <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
+                <span className="runningtext-word">Contact me </span>
               </motion.div>
             </div>
           </div>
         </a>
-        <p>sydzhao@outlook.com</p>
-        <h1>© SYDNEY ZHAO</h1>
-        <p>Webdesign + Dev by Bottom Think Studio</p>
+        <a
+          href="mailto:sydzhao@outlook.com"
+          type="email"
+          className="contact-email-link"
+        >
+          <p className="contact-email">sydzhao@outlook.com</p>
+        </a>
+        <h3>© 2023 Sydney Zhao. All rights resrved.</h3>
+        <p>
+          Webdesign + WebDev by{" "}
+          <span>
+            <a
+              href="https://github.com/BrainEno"
+              type="link"
+              target="_blank"
+              className="github-link"
+              rel="noreferrer"
+            >
+              Bottom Think - BrainEno
+            </a>
+          </span>
+        </p>
       </div>
     </section>
   );

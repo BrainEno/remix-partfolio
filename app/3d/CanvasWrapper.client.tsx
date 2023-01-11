@@ -1,4 +1,3 @@
-import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Suspense } from "react";
 
@@ -9,7 +8,6 @@ const CanvasWrapper = ({ children }: { children: JSX.Element }) => {
         <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
         <pointLight position={[-10, -10, -10]} />
         <Suspense fallback={null}>{children}</Suspense>
-        <OrbitControls />
     </Canvas>
   );
 };
