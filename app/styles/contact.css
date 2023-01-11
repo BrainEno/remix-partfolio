@@ -1,19 +1,23 @@
 #contact {
   display: block;
   position: relative;
-  margin-top: -125vh;
+  margin-top: -140vh;
 }
 
 .contact-text-box {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-top: 55vh;
-  margin-bottom: 50vh;
+  margin-bottom: 60vh;
 }
 
 .contact-number {
+  position: absolute;
   text-align: center;
+  z-index: 10;
+  font-size: 18px;
 }
 
 .contact-headline {
@@ -25,7 +29,7 @@
   font-weight: 500;
   color: transparent;
   -webkit-text-stroke-color: var(--black);
-  -webkit-text-stroke-width: 3px;
+  -webkit-text-stroke-width: 4px;
 }
 
 .contact-hl1 {
@@ -56,8 +60,8 @@
 .canvas-container {
   display: flex;
   position: fixed;
-  top: 75vh;
-  left: 0;
+  top: 80vh;
+  left: 5vw;
   z-index: 3;
   pointer-events: none;
   -webkit-box-align: center;
@@ -71,6 +75,7 @@
   display: block;
   cursor: pointer;
   z-index: 10;
+  margin-bottom: 6vw;
 }
 
 .runningtext-bufferdiv {
@@ -114,11 +119,12 @@
   position: relative;
   cursor: pointer;
   color: var(--black);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .contact-link:hover .runningtext-word {
   color: #e55139;
+  mix-blend-mode: difference;
 }
 
 .contact-email-link,
@@ -127,6 +133,10 @@
   cursor: pointer;
   outline: none;
   transition: ease-in 200ms all;
+}
+
+.contact-email-link{
+    font-size: 18px;
 }
 
 .contact-email-link:hover,

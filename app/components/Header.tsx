@@ -31,11 +31,11 @@ const Header: React.FC<HeaderProps> = ({
           <motion.span
             initial={{
               opacity: 0,
-              y: 100,
+              y: "100%",
             }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
-              duration: 1,
+              duration: 0.6,
               ease: "easeOut",
             }}
           >
@@ -43,7 +43,7 @@ const Header: React.FC<HeaderProps> = ({
           </motion.span>
         </NavLink>
         <Form method="post" className="lang-switch">
-          <button
+          <motion.button
             type="submit"
             name="lang"
             value="zh"
@@ -51,19 +51,50 @@ const Header: React.FC<HeaderProps> = ({
             className={classNames("lang zh", {
               "lang-selected": lang === "zh",
             })}
+            initial={{
+              opacity: 0,
+              y: "100%",
+            }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.6,
+              ease: "easeOut",
+            }}
           >
             中文
-          </button>
-          <span> | </span>
-          <button
+          </motion.button>
+          <motion.span
+            initial={{
+              opacity: 0,
+              y: "100%",
+            }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.6,
+              ease: "easeOut",
+            }}
+          >
+            {" "}
+            |{" "}
+          </motion.span>
+          <motion.button
             type="submit"
             name="lang"
             value="en"
             onClick={() => setLanguage("en")}
             className={classNames("lang", { "lang-selected": lang === "en" })}
+            initial={{
+              opacity: 0,
+              y: "100%",
+            }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.6,
+              ease: "easeOut",
+            }}
           >
             English
-          </button>
+          </motion.button>
         </Form>
       </div>
       <nav className="nav">

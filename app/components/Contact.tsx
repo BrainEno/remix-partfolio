@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
-import React from "react";
-import { ClientOnly } from "remix-utils";
+import React, { Suspense } from "react";
 import { useForwardedRef } from "~/hooks/useForwardedRef";
-import CanvasWrapper from "../3d/CanvasWrapper.client";
+import CanvasWrapper from "../3d/CanvasWrapper";
 import Telephone from "../3d/Telephone";
 
 interface Props {
@@ -33,13 +32,11 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
         <h2 className="contact-headline">FOR THE</h2>
         <h2 className="contact-headline contact-hl3">MARQUEE MOON</h2>
         <div className="canvas-container">
-          <ClientOnly fallback={null}>
-            {() => (
-              <CanvasWrapper>
-                <Telephone />
-              </CanvasWrapper>
-            )}
-          </ClientOnly>
+          <Suspense fallback={null}>
+            <CanvasWrapper>
+              <Telephone />
+            </CanvasWrapper>
+          </Suspense>
         </div>
         <a
           href="mailto:sydzhao@outlook.com"

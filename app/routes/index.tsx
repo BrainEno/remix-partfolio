@@ -326,11 +326,12 @@ export default function Index() {
           {
             rotation: -11,
           },
-          ">"
+          ">+=2"
         )
         .to(
           ".tv-box",
           {
+            opacity: 0,
             scale: 4,
             zIndex: 1,
           },
@@ -339,8 +340,6 @@ export default function Index() {
         .to(
           ".tv-bg",
           {
-            zIndex: 1,
-            opacity: 0,
             display: "none",
           },
           "<"
@@ -360,7 +359,7 @@ export default function Index() {
 
       t5.to(".canvas-container", {
         top: "78vw",
-        left: "80vw",
+        left: "75vw",
         scale: 1.3,
       });
     }, 1000);

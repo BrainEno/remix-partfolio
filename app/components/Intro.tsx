@@ -50,6 +50,7 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
               className="intro-headline-bar-image"
               src="/images/figure.webp"
               alt="bar"
+              loading="eager"
             />
           </div>
         </div>
@@ -61,6 +62,7 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
               className="intro-headline-bar-image"
               src="/images/figure.webp"
               alt="bar"
+              loading="eager"
             />
           </div>
         </div>
@@ -72,6 +74,7 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
               className="intro-photo"
               src="/images/figure.webp"
               alt="figure"
+              loading="eager"
             />
           </div>
         </div>
