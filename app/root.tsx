@@ -17,7 +17,7 @@ import {
 
 import globalStylesUrl from "~/styles/global.css";
 import interFont from "@fontsource/inter/index.css";
-import inria from "@fontsource/inria-serif/index.css"
+import inria from "@fontsource/inria-serif/index.css";
 import notoSansTC from "@fontsource/noto-sans-tc/index.css";
 import { getUser } from "./session.server";
 import { langCookie } from "./cookies";

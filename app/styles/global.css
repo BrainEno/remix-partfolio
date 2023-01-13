@@ -6,12 +6,13 @@
 }
 
 :root {
+  --black: #000;
+  --white: #fff;
   --color-foreground: #1e1e1e;
-  /* --color-background: #b8b8b8; */
-  --color-background:#fff;
-  --black:#000;
-  --white:#fff;
+  --color-background: var(--white);
   --color-links: #000000;
+  --lang-links:#898989;
+  --lang-links-active:#bbbbbb;
 }
 
 ::-webkit-scrollbar {
@@ -60,8 +61,8 @@ h6 {
   cursor: default;
 }
 
-p{
-  cursor:default;
+p {
+  cursor: default;
 }
 
 a {
@@ -69,16 +70,15 @@ a {
   text-decoration: none;
 }
 
-div{
+div {
   border: none;
 }
 
-
-.zh{
-  font-family: "Noto Sans TC",sans-serif;
+.zh {
+  font-family: "Noto Sans TC", sans-serif;
 }
 
-#container{
+#container {
   width: 100%;
   height: 100%;
 }

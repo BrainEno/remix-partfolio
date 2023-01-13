@@ -5,7 +5,6 @@
 
 .page-home {
   display: block;
-  /* height: 100%; */
 }
 
 .header {
@@ -21,47 +20,17 @@
   mix-blend-mode: difference;
 }
 
-.header-link{
-  overflow: hidden;
-}
-
-.header-link span {
-  display: block;
-}
-
 .header-left {
   display: inline-flex;
   flex-direction: row;
   align-items: flex-end;
 }
 
-.header-left .lang-switch {
-  margin-left: 13px;
-  color: #bbbbbb;
-}
-
-.lang {
-  cursor: pointer;
-  color: #898989;
-  background-color: transparent;
-  border: none;
-}
-
-.lang.zh {
-  letter-spacing: 1px;
-}
-
-.lang.lang-selected {
-  color: #bbbbbb;
-  border-bottom: 1px solid #bbbbbb;
-  padding-bottom: 2px;
-}
-
 .header-link {
   font-family: "inter,sans-serif";
   display: flex;
   position: relative;
-  color: #bbbbbb;
+  color: var(--lang-links-active);
   font-size: 25px;
   font-weight: bold;
   letter-spacing: 2.5px;
@@ -76,6 +45,33 @@
   -ms-transform: scale(1, 1.25);
   /* Opera */
   -o-transform: scale(1, 1.25);
+  overflow: hidden;
+}
+
+.header-link span {
+  display: block;
+}
+
+.lang-switch {
+  margin-left: 13px;
+  color: var(--lang-links-active);
+}
+
+.lang {
+  cursor: pointer;
+  color: var(--lang-links);
+  background-color: transparent;
+  border: none;
+}
+
+.lang.zh {
+  letter-spacing: 1px;
+}
+
+.lang.lang-selected {
+  color: var(--lang-links-active);
+  border-bottom: 1px solid var(--lang-links-active);
+  padding-bottom: 2px;
 }
 
 .nav {
@@ -124,7 +120,6 @@
 }
 
 #home {
-  top: 6.25vw;
   display: flex;
   flex-direction: column;
 }
@@ -134,4 +129,47 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
+}
+
+/**mobile*/
+@media (max-width: 480px) {
+  .header {
+    left: 20px;
+    height: 50px;
+    width: calc(100vw - 40px);
+    font-size: 12px;
+  }
+
+  .header-link {
+    font-size: 14px;
+    letter-spacing: .2px;
+  }
+
+  .lang-switch {
+    position: fixed;
+    left: 72.5px;
+    top:35px;
+    margin-left: 4px;
+    display: block;
+    transform:scale(75%);
+  }
+
+  .lang-switch .lang {
+    font-size: 12px;
+  }
+
+  .nav-entry {
+    margin-left: 20px;
+  }
+
+  .nav-entry-bg {
+    width: calc(100% + 20px);
+    height: calc(100% + 10px);
+    left: -10px;
+    top: -5px;
+  }
+
+  body,#home{
+    position: absolute;
+  }
 }

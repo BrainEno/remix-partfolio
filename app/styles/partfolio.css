@@ -171,14 +171,16 @@
   font-style: normal;
   position: absolute;
   text-transform: uppercase;
-  font-weight: 400;
+  font-weight: 600;
   line-height: 0.9em;
   width: 100vw;
   padding-top: 10px;
-  font-size: 4vw;
+  padding-bottom: 1px;
+  font-size: 3.925vw;
   margin: 0;
   color: var(--white);
   margin-top: 0.1vw;
+  letter-spacing: 1.1px;
 }
 
 .work-name.zh,
@@ -193,13 +195,13 @@
 .work-item:hover .work-item-topline,
 .work-item:hover .work-item-botline {
   opacity: 1;
-  transition: ease-in 200ms all;
+  transition: ease-in 250ms all;
 }
 
 .work-item:hover .work-name,
 .work-item:hover .work-name-hover {
   transform: translate(0%, -100%);
-  transition: ease-in 200ms all;
+  transition: ease-in 250ms all;
 }
 
 .work-teaser {
@@ -226,7 +228,11 @@
 }
 
 .work-teaser-date {
-  transform: translate(0px, 32.05%);
+  transform: translate(0px, 32%);
+}
+
+.work-teaser-seperator{
+  transform: translate(0px,56%);
 }
 
 .work-teaser-group {
@@ -236,7 +242,7 @@
 .work-item:hover .work-teaser-date,
 .work-item:hover .work-teaser-seperator,
 .work-item:hover .work-teaser-group {
-  transition: ease-in 200ms all;
+  transition: ease-in 250ms all;
   transform: translate(0px, 0%);
   opacity: 1;
 }

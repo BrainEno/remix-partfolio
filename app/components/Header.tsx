@@ -4,6 +4,7 @@ import type { MouseEvent } from "react";
 import React from "react";
 import type { Language, SectionOptions } from "../routes";
 import { motion } from "framer-motion";
+import { isMobile } from "react-device-detect";
 
 interface HeaderProps {
   lang: Language;
@@ -51,24 +52,32 @@ const Header: React.FC<HeaderProps> = ({
             className={classNames("lang zh", {
               "lang-selected": lang === "zh",
             })}
-            initial={{
-              opacity: 0,
-              y: "100%",
-            }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={
+              isMobile
+                ? { opacity: 0, x: "-100%" }
+                : {
+                    opacity: 0,
+                    y: "100%",
+                  }
+            }
+            animate={isMobile ? { opacity: 1, x: 0 } : { opacity: 1, y: 0 }}
             transition={{
               duration: 0.6,
               ease: "easeOut",
             }}
           >
-            中文
+            {isMobile ? "Zh" : "中文"}
           </motion.button>
           <motion.span
-            initial={{
-              opacity: 0,
-              y: "100%",
-            }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={
+              isMobile
+                ? { opacity: 0, x: "-120%" }
+                : {
+                    opacity: 0,
+                    y: "100%",
+                  }
+            }
+            animate={isMobile ? { opacity: 1, x: 0 } : { opacity: 1, y: 0 }}
             transition={{
               duration: 0.6,
               ease: "easeOut",
@@ -83,17 +92,21 @@ const Header: React.FC<HeaderProps> = ({
             value="en"
             onClick={() => setLanguage("en")}
             className={classNames("lang", { "lang-selected": lang === "en" })}
-            initial={{
-              opacity: 0,
-              y: "100%",
-            }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={
+              isMobile
+                ? { opacity: 0, x: "-140%" }
+                : {
+                    opacity: 0,
+                    y: "100%",
+                  }
+            }
+            animate={isMobile ? { opacity: 1, x: 0 } : { opacity: 1, y: 0 }}
             transition={{
               duration: 0.6,
               ease: "easeOut",
             }}
           >
-            English
+            {isMobile ? "En" : "English"}
           </motion.button>
         </Form>
       </div>
@@ -114,9 +127,7 @@ const Header: React.FC<HeaderProps> = ({
           onClick={handlePartfolio}
         >
           <div className="nav-entry-bg"></div>
-          <span className="nav-entry-text">
-            {isZh ? "作品集" : "Partfolio"}
-          </span>
+          <span className="nav-entry-text">{isZh ? "作品集" : "Works"}</span>
         </div>
         <div
           className={classNames("nav-entry", {

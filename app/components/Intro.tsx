@@ -27,19 +27,19 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
         <span
           className={classNames("intro-headline-word word-1", { zh: isZh })}
         >
-          <h1 className="zh">{isZh ? "⾏為藝術" : "Performance Art"}</h1>
+          <h1>{isZh ? "⾏為藝術" : "Performance Art"}</h1>
         </span>
         <span
           className={classNames("intro-headline-word word-2", { zh: isZh })}
         >
-          <h1 data-scroll data-scroll-speed="-0.5" className="zh">
+          <h1 data-scroll data-scroll-speed="-0.5">
             {isZh ? "電影" : "Movie"}
           </h1>
         </span>
         <span
           className={classNames("intro-headline-word word-3", { zh: isZh })}
         >
-          <h1 className="zh">{isZh ? "戲劇" : "Drama"}</h1>
+          <h1>{isZh ? "戲劇" : "Drama"}</h1>
         </span>
 
         <div className="intro-headline-bar bar-1">
