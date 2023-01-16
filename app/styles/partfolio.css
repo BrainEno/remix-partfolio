@@ -195,13 +195,13 @@
 .work-item:hover .work-item-topline,
 .work-item:hover .work-item-botline {
   opacity: 1;
-  transition: ease-in 250ms all;
+  transition: ease-out 200ms all;
 }
 
 .work-item:hover .work-name,
 .work-item:hover .work-name-hover {
   transform: translate(0%, -100%);
-  transition: ease-in 250ms all;
+  transition: ease-out 200ms all;
 }
 
 .work-teaser {
@@ -242,7 +242,7 @@
 .work-item:hover .work-teaser-date,
 .work-item:hover .work-teaser-seperator,
 .work-item:hover .work-teaser-group {
-  transition: ease-in 250ms all;
+  transition: ease-in 200ms all;
   transform: translate(0px, 0%);
   opacity: 1;
 }

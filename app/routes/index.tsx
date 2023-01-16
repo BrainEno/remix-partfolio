@@ -143,20 +143,26 @@ export default function Index() {
           scrollTrigger: {
             trigger: ".intro-headline-box",
             start: "top top",
-            end:"bottom 100px",
-            markers:true,
+            end: "bottom 100px",
+            markers: true,
             scrub: true,
-            pin:true,
-            pinType:'fixed'
+            pin: true,
+            pinType: "fixed",
           },
         });
 
-        t1.to(".intro-headline-word.word-1", {
-          translateY: "+=50px",
-          translateX:'-=16.905px',
-          ease:'power1',
-          duration:1
-        });
+        !isZh
+          ? t1.to(".intro-headline-word.word-1", {
+              translateY: "+=50px",
+              translateX: "-=16.905px",
+              ease: "power1",
+              duration: 1,
+            })
+          : t1.to("intro-headline-word.zh", {
+              position: "absolute",
+              x: "+=20",
+              stagger: 0.5,
+            });
       }, 1000);
     } else {
       /**desktop ScrollTriggers */
