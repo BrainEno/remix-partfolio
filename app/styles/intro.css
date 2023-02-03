@@ -432,4 +432,16 @@
     height: 40vh;
     width: 25vh;
   }
+
+  .intro-subheadline-title {
+    position: absolute;
+    top: 0;
+    left: 48vw;
+    font-size: 10vw;
+  }
+
+  .intro-subheadline-text {
+    font-size: 3vh;
+    width: 100vw;
+  }
 }

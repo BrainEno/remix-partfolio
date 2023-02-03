@@ -13,6 +13,7 @@
   justify-content: space-between;
   align-items: center;
   position: fixed;
+  -webkit-backface-visibility: hidden;
   left: 3.125vw;
   height: 3.125vw;
   width: 93.75vw;
@@ -142,16 +143,16 @@
 
   .header-link {
     font-size: 14px;
-    letter-spacing: .2px;
+    letter-spacing: 0.2px;
   }
 
   .lang-switch {
     position: fixed;
     left: 72.5px;
-    top:35px;
+    top: 35px;
     margin-left: 4px;
     display: block;
-    transform:scale(75%);
+    transform: scale(75%);
   }
 
   .lang-switch .lang {
@@ -169,7 +170,8 @@
     top: -5px;
   }
 
-  body,#home{
+  body,
+  #home {
     position: absolute;
   }
 }

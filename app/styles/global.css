@@ -1,8 +1,16 @@
 @font-face {
   font-family: "aeonik,Arial,sans-serif";
   src: url("/fonts/aeonik/aeonik.otf") format("opnetype");
+  src: url("/fonts/aeonik/Aeonik-Regular.eot");
+  src: url("/fonts/aeonik/Aeonik-Regular.eot?#iefix")
+      format("embedded-opentype"),
+    url("/fonts/aeonik/Aeonik-Regular.woff2") format("woff2"),
+    url("/fonts/aeonik/Aeonik-Regular.woff") format("woff"),
+    url("/fonts/aeonik/Aeonik-Regular.ttf") format("truetype"),
+    url("/fonts/aeonik/Aeonik-Regular.svg#Aeonik-Regular") format("svg");
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
 }
 
 :root {
@@ -11,8 +19,8 @@
   --color-foreground: #1e1e1e;
   --color-background: var(--white);
   --color-links: #000000;
-  --lang-links:#898989;
-  --lang-links-active:#bbbbbb;
+  --lang-links: #898989;
+  --lang-links-active: #bbbbbb;
 }
 
 ::-webkit-scrollbar {

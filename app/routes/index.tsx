@@ -135,37 +135,112 @@ export default function Index() {
 
   gsap.registerPlugin(ScrollTrigger);
 
-  useEffect(() => {
-    /**mobile ScrollTriggers */
-    if (isMobile) {
+  const handleMoblieScroll = useCallback(
+    () =>
       setTimeout(() => {
         const t1 = gsap.timeline({
           scrollTrigger: {
             trigger: ".intro-headline-box",
-            start: "top top",
-            end: "bottom 100px",
+            start: "top-=100 top",
+            end: "350px",
             markers: true,
             scrub: true,
-            pin: true,
-            pinType: "fixed",
           },
         });
 
         !isZh
-          ? t1.to(".intro-headline-word.word-1", {
-              translateY: "+=50px",
-              translateX: "-=16.905px",
-              ease: "power1",
-              duration: 1,
-            })
-          : t1.to("intro-headline-word.zh", {
-              position: "absolute",
-              x: "+=20",
-              stagger: 0.5,
+          ? t1
+              .to(".intro-headline-word.word-1", {
+                translateY: "+=50px",
+                translateX: "-=16.905px",
+                ease: "power1",
+                duration: 1,
+              })
+              .to(
+                ".intro-headline-word.word-2",
+                {
+                  translateY: "+=50px",
+                  translateX: "-=16.905px",
+                },
+                "<-=0.1"
+              )
+              .to(
+                ".intro-headline-word.word-3",
+                {
+                  translateY: "+=50px",
+                  translateX: "-=16.905px",
+                },
+                "<-=0.2"
+              )
+          : t1.to(".intro-headline-word.zh", {
+              translateX: "+=20px",
+              stagger: 0.2,
             });
-      }, 1000);
-    } else {
-      /**desktop ScrollTriggers */
+
+        const t2 = gsap.timeline({
+          scrollTrigger: {
+            trigger: ".intro-subheadline-stickytainer",
+            scroller: "#container",
+            start: "top-=422 top",
+            end: "2000",
+            scrub: true,
+            pin: true,
+            pinType: "fixed",
+            anticipatePin: 1,
+            immediateRender: false,
+          },
+          defaults: { ease: "none" },
+        });
+
+        t2.to(".intro-subheadline-photo-box", {
+          translateX: "10vw",
+          rotation: -18.75,
+          scale: 1.4,
+          autoAlpha: 0.8,
+          filter: "grayscale(10%)",
+        })
+          .to(
+            ".intro-subheadline-title",
+            {
+              left: "2vw",
+              top:"15vh",
+              scale: 1.2,
+            },
+            "<1"
+          )
+          .to(
+            ".intro-subheadline-photo-mask",
+            {
+              translateX: "4vw",
+              width: "+=20vw",
+              borderTopLeftRadius: "14vw",
+              filter: "grayscale(0%)",
+            },
+            ">1"
+          )
+          .to(".intro-subheadline-text-box1", {
+            left: "0",
+          });
+
+        const t3 = gsap.timeline({
+          scrollTrigger: {
+            trigger: ".intro-subheadline-stickytainer2",
+            scroller: "#container",
+            start: "top top",
+            end: "2000",
+            scrub: true,
+            pin: true,
+            pinType: "fixed",
+            anticipatePin: 1,
+          },
+          defaults: { duration: 20, ease: "none" },
+        });
+      }, 1000),
+    [isZh]
+  );
+
+  const handleDesktopScroll = useCallback(
+    () =>
       setTimeout(() => {
         const t1 = gsap.timeline({
           scrollTrigger: {
@@ -396,7 +471,17 @@ export default function Index() {
           left: "75vw",
           scale: 1.3,
         });
-      }, 1000);
+      }, 1000),
+    []
+  );
+
+  useEffect(() => {
+    /**mobile ScrollTriggers */
+    if (isMobile) {
+      handleMoblieScroll();
+    } else {
+      /**desktop ScrollTriggers */
+      handleDesktopScroll();
     }
     return () => ScrollTrigger.refresh();
   }, []);
