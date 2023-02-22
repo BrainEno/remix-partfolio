@@ -47,7 +47,7 @@ export const loader: LoaderFunction = async ({ request }: LoaderArgs) => {
 };
 
 export const meta: MetaFunction = ({ data }) => {
-  const { lang } = data;
+  const lang = data ? data.lang : "en";
   const title = lang === "zh" ? "趙 悉 尼" : "Sydney Zhao";
   return {
     charset: "utf-8",

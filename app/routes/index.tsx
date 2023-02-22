@@ -141,8 +141,12 @@ export default function Index() {
         const t1 = gsap.timeline({
           scrollTrigger: {
             trigger: ".intro-headline-box",
-            start: "top-=100 top",
-            end: "350px",
+            start: "top-=100px top",
+            end: () =>
+              "+=" +
+              document
+                .querySelector(".intro-headline-box")
+                ?.getBoundingClientRect().height,
             markers: true,
             scrub: true,
           },
@@ -184,6 +188,7 @@ export default function Index() {
             start: "top-=422 top",
             end: "2000",
             scrub: true,
+            markers: true,
             pin: true,
             pinType: "fixed",
             anticipatePin: 1,
@@ -199,15 +204,6 @@ export default function Index() {
           autoAlpha: 0.8,
           filter: "grayscale(10%)",
         })
-          .to(
-            ".intro-subheadline-title",
-            {
-              left: "2vw",
-              top:"15vh",
-              scale: 1.2,
-            },
-            "<1"
-          )
           .to(
             ".intro-subheadline-photo-mask",
             {
