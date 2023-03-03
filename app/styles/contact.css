@@ -2,6 +2,7 @@
   display: block;
   position: relative;
   margin-top: -140vh;
+  margin-bottom: 80px;
 }
 
 .contact-text-box {
@@ -148,4 +149,25 @@
 .github-link {
   cursor: pointer;
   text-decoration: underline;
+}
+
+
+/** Mobile */
+@media (max-width: 480px) {
+  #contact{
+    width: 100vw;
+    margin-top: 0;
+    margin-bottom: 20px;
+  }
+
+  .contact-headline{
+    -webkit-text-stroke-width: 1px;
+  }
+
+  .canvas-container{
+    position: absolute;
+    top: -200px;
+    left: 20px;
+    height: 50vh;
+  }
 }

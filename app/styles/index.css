@@ -135,6 +135,7 @@
 /**mobile*/
 @media (max-width: 480px) {
   .header {
+    position: fixed;
     left: 20px;
     height: 50px;
     width: calc(100vw - 40px);

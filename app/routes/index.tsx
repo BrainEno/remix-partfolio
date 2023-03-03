@@ -186,7 +186,11 @@ export default function Index() {
             trigger: ".intro-subheadline-stickytainer",
             scroller: "#container",
             start: "top-=422 top",
-            end: "2000",
+            end: () =>
+              "+=" +
+              document
+                .querySelector(".intro-subheadline-stickytainer")
+                ?.getBoundingClientRect().height!,
             scrub: true,
             markers: true,
             pin: true,
@@ -223,13 +227,48 @@ export default function Index() {
             trigger: ".intro-subheadline-stickytainer2",
             scroller: "#container",
             start: "top top",
-            end: "2000",
+            end: () =>
+              "+=" +
+              document
+                .querySelector(".intro-subheadline-stickytainer2")
+                ?.getBoundingClientRect().height,
             scrub: true,
             pin: true,
             pinType: "fixed",
             anticipatePin: 1,
           },
           defaults: { duration: 20, ease: "none" },
+        });
+
+        t3.to(".intro-subheadline-stickytainer2", {
+          transform: "translate3d(-100vw,0px,0px)",
+        });
+
+        const t4 = gsap.timeline({
+          scrollTrigger: {
+            trigger: ".tv-box-pinner",
+            scroller: "#container",
+            start: "top top",
+            end: () =>
+              "+=" +
+              document.querySelector(".tv-box-pinner")?.getBoundingClientRect()
+                .height,
+            scrub: true,
+            pin: true,
+            pinType: isMobile ? "fixed" : "transform",
+            pinSpacing: false,
+            anticipatePin: 1,
+          },
+          defaults: { duration: 2, ease: "none" },
+        });
+
+        t4.to(".tv-box-pinner", {
+          position: "fixed",
+          top: "0",
+          margin: "0px",
+          maxHeight: "1px",
+          padding: 0,
+          boxSizing: "border-box",
         });
       }, 1000),
     [isZh]
@@ -480,7 +519,7 @@ export default function Index() {
       handleDesktopScroll();
     }
     return () => ScrollTrigger.refresh();
-  }, []);
+  }, [isMobile]);
 
   return (
     <div className="page-home">

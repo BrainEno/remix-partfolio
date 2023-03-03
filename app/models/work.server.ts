@@ -20,12 +20,21 @@ export type Work = {
 export type CreateWorkInput = Omit<Work, "id"> & { userId: User["id"] };
 
 export async function getInfroListItems() {
+  let works: Partial<Work>[] = [];
   const { data, error } = await supabase
     .from("works")
     .select("id, name, title, imageUri, date, groupName, groupTitle");
-  if (error) console.log("error", error);
+  if (data !== null) {
+    works = data;
+  }
 
-  const filteredData = data?.filter((d) => d.imageUri);
+  if (error) {
+    const res = await fetch(`${process.env.URL}/data.json`);
+    const data = await res.json();
+    works = data;
+  }
+
+  const filteredData = works.filter((d) => d.imageUri);
   return filteredData;
 }
 
