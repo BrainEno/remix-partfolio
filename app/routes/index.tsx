@@ -141,13 +141,13 @@ export default function Index() {
         const t1 = gsap.timeline({
           scrollTrigger: {
             trigger: ".intro-headline-box",
-            start: "top-=100px top",
+            start: "-=100 top",
             end: () =>
               "+=" +
-              document
+              (document
                 .querySelector(".intro-headline-box")
-                ?.getBoundingClientRect().height,
-            markers: true,
+                ?.getBoundingClientRect().height! -
+                100),
             scrub: true,
           },
         });
@@ -195,8 +195,8 @@ export default function Index() {
             markers: true,
             pin: true,
             pinType: "fixed",
-            anticipatePin: 1,
-            immediateRender: false,
+            // anticipatePin: 1,
+            // immediateRender: false,
           },
           defaults: { ease: "none" },
         });
@@ -235,12 +235,15 @@ export default function Index() {
             scrub: true,
             pin: true,
             pinType: "fixed",
-            anticipatePin: 1,
+            // anticipatePin: 1,
           },
           defaults: { duration: 20, ease: "none" },
         });
 
-        t3.to(".intro-subheadline-stickytainer2", {
+        t3.to(".intro-subheadline-photo-mask2", {
+          translateX: "-=40vw",
+          stagger: 0.5,
+        }).to(".intro-subheadline-stickytainer2", {
           transform: "translate3d(-100vw,0px,0px)",
         });
 
@@ -270,6 +273,63 @@ export default function Index() {
           padding: 0,
           boxSizing: "border-box",
         });
+
+        const t5 = gsap.timeline({
+          scrollTrigger: {
+            trigger: ".tv-transition-trigger",
+            scroller: "#container",
+            start: "top center",
+            end: "200vh",
+            scrub: true,
+          },
+          defaults: { duration: 2, ease: "none" },
+        });
+
+        t5.to(".tv-cover", {
+          display: "none",
+          duration: 0.1,
+        })
+          .to(
+            ".tv-box",
+            {
+              rotation: -11,
+            },
+            ">+=2"
+          )
+          .to(
+            ".tv-box",
+            {
+              opacity: 0,
+              scale: 2,
+              zIndex: 1,
+            },
+            "<+=0.1"
+          )
+          .to(
+            ".tv-bg",
+            {
+              display: "none",
+            },
+            "<"
+          );
+
+        const t6 = gsap.timeline({
+          scrollTrigger: {
+            trigger: ".contact-inner",
+            scroller: "#container",
+            start: "top center",
+            end: "bottom bottom",
+            scrub: true,
+            immediateRender: false,
+          },
+          defaults: { duration: 30, ease: "none" },
+        });
+
+        t6.to(".canvas-container", {
+          top: "78vw",
+          left: "75vw",
+          scale: 1.3,
+        });
       }, 1000),
     [isZh]
   );
@@ -288,20 +348,16 @@ export default function Index() {
             pinType: isMobile ? "fixed" : "transform",
             anticipatePin: 1,
             immediateRender: false,
-          },
-          defaults: { duration: 20, ease: "none" },
-        });
-
-        const t2 = gsap.timeline({
-          scrollTrigger: {
-            trigger: ".intro-subheadline-stickytainer2",
-            scroller: "#container",
-            start: "top top",
-            end: "4000",
-            scrub: true,
-            pin: true,
-            pinType: isMobile ? "fixed" : "transform",
-            anticipatePin: 1,
+            onUpdate: (self) => {
+              console.log(
+                "progress:",
+                self.progress.toFixed(3),
+                "direction:",
+                self.direction,
+                "velocity",
+                self.getVelocity()
+              );
+            },
           },
           defaults: { duration: 20, ease: "none" },
         });
@@ -378,6 +434,20 @@ export default function Index() {
             },
             "<"
           );
+
+        const t2 = gsap.timeline({
+          scrollTrigger: {
+            trigger: ".intro-subheadline-stickytainer2",
+            scroller: "#container",
+            start: "top top",
+            end: "4000",
+            scrub: true,
+            pin: true,
+            pinType: isMobile ? "fixed" : "transform",
+            anticipatePin: 1,
+          },
+          defaults: { duration: 20, ease: "none" },
+        });
 
         t2.to(".intro-subheadline-photo-box2", {
           x: "-=130vw",
@@ -519,7 +589,7 @@ export default function Index() {
       handleDesktopScroll();
     }
     return () => ScrollTrigger.refresh();
-  }, [isMobile]);
+  }, [handleDesktopScroll, handleMoblieScroll]);
 
   return (
     <div className="page-home">

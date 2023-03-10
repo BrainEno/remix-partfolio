@@ -158,16 +158,26 @@
     width: 100vw;
     margin-top: 0;
     margin-bottom: 20px;
+    overflow: hidden;
   }
 
   .contact-headline{
     -webkit-text-stroke-width: 1px;
   }
 
+  .contact-text-box{
+    margin-bottom: 300px;
+    margin-top: 300px;
+  }
+
+  .contact-inner{
+    overflow: visible;
+  }
+
   .canvas-container{
     position: absolute;
-    top: -200px;
-    left: 20px;
+    top: -350px;
+    left: -60px;
     height: 50vh;
   }
 }

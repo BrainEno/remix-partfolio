@@ -268,4 +268,10 @@
     height: 100%;
     transform-origin: center;
   }
+
+  .tv-all-vids {
+    width: 45%;
+    left: 24%;
+    opacity: 1;
+  }
 }

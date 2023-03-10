@@ -235,6 +235,7 @@
   left: 1.5vw;
   opacity: 0.55;
 }
+
 .intro-subheadline-ghost-photo {
   width: 102%;
   height: 102%;
@@ -365,6 +366,8 @@
 @media (max-width: 480px) {
   #intro {
     padding: 100px 20px;
+    width: 100vw;
+    overflow: hidden;
   }
 
   .intro-headline-box {
@@ -418,6 +421,10 @@
     height: 100vh;
   }
 
+  .intro-subheadline-slider {
+    width: 100vw;
+  }
+
   .intro-subheadline-wrapper {
     position: absolute;
     width: 100vw;
@@ -449,7 +456,7 @@
   }
 
   .intro-subheadline-text {
-    font-size: 2.8vh;
+    font-size: 23.5px;
     text-indent: 6vh;
     margin-top: 0.45vh;
     width: 90vw;
@@ -460,7 +467,7 @@
     position: relative;
     width: 100vw;
     height: 100vh;
-    transform: translate3d(100vw, 0px, 0px);
+    transform: translate3d(100vw, 0, 0);
   }
 
   .intro-subheadline-wrapper2 {
@@ -478,7 +485,6 @@
   }
 
   .intro-subheadline-text-box2 {
-    left: 50%;
     width: 100vw;
     padding-left: 20px;
     padding-right: 20px;

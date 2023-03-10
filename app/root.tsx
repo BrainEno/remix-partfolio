@@ -112,7 +112,7 @@ function Document({
         <Links />
       </head>
       <LocomotiveScrollProvider
-        options={{ smooth: true }}
+        options={{ smooth: true, lerp: 0.08, multiplier: 0.9 }}
         watch={[]}
         containerRef={containerRef}
         onUpdate={() => console.log("Updated,but not on location change!")}
