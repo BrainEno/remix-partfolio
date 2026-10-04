@@ -7,7 +7,7 @@
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
-    "test:scroll": "playwright test tests/scroll-runtime.spec.ts --project=webkit-mobile",
+    "test:scroll": "playwright test tests/scroll-runtime.spec.ts tests/template-runtime.spec.ts --project=webkit-mobile",
     "format": "prettier --write .",
     "check": "npm run typecheck && npm run build"
   },
