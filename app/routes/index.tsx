@@ -1,5 +1,5 @@
 import type { MouseEvent } from "react";
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { redirect } from "react-router";
 import type { Route } from "./+types/index";
 import homeStylesUrl from "~/styles/index.css?url";
@@ -8,25 +8,20 @@ import Header from "../components/Header";
 import Intro from "../components/Intro";
 import Partifolio from "../components/Partfolio";
 import { langCookie } from "../cookies";
-import { getInfroListItems } from "../models/work.server";
 import type { Language, PortfolioSection } from "../portfolio/types";
-import {
-  scrollToPortfolioSection,
-  setupPortfolioScroll,
-} from "../scroll/portfolio-scroll";
+import { portfolioWorks } from "../portfolio/works";
 
 export const links = () => [{ rel: "stylesheet", href: homeStylesUrl }];
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const works = (await getInfroListItems()) ?? [];
   const cookieHeader = request.headers.get("Cookie");
 
   try {
     const cookie = await langCookie.parse(cookieHeader);
     const lang: Language = cookie?.lang === "en" ? "en" : "zh";
-    return { lang, works };
+    return { lang, works: portfolioWorks };
   } catch {
-    return { lang: "zh" as Language, works };
+    return { lang: "zh" as Language, works: portfolioWorks };
   }
 }
 
@@ -63,35 +58,63 @@ export default function Index({ loaderData }: Route.ComponentProps) {
     [works.length]
   );
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const scope = pageRef.current;
     if (!scope) return;
 
-    return setupPortfolioScroll({
-      scope,
-      isZh,
-      onSectionChange: setSection,
-      onWorkPreview: handleWorkPreview,
-    });
+    let disposed = false;
+    let cleanup: (() => void) | undefined;
+
+    void import("../scroll/portfolio-scroll.client").then(
+      ({ setupPortfolioScroll }) => {
+        if (disposed) return;
+        cleanup = setupPortfolioScroll({
+          scope,
+          isZh,
+          onSectionChange: setSection,
+          onWorkPreview: handleWorkPreview,
+        });
+      }
+    );
+
+    return () => {
+      disposed = true;
+      cleanup?.();
+    };
   }, [handleWorkPreview, isZh]);
 
-  const handleIntro = useCallback((e: MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setSection("intro");
-    scrollToPortfolioSection("intro");
+  const scrollToSection = useCallback((target: PortfolioSection) => {
+    void import("../scroll/portfolio-scroll.client").then(
+      ({ scrollToPortfolioSection }) => scrollToPortfolioSection(target)
+    );
   }, []);
 
-  const handlePartifolio = useCallback((e: MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setSection("partfolio");
-    scrollToPortfolioSection("partfolio");
-  }, []);
+  const handleIntro = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setSection("intro");
+      scrollToSection("intro");
+    },
+    [scrollToSection]
+  );
 
-  const handleContact = useCallback((e: MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setSection("contact");
-    scrollToPortfolioSection("contact");
-  }, []);
+  const handlePartifolio = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setSection("partfolio");
+      scrollToSection("partfolio");
+    },
+    [scrollToSection]
+  );
+
+  const handleContact = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setSection("contact");
+      scrollToSection("contact");
+    },
+    [scrollToSection]
+  );
 
   return (
     <div className="page-home" ref={pageRef}>
