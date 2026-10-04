@@ -11,10 +11,12 @@ import ArchiveCard from "../components/archive/ArchiveCard";
 import ArchiveShell from "../components/archive/ArchiveShell";
 import { useSiteLanguage } from "../hooks/useSiteLanguage";
 import archiveStylesUrl from "../styles/archive.css?url";
+import archiveIndexesStylesUrl from "../styles/archive-indexes.css?url";
 import archiveSearchStylesUrl from "../styles/archive-search.css?url";
 
 export const links = () => [
   { rel: "stylesheet", href: archiveStylesUrl },
+  { rel: "stylesheet", href: archiveIndexesStylesUrl },
   { rel: "stylesheet", href: archiveSearchStylesUrl },
 ];
 
@@ -49,6 +51,16 @@ export default function ArchiveIndex() {
         ...item.creators,
         item.year ?? "",
         ...item.tags,
+        item.summary?.zh ?? "",
+        item.summary?.en ?? "",
+        item.note?.zh ?? "",
+        item.note?.en ?? "",
+        ...(item.facts?.flatMap((fact) => [
+          fact.label.zh,
+          fact.label.en,
+          fact.value.zh,
+          fact.value.en,
+        ]) ?? []),
       ]
         .join(" ")
         .toLowerCase();
