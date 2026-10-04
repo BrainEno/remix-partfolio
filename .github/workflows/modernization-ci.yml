@@ -44,13 +44,20 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Verify GSAP is client-only
+      - name: Verify browser-only libraries stay out of SSR
         shell: bash
         run: |
-          if grep -RInF 'from "gsap"' build/server || \
-             grep -RInF "from 'gsap'" build/server || \
-             grep -RInF 'gsap/dist/Scroll' build/server; then
+          if grep -RInF '"gsap"' build/server || \
+             grep -RInF "'gsap'" build/server || \
+             grep -RInF 'gsap/dist/' build/server; then
             echo 'GSAP leaked into the server bundle.'
+            exit 1
+          fi
+
+          if grep -RInF '@react-three/' build/server || \
+             grep -RInF '"three"' build/server || \
+             grep -RInF "'three'" build/server; then
+            echo 'Three.js or React Three Fiber leaked into the server bundle.'
             exit 1
           fi
 
@@ -71,4 +78,30 @@ jobs:
           done
 
           cat /tmp/remix-portfolio.log
+          exit 1
+
+      - name: Smoke test Netlify Deploy Preview
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          PREVIEW_URL: https://deploy-preview-${{ github.event.pull_request.number }}--sydneyzhao.netlify.app/
+        run: |
+          for attempt in {1..60}; do
+            status=$(curl -L --silent --show-error \
+              --output /tmp/netlify-preview.html \
+              --write-out '%{http_code}' \
+              "$PREVIEW_URL" || true)
+
+            if [ "$status" = "200" ] && \
+               grep -q 'Seeing You Through The River' /tmp/netlify-preview.html; then
+              echo "Netlify Deploy Preview is serving the portfolio successfully."
+              exit 0
+            fi
+
+            echo "Waiting for healthy Netlify Deploy Preview (attempt $attempt/60, HTTP $status)..."
+            sleep 2
+          done
+
+          echo 'Netlify Deploy Preview never became healthy.'
+          cat /tmp/netlify-preview.html || true
           exit 1
