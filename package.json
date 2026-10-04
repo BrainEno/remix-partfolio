@@ -15,7 +15,6 @@
   "dependencies": {
     "@fontsource/inria-serif": "^4.5.8",
     "@fontsource/inter": "^4.5.14",
-    "@fontsource/noto-sans-tc": "^4.5.11",
     "@react-router/node": "^8.4.0",
     "@react-router/serve": "^8.4.0",
     "@react-three/drei": "^10.7.9",
