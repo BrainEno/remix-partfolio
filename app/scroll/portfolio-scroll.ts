@@ -19,18 +19,47 @@ type ResponsiveConditions = {
   isDesktop: boolean;
 };
 
-const TELEVISION_EXIT_VIEWPORTS = 1.5;
+const MOBILE_TV_EXIT_VIEWPORTS = 1.2;
+const DESKTOP_TV_EXIT_VIEWPORTS = 1.5;
 let pluginsRegistered = false;
 
 function registerScrollPlugins() {
   if (typeof window === "undefined" || pluginsRegistered) return;
 
   gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+  ScrollTrigger.config({
+    ignoreMobileResize: true,
+    limitCallbacks: true,
+  });
   pluginsRegistered = true;
 }
 
-function getTelevisionExitDistance() {
-  return window.innerHeight * TELEVISION_EXIT_VIEWPORTS;
+function isMobileViewport() {
+  return window.matchMedia(MOBILE_MEDIA_QUERY).matches;
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function getTelevisionExitDistance(viewports: number) {
+  return window.innerHeight * viewports;
+}
+
+function getPinDistance(selector: string, minimumViewports = 1) {
+  const element = document.querySelector<HTMLElement>(selector);
+  return Math.max(
+    element?.offsetHeight ?? 0,
+    window.innerHeight * minimumViewports
+  );
+}
+
+function disablePortfolioSmoother() {
+  const existing = ScrollSmoother.get();
+  if (existing) existing.kill();
+
+  gsap.set("#smooth-content", { clearProps: "transform" });
+  gsap.set("#smooth-wrapper", { clearProps: "height,overflow,position" });
 }
 
 export function ensurePortfolioSmoother() {
@@ -38,19 +67,21 @@ export function ensurePortfolioSmoother() {
 
   registerScrollPlugins();
 
+  // Touch Safari already has high-quality momentum scrolling. Keeping the page on
+  // native coordinates also avoids the resize/pin feedback loop that caused the
+  // old "jump back to top" regression on phones.
+  if (isMobileViewport()) {
+    disablePortfolioSmoother();
+    return null;
+  }
+
   const existing = ScrollSmoother.get();
   if (existing) return existing;
-
-  const reduceMotion = window.matchMedia(
-    "(prefers-reduced-motion: reduce)"
-  ).matches;
 
   return ScrollSmoother.create({
     wrapper: "#smooth-wrapper",
     content: "#smooth-content",
-    smooth: reduceMotion ? 0 : 0.8,
-    smoothTouch: reduceMotion ? 0 : 0.08,
-    normalizeScroll: true,
+    smooth: prefersReducedMotion() ? 0 : 0.8,
     speed: 0.9,
     effects: false,
   });
@@ -59,16 +90,28 @@ export function ensurePortfolioSmoother() {
 export function scrollToPortfolioSection(section: PortfolioSection) {
   if (typeof window === "undefined") return;
 
-  const target = `#${section}`;
-  const smoother = ensurePortfolioSmoother();
+  registerScrollPlugins();
 
-  if (smoother) {
-    smoother.scrollTo(target, true, "top top");
+  const target = document.getElementById(section);
+  if (!target) return;
+
+  if (isMobileViewport()) {
+    disablePortfolioSmoother();
+    target.scrollIntoView({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "start",
+    });
     return;
   }
 
-  document.querySelector(target)?.scrollIntoView({
-    behavior: "smooth",
+  const smoother = ensurePortfolioSmoother();
+  if (smoother) {
+    smoother.scrollTo(target, !prefersReducedMotion(), "top top");
+    return;
+  }
+
+  target.scrollIntoView({
+    behavior: prefersReducedMotion() ? "auto" : "smooth",
     block: "start",
   });
 }
@@ -81,8 +124,10 @@ function setupSectionTracking(
   sections.forEach((section) => {
     ScrollTrigger.create({
       trigger: `#${section}`,
-      start: "top center",
-      end: "bottom center",
+      start: "top 55%",
+      end: "bottom 45%",
+      onEnter: () => onSectionChange(section),
+      onEnterBack: () => onSectionChange(section),
       onToggle: (self) => {
         if (self.isActive) onSectionChange(section);
       },
@@ -91,351 +136,224 @@ function setupSectionTracking(
   });
 }
 
-function setupIntroParallax() {
-  gsap.fromTo(
-    ".intro-headline-bar-image",
-    { yPercent: -15 },
-    {
-      yPercent: 15,
-      ease: "none",
-      scrollTrigger: {
-        trigger: ".intro-headline-box",
-        start: "top bottom",
-        end: "bottom top",
-        scrub: true,
-        invalidateOnRefresh: true,
-      },
-    }
-  );
-
-  gsap.fromTo(
-    ".intro-photo",
-    { yPercent: 7 },
-    {
-      yPercent: -7,
-      ease: "none",
-      scrollTrigger: {
-        trigger: ".intro-headline-box",
-        start: "top top",
-        end: "bottom top",
-        scrub: true,
-        invalidateOnRefresh: true,
-      },
-    }
-  );
-}
-
-function setupMobileWorkPreview(onWorkPreview: (index: number) => void) {
-  const rows = gsap.utils.toArray<HTMLElement>(".work-item");
-
-  rows.forEach((row, index) => {
-    const activate = () => onWorkPreview(index);
-
-    ScrollTrigger.create({
-      trigger: row,
-      start: "top 68%",
-      end: "bottom 32%",
-      onEnter: activate,
-      onEnterBack: activate,
-      invalidateOnRefresh: true,
-    });
-  });
-}
-
-function setupTelevisionPin() {
-  ScrollTrigger.create({
-    trigger: ".tv-box",
-    start: "center center",
-    endTrigger: ".work-items-box",
-    end: () => `bottom+=${getTelevisionExitDistance()} top`,
-    pin: ".tv-box-pinner",
-    pinSpacing: false,
-    anticipatePin: 1,
-    invalidateOnRefresh: true,
-  });
-}
-
-function setupTelevisionExit(scale: number) {
-  gsap
-    .timeline({
-      scrollTrigger: {
-        trigger: ".work-items-box",
-        start: "bottom top",
-        end: () => `+=${getTelevisionExitDistance()}`,
-        scrub: true,
-        invalidateOnRefresh: true,
-      },
-      defaults: { duration: 2, ease: "none" },
-    })
-    .to(".tv-cover", {
-      autoAlpha: 0,
-      duration: 0.1,
-    })
-    .to(
-      ".tv-box",
-      {
-        rotation: -11,
-      },
-      ">+=2"
-    )
-    .to(
-      ".tv-box",
-      {
-        opacity: 0,
-        scale,
-        zIndex: 1,
-      },
-      "<+=0.1"
-    )
-    .to(
-      ".tv-bg",
-      {
-        autoAlpha: 0,
-      },
-      "<"
-    );
-}
-
-function setupContactCanvas() {
-  gsap
-    .timeline({
-      scrollTrigger: {
-        trigger: ".contact-inner",
-        start: "top center",
-        end: "bottom bottom",
-        scrub: true,
-        invalidateOnRefresh: true,
-      },
-      defaults: { duration: 30, ease: "none" },
-    })
-    .to(".canvas-container", {
-      top: "78vw",
-      left: "75vw",
-      scale: 1.3,
-    });
-}
-
-function setupMobileAnimations(
-  isZh: boolean,
-  onWorkPreview: (index: number) => void
-) {
-  const headline = gsap.timeline({
+function setupIntroHeadlineChoreography(isZh: boolean, isMobile: boolean) {
+  const timeline = gsap.timeline({
     scrollTrigger: {
       trigger: ".intro-headline-box",
-      start: "top-=100 top",
-      end: () => {
-        const element = document.querySelector<HTMLElement>(
-          ".intro-headline-box"
-        );
-        return `+=${Math.max((element?.offsetHeight ?? 100) - 100, 1)}`;
-      },
-      scrub: true,
+      start: isMobile ? "top top" : "top 8%",
+      end: isMobile ? "bottom 42%" : "bottom 28%",
+      scrub: prefersReducedMotion() ? false : 0.35,
       invalidateOnRefresh: true,
     },
   });
 
   if (isZh) {
-    headline.to(".intro-headline-word.zh", {
-      translateX: "+=20px",
-      stagger: 0.2,
+    timeline.to(".intro-headline-word.zh", {
+      x: 20,
+      stagger: 0.18,
+      ease: "none",
     });
-  } else {
-    headline
-      .to(".intro-headline-word.word-1", {
-        translateY: "+=50px",
-        translateX: "-=16.905px",
-        ease: "power1",
-        duration: 1,
-      })
-      .to(
-        ".intro-headline-word.word-2",
-        {
-          translateY: "+=50px",
-          translateX: "-=16.905px",
+    return;
+  }
+
+  timeline
+    .to(".intro-headline-word.word-1", {
+      y: 50,
+      x: -16.905,
+      ease: "none",
+      duration: 1,
+    })
+    .to(
+      ".intro-headline-word.word-2",
+      {
+        y: 50,
+        x: -16.905,
+        ease: "none",
+      },
+      "<-=0.1"
+    )
+    .to(
+      ".intro-headline-word.word-3",
+      {
+        y: 50,
+        x: -16.905,
+        ease: "none",
+      },
+      "<-=0.2"
+    );
+}
+
+function setupIntroParallax(isMobile: boolean) {
+  if (!isMobile) {
+    gsap.fromTo(
+      ".intro-headline-bar-image",
+      { yPercent: -15 },
+      {
+        yPercent: 15,
+        ease: "none",
+        scrollTrigger: {
+          trigger: ".intro-headline-box",
+          start: "top bottom",
+          end: "bottom top",
+          scrub: true,
+          invalidateOnRefresh: true,
         },
-        "<-=0.1"
+      }
+    );
+  }
+
+  gsap.fromTo(
+    ".intro-photo",
+    { yPercent: isMobile ? 4 : 7 },
+    {
+      yPercent: isMobile ? -4 : -7,
+      ease: "none",
+      scrollTrigger: {
+        trigger: ".intro-headline-box",
+        start: "top top",
+        end: "bottom top",
+        scrub: true,
+        invalidateOnRefresh: true,
+      },
+    }
+  );
+}
+
+function setupFirstIntroStory(isMobile: boolean) {
+  const timeline = gsap.timeline({
+    scrollTrigger: {
+      trigger: ".intro-subheadline-stickytainer",
+      start: isMobile ? "top 12%" : "top-=100 top",
+      end: () => `+=${getPinDistance(
+        ".intro-subheadline-stickytainer",
+        isMobile ? 1.35 : 4
+      )}`,
+      scrub: prefersReducedMotion() ? false : true,
+      pin: true,
+      anticipatePin: 1,
+      invalidateOnRefresh: true,
+    },
+    defaults: { ease: "none" },
+  });
+
+  timeline.to(".intro-subheadline-photo-box", {
+    y: isMobile ? 0 : "4vw",
+    x: "10vw",
+    rotation: -18.75,
+    scale: isMobile ? 1.4 : 1.2,
+    autoAlpha: 0.8,
+    filter: "grayscale(10%)",
+    duration: 4,
+  });
+
+  if (!isMobile) {
+    timeline
+      .to(
+        ".intro-subheadline-title",
+        {
+          left: "12vw",
+          top: "32vw",
+          ease: "sine.out",
+        },
+        "<1"
       )
       .to(
-        ".intro-headline-word.word-3",
+        ".intro-subheadline-photo-ghost-mask",
         {
-          translateY: "+=50px",
-          translateX: "-=16.905px",
+          autoAlpha: 0,
+          rotation: 18.15,
         },
-        "<-=0.2"
+        "<"
+      )
+      .to(
+        ".intro-subheadline-pic-info",
+        {
+          autoAlpha: 1,
+          scale: 1,
+          ease: "power1.out",
+        },
+        ">+=1"
       );
   }
 
-  gsap
-    .timeline({
-      scrollTrigger: {
-        trigger: ".intro-subheadline-stickytainer",
-        start: "top-=422 top",
-        end: () => {
-          const element = document.querySelector<HTMLElement>(
-            ".intro-subheadline-stickytainer"
-          );
-          return `+=${Math.max(element?.offsetHeight ?? window.innerHeight, 1)}`;
-        },
-        scrub: true,
-        pin: true,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-      },
-      defaults: { ease: "none" },
-    })
-    .to(".intro-subheadline-photo-box", {
-      translateX: "10vw",
-      rotation: -18.75,
-      scale: 1.4,
-      autoAlpha: 0.8,
-      filter: "grayscale(10%)",
-    })
+  timeline
     .to(
       ".intro-subheadline-photo-mask",
       {
-        translateX: "4vw",
+        x: isMobile ? "4vw" : 0,
         width: "+=20vw",
         borderTopLeftRadius: "14vw",
         filter: "grayscale(0%)",
+        duration: 4,
       },
-      ">1"
-    )
-    .to(".intro-subheadline-text-box1", {
-      left: "0",
-    });
-
-  gsap
-    .timeline({
-      scrollTrigger: {
-        trigger: ".intro-subheadline-stickytainer2",
-        start: "top top",
-        end: () => {
-          const element = document.querySelector<HTMLElement>(
-            ".intro-subheadline-stickytainer2"
-          );
-          return `+=${Math.max(element?.offsetHeight ?? window.innerHeight, 1)}`;
-        },
-        scrub: true,
-        pin: true,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-      },
-      defaults: { duration: 20, ease: "none" },
-    })
-    .to(".intro-subheadline-photo-mask2", {
-      translateX: "-=40vw",
-      stagger: 0.5,
-    })
-    .to(".intro-subheadline-stickytainer2", {
-      transform: "translate3d(-100vw,0px,0px)",
-    });
-
-  setupMobileWorkPreview(onWorkPreview);
-  setupTelevisionPin();
-  setupTelevisionExit(2);
-  setupContactCanvas();
-}
-
-function setupDesktopAnimations() {
-  gsap
-    .timeline({
-      scrollTrigger: {
-        trigger: ".intro-subheadline-stickytainer",
-        start: "top-=100 top",
-        end: "+=4000",
-        scrub: true,
-        pin: true,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-      },
-      defaults: { duration: 20, ease: "none" },
-    })
-    .to(".intro-subheadline-photo-box", {
-      translateY: "4vw",
-      translateX: "10vw",
-      rotation: -18.75,
-      scale: 1.2,
-      autoAlpha: 0.8,
-      ease: "slow(0.7,0.7,false)",
-      filter: "grayscale(10%)",
-    })
-    .to(
-      ".intro-subheadline-title",
-      {
-        left: "12vw",
-        top: "32vw",
-        ease: "sine.out",
-      },
-      "<3"
-    )
-    .to(
-      ".intro-subheadline-photo-ghost-mask",
-      {
-        autoAlpha: 0,
-        rotation: 18.15,
-      },
-      "<"
-    )
-    .to(
-      ".intro-subheadline-pic-info",
-      {
-        autoAlpha: 1,
-        ease: "power1.out",
-        scale: 1,
-      },
-      "+=5"
-    )
-    .to(
-      ".intro-subheadline-photo-mask",
-      {
-        width: "+=20vw",
-        borderTopLeftRadius: "14vw",
-        filter: "grayscale(0%)",
-      },
-      ">5"
-    )
-    .to(
-      ".intro-subheadline-title",
-      {
-        left: "+=20vw",
-      },
-      "<"
+      ">+=0.5"
     )
     .to(
       ".intro-subheadline-text-box1",
       {
-        left: "0",
+        left: 0,
+        duration: 4,
       },
-      ">5"
-    )
-    .to(
-      ".intro-subheadline-photo-box",
-      {
-        left: "-100%",
-      },
-      "<9"
-    )
-    .to(
-      ".intro-subheadline-title",
-      {
-        left: "-66vw",
-      },
-      "<"
+      ">+=0.5"
     );
 
-  gsap
-    .timeline({
-      scrollTrigger: {
-        trigger: ".intro-subheadline-stickytainer2",
-        start: "top top",
-        end: "+=4000",
-        scrub: true,
-        pin: true,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-      },
-      defaults: { duration: 20, ease: "none" },
-    })
+  if (!isMobile) {
+    timeline
+      .to(
+        ".intro-subheadline-title",
+        {
+          left: "+=20vw",
+          duration: 3,
+        },
+        "<"
+      )
+      .to(
+        ".intro-subheadline-photo-box",
+        {
+          left: "-100%",
+          duration: 6,
+        },
+        ">+=1"
+      )
+      .to(
+        ".intro-subheadline-title",
+        {
+          left: "-66vw",
+          duration: 6,
+        },
+        "<"
+      );
+  }
+}
+
+function setupSecondIntroStory(isMobile: boolean) {
+  const timeline = gsap.timeline({
+    scrollTrigger: {
+      trigger: ".intro-subheadline-stickytainer2",
+      start: "top top",
+      end: () => `+=${getPinDistance(
+        ".intro-subheadline-stickytainer2",
+        isMobile ? 1.2 : 4
+      )}`,
+      scrub: prefersReducedMotion() ? false : true,
+      pin: true,
+      anticipatePin: 1,
+      invalidateOnRefresh: true,
+    },
+    defaults: { duration: 20, ease: "none" },
+  });
+
+  if (isMobile) {
+    // This is the original mobile choreography from the last working Remix
+    // implementation: the second story panel traverses the viewport as one
+    // composed scene instead of each image owning an independent scroll model.
+    timeline.to(".intro-subheadline-stickytainer2", {
+      x: "-100vw",
+    });
+    return;
+  }
+
+  timeline
     .to(".intro-subheadline-photo-box2", {
       x: "-=130vw",
     })
@@ -482,9 +400,123 @@ function setupDesktopAnimations() {
       },
       ">-=2"
     );
+}
 
-  setupTelevisionPin();
-  setupTelevisionExit(4);
+function setupWorkPreview(onWorkPreview: (index: number) => void) {
+  const rows = gsap.utils.toArray<HTMLElement>(".work-item");
+
+  rows.forEach((row, index) => {
+    const activate = () => onWorkPreview(index);
+
+    ScrollTrigger.create({
+      trigger: row,
+      start: "top 62%",
+      end: "bottom 38%",
+      onEnter: activate,
+      onEnterBack: activate,
+      invalidateOnRefresh: true,
+    });
+  });
+}
+
+function setupTelevisionSequence(
+  onWorkPreview: (index: number) => void,
+  isMobile: boolean
+) {
+  const exitViewports = isMobile
+    ? MOBILE_TV_EXIT_VIEWPORTS
+    : DESKTOP_TV_EXIT_VIEWPORTS;
+
+  setupWorkPreview(onWorkPreview);
+
+  ScrollTrigger.create({
+    trigger: ".tv-box",
+    start: "center center",
+    endTrigger: ".work-items-box",
+    end: () => `bottom+=${getTelevisionExitDistance(exitViewports)} top`,
+    pin: ".tv-box-pinner",
+    pinSpacing: false,
+    anticipatePin: 1,
+    invalidateOnRefresh: true,
+    onEnter: () => onWorkPreview(0),
+    onEnterBack: () => {
+      const rows = gsap.utils.toArray<HTMLElement>(".work-item");
+      if (rows.length > 0) onWorkPreview(rows.length - 1);
+    },
+  });
+
+  gsap
+    .timeline({
+      scrollTrigger: {
+        trigger: ".work-items-box",
+        start: "bottom top",
+        end: () => `+=${getTelevisionExitDistance(exitViewports)}`,
+        scrub: prefersReducedMotion() ? false : true,
+        invalidateOnRefresh: true,
+      },
+      defaults: { ease: "none" },
+    })
+    .to(".tv-cover", {
+      autoAlpha: 0,
+      duration: 0.1,
+    })
+    .to(
+      ".tv-box",
+      {
+        rotation: -11,
+        duration: 2,
+      },
+      ">+=0.75"
+    )
+    .to(
+      ".tv-box",
+      {
+        autoAlpha: 0,
+        scale: isMobile ? 2.2 : 4,
+        zIndex: 1,
+        duration: 2,
+      },
+      "<+=0.1"
+    )
+    .to(
+      ".tv-bg",
+      {
+        autoAlpha: 0,
+        duration: 0.2,
+      },
+      "<"
+    );
+}
+
+function setupContactCanvas() {
+  gsap
+    .timeline({
+      scrollTrigger: {
+        trigger: ".contact-inner",
+        start: "top center",
+        end: "bottom bottom",
+        scrub: prefersReducedMotion() ? false : true,
+        invalidateOnRefresh: true,
+      },
+      defaults: { duration: 30, ease: "none" },
+    })
+    .to(".canvas-container", {
+      top: "78vw",
+      left: "75vw",
+      scale: 1.3,
+    });
+}
+
+function setupResponsiveAnimations(
+  isZh: boolean,
+  isMobile: boolean,
+  onWorkPreview: (index: number) => void
+) {
+  setupIntroHeadlineChoreography(isZh, isMobile);
+  setupIntroParallax(isMobile);
+  setupFirstIntroStory(isMobile);
+  setupSecondIntroStory(isMobile);
+  setupTelevisionSequence(onWorkPreview, isMobile);
   setupContactCanvas();
 }
 
@@ -497,7 +529,6 @@ export function setupPortfolioScroll({
   if (typeof window === "undefined") return () => undefined;
 
   registerScrollPlugins();
-  ensurePortfolioSmoother();
 
   const media = gsap.matchMedia();
 
@@ -509,24 +540,29 @@ export function setupPortfolioScroll({
     (context) => {
       const { isMobile } = context.conditions as ResponsiveConditions;
 
-      setupSectionTracking(onSectionChange);
-      setupIntroParallax();
-
       if (isMobile) {
-        setupMobileAnimations(isZh, onWorkPreview);
+        disablePortfolioSmoother();
       } else {
-        setupDesktopAnimations();
+        ensurePortfolioSmoother();
       }
+
+      setupSectionTracking(onSectionChange);
+      setupResponsiveAnimations(isZh, isMobile, onWorkPreview);
     },
     scope
   );
 
   const refresh = () => ScrollTrigger.refresh();
-  const frame = window.requestAnimationFrame(refresh);
+  const frame = window.requestAnimationFrame(() => {
+    refresh();
+    window.requestAnimationFrame(refresh);
+  });
   void document.fonts?.ready.then(refresh);
 
   return () => {
     window.cancelAnimationFrame(frame);
     media.revert();
+    ScrollSmoother.get()?.kill();
+    gsap.set("#smooth-content", { clearProps: "transform" });
   };
 }

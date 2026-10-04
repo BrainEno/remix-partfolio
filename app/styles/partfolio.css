@@ -32,6 +32,7 @@
   align-items: flex-end;
   transform-origin: 50% 64%;
   width: 100%;
+  will-change: transform, opacity;
 }
 
 .tv-all-vids {
@@ -248,8 +249,11 @@
 @media (max-width: 480px) {
   #partfolio {
     width: 100vw;
-    min-height: 320vh;
-    overflow: clip;
+    /* 220svh accounts for TV arrival + exit. The route provides the total
+       project dwell space as a length so this remains compatible with Safari. */
+    min-height: calc(220svh + var(--portfolio-work-space, 24svh));
+    overflow-x: clip;
+    overflow-y: visible;
   }
 
   .tv-bg-box {

@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import React from "react";
+import React, { type CSSProperties } from "react";
 import { useForwardedRef } from "~/hooks/useForwardedRef";
 import type { PortfolioWork } from "~/portfolio/types";
 
@@ -10,6 +10,10 @@ interface PartfolioProps {
   onWorkPreview: (index: number) => void;
 }
 
+type PortfolioStyle = CSSProperties & {
+  "--portfolio-work-space": string;
+};
+
 const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
   function Partfolio(
     { isZh, works, activeWorkIndex, onWorkPreview },
@@ -17,9 +21,12 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
   ) {
     const partfolioRef = useForwardedRef(ref);
     const activeWork = works[activeWorkIndex] ?? works[0] ?? null;
+    const portfolioStyle: PortfolioStyle = {
+      "--portfolio-work-space": `${Math.max(works.length, 1) * 24}svh`,
+    };
 
     return (
-      <section id="partfolio" ref={partfolioRef}>
+      <section id="partfolio" ref={partfolioRef} style={portfolioStyle}>
         <div className="tv-box-stickytainer">
           <div className="tv-box-pinner">
             <div className="tv-box-mask">
