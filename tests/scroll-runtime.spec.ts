@@ -27,6 +27,20 @@ async function scrollUntilAttribute(
   await expect(page.locator(selector)).toHaveAttribute(attribute, expected);
 }
 
+async function readCssColorLuma(page: Page, selector: string, property: string) {
+  return page.locator(selector).evaluate((element, cssProperty) => {
+    const raw = getComputedStyle(element).getPropertyValue(cssProperty).trim();
+    const probe = document.createElement("span");
+    probe.style.color = raw || "#000";
+    document.body.appendChild(probe);
+    const computed = getComputedStyle(probe).color;
+    probe.remove();
+
+    const channels = computed.match(/[\d.]+/g)?.slice(0, 3).map(Number) ?? [0, 0, 0];
+    return (channels[0] + channels[1] + channels[2]) / 3;
+  }, property);
+}
+
 test("mobile choreography synchronizes the hero and moves the second photo rail in from the right", async ({
   page,
 }) => {
@@ -103,7 +117,7 @@ test("mobile choreography synchronizes the hero and moves the second photo rail 
   expect(pageErrors).toEqual([]);
 });
 
-test("mobile TV is grey before works, shows work only inside its screen zone, then returns to grey and becomes the transition", async ({
+test("mobile TV is grey before works, previews only inside the screen, then fades grey-green to black to white before Contact appears", async ({
   page,
 }) => {
   const pageErrors: string[] = [];
@@ -125,6 +139,7 @@ test("mobile TV is grey before works, shows work only inside its screen zone, th
   const tvScreen = page.locator(".tv-all-vids");
   const tvBackground = page.locator(".tv-bg");
   const tvPinner = page.locator(".tv-box-pinner");
+  const contactHeadline = page.locator(".contact-headline").first();
 
   await expect(tvScreen).toHaveAttribute("data-preview-active", "false");
   await expect(page.locator(".tv-cover")).toHaveCount(0);
@@ -137,9 +152,6 @@ test("mobile TV is grey before works, shows work only inside its screen zone, th
     )
     .toBe(true);
 
-  // Move through the scene in small increments like an actual touch scroll.
-  // This avoids teleporting across both the TV pin and work trigger in one
-  // animation frame, which is not representative of the real mobile UX.
   await scrollUntilAttribute(
     page,
     ".tv-all-vids",
@@ -160,8 +172,6 @@ test("mobile TV is grey before works, shows work only inside its screen zone, th
     expect(workRect.height).toBeLessThan(screenRect.height * 1.05);
   }
 
-  // Continue naturally through the remaining works. Only the final row clears
-  // the preview, at which point the television must be grey again.
   await scrollUntilAttribute(
     page,
     ".tv-all-vids",
@@ -172,30 +182,47 @@ test("mobile TV is grey before works, shows work only inside its screen zone, th
 
   await expect(page.locator(".tv-cover")).toHaveCount(0);
 
-  // Enter the exit scene incrementally so the TV's grey-to-black transition is
-  // observed rather than skipped by a single large scroll jump.
   const tvBox = page.locator(".tv-box");
   const transformBeforeExit = await tvBox.evaluate(
     (element) => getComputedStyle(element).transform
   );
 
+  // First phase: the project is gone, the TV is enlarging/rotating and its
+  // grey-green CRT is darkening toward black. Contact must still be hidden.
   await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.46));
   await waitForScroll(page, 420);
 
-  const exitState = await tvBox.evaluate((element) => ({
-    transform: getComputedStyle(element).transform,
-  }));
+  const transformInBlackPhase = await tvBox.evaluate(
+    (element) => getComputedStyle(element).transform
+  );
   const backgroundOpacity = Number(
     await tvBackground.evaluate((element) => getComputedStyle(element).opacity)
   );
-  const idleScreen = await page.locator(".tv-blackscreen").evaluate((element) =>
-    getComputedStyle(element).backgroundColor
+  const blackPhaseLuma = await readCssColorLuma(
+    page,
+    ".tv-blackscreen",
+    "--tv-screen-mid"
   );
 
-  expect(exitState.transform).not.toBe(transformBeforeExit);
+  expect(transformInBlackPhase).not.toBe(transformBeforeExit);
   expect(backgroundOpacity).toBeLessThan(1);
-  expect(idleScreen).toMatch(/rgb/);
-  await expect(page.locator(".contact-headline").first()).toBeVisible();
+  await expect(contactHeadline).toBeHidden();
+
+  // Second phase: keep scrolling until the black -> white passage begins.
+  // Contact is expected to emerge here, not during the earlier black phase.
+  for (let step = 0; step < 24 && !(await contactHeadline.isVisible()); step += 1) {
+    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.05));
+    await waitForScroll(page, 110);
+  }
+
+  await expect(contactHeadline).toBeVisible();
+
+  const whitePhaseLuma = await readCssColorLuma(
+    page,
+    ".tv-blackscreen",
+    "--tv-screen-mid"
+  );
+  expect(whitePhaseLuma).toBeGreaterThan(blackPhaseLuma + 20);
   expect(pageErrors).toEqual([]);
 });
 
