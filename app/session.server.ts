@@ -1,4 +1,4 @@
-import { createCookieSessionStorage, redirect } from "@remix-run/node";
+import { createCookieSessionStorage, redirect } from "react-router";
 import invariant from "tiny-invariant";
 import { getProfileById } from "./models/user.server";
 
@@ -43,11 +43,6 @@ export async function getUser(request: Request) {
   throw await logout(request);
 }
 
-/**
- * Require a user session to get to a page. If none is found
- * redirect them to the login page. After login, take them to
- * the original page they wanted to get to.
- */
 export async function requireUserId(
   request: Request,
   redirectTo: string = new URL(request.url).pathname
@@ -87,9 +82,7 @@ export async function createUserSession({
   return redirect(redirectTo, {
     headers: {
       "Set-Cookie": await sessionStorage.commitSession(session, {
-        maxAge: remember
-          ? 60 * 60 * 24 * 7 // 7 days
-          : undefined,
+        maxAge: remember ? 60 * 60 * 24 * 7 : undefined,
       }),
     },
   });

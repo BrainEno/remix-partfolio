@@ -1,62 +1,108 @@
-# Welcome to Remix!
+# Remix Portfolio
 
-- [Remix Docs](https://remix.run/docs)
-- [Netlify Functions](https://www.netlify.com/products/functions/)
+A portfolio site originally built with Remix, now migrated to the current React Router Framework Mode stack while preserving the original visual design, GSAP animations, Locomotive Scroll behavior, and Netlify deployment target.
 
-## Netlify Setup
+## Stack
 
-1. Install the [Netlify CLI](https://www.netlify.com/products/dev/):
+- React Router 8 (Framework Mode)
+- React 19
+- Vite 8
+- TypeScript 5.9
+- GSAP / ScrollTrigger
+- Locomotive Scroll
+- React Three Fiber / Drei
+- Supabase
+- Netlify
 
-```sh
-npm i -g netlify-cli
-```
+## Requirements
 
-If you have previously installed the Netlify CLI, you should update it to the latest version:
+- Node.js 22.22.0 or newer
+- npm 10+
 
-```sh
-npm i -g netlify-cli@latest
-```
-
-2. Sign up and log in to Netlify:
-
-```sh
-netlify login
-```
-
-3. Create a new site:
+The repository includes an `.nvmrc`, so with nvm you can run:
 
 ```sh
-netlify init
+nvm use
 ```
 
-## Development
+## Local setup
 
-The Remix dev server starts your app in development mode, rebuilding assets on file changes. To start the Remix dev server:
+Install dependencies:
+
+```sh
+npm install
+```
+
+Create your local environment file:
+
+```sh
+cp .env.example .env
+```
+
+Then replace the placeholder values in `.env` with your own configuration.
+
+Start the development server:
 
 ```sh
 npm run dev
 ```
 
-Open up [http://localhost:3000](http://localhost:3000), and you should be ready to go!
+The Vite development server is available at `http://localhost:5173` by default.
 
-The Netlify CLI builds a production version of your Remix App Server and splits it into Netlify Functions that run locally. This includes any custom Netlify functions you've developed. The Netlify CLI runs all of this in its development mode.
+## Quality checks
 
-```sh
-netlify dev
-```
-
-Open up [http://localhost:3000](http://localhost:3000), and you should be ready to go!
-
-Note: When running the Netlify CLI, file changes will rebuild assets, but you will not see the changes to the page you are on unless you do a browser refresh of the page. Due to how the Netlify CLI builds the Remix App Server, it does not support hot module reloading.
-
-## Deployment
-
-There are two ways to deploy your app to Netlify, you can either link your app to your git repo and have it auto deploy changes to Netlify, or you can deploy your app manually. If you've followed the setup instructions already, all you need to do is run this:
+Run the strict TypeScript and generated-route type check:
 
 ```sh
-# preview deployment
-netlify deploy --build
-
-# production deployment
-netlify deploy --build --prod
+npm run typecheck
 ```
+
+Create a production build:
+
+```sh
+npm run build
+```
+
+Run both checks together:
+
+```sh
+npm run check
+```
+
+## Production preview
+
+Build first, then start the generated server bundle:
+
+```sh
+npm run build
+npm run start
+```
+
+The production server uses port `3000` by default.
+
+## Environment variables
+
+See `.env.example` for the required keys:
+
+- `SESSION_SECRET`
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `URL`
+
+Never commit a real `.env` file.
+
+## Netlify
+
+Netlify is configured through `netlify.toml` and `@netlify/vite-plugin-react-router`. The production build command is:
+
+```sh
+npm run build
+```
+
+and the client output directory is `build/client`.
+
+## Migration notes
+
+The project no longer uses the Classic Remix compiler, the legacy custom Netlify Remix server entry, or the old Remix browser/server entry files. Routing, type generation, and builds now use React Router Framework Mode and Vite.
+
+The old `react-locomotive-scroll` wrapper was replaced with a small local adapter around `locomotive-scroll` so the original scrolling behavior can be preserved on React 19 without keeping an abandoned React 18-only wrapper dependency.

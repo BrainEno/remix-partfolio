@@ -1,0 +1,58 @@
+name: Modernization CI
+
+on:
+  push:
+    branches:
+      - chore/react-router-v8-modernize
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SESSION_SECRET: ci-only-session-secret-not-for-production
+      SUPABASE_URL: http://127.0.0.1:9
+      SUPABASE_ANON_KEY: ci-only-placeholder
+      URL: http://127.0.0.1:3000
+      PORT: 3000
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22.22.0
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Smoke test production server
+        shell: bash
+        run: |
+          npm run start > /tmp/remix-portfolio.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error http://127.0.0.1:3000/ > /tmp/homepage.html; then
+              test -s /tmp/homepage.html
+              exit 0
+            fi
+            sleep 1
+          done
+
+          cat /tmp/remix-portfolio.log
+          exit 1

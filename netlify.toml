@@ -1,21 +1,11 @@
 [build]
-  command = "remix build"
-  functions ="netlify/functions"
-  publish = "public"
+  command = "npm run build"
+  publish = "build/client"
 
-  [build.environment]
+[build.environment]
+  NODE_VERSION = "22.22.0"
   TERM = "xterm"
 
 [dev]
-  command = "remix watch"
-  port = 3000
-
-[[redirects]]
-  from = "/*"
-  to = "/.netlify/functions/server"
-  status = 200
-
-[[headers]]
-  for = "/build/*"
-  [headers.values]
-    "Cache-Control" = "public, max-age=31536000, s-maxage=31536000"
+  command = "npm run dev"
+  port = 5173

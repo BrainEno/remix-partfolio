@@ -1,166 +1,145 @@
-import type {
-  LinksFunction,
-  LoaderArgs,
-  LoaderFunction,
-  MetaFunction,
-} from "@remix-run/node";
-import { json } from "@remix-run/node";
+import interFont from "@fontsource/inter/index.css?url";
+import inria from "@fontsource/inria-serif/index.css?url";
+import notoSansTC from "@fontsource/noto-sans-tc/index.css?url";
+import { gsap } from "gsap";
+import ScrollTrigger from "gsap/dist/ScrollTrigger";
+import { useEffect, useRef, type ReactNode } from "react";
 import {
+  isRouteErrorResponse,
   Links,
-  LiveReload,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
-  useCatch,
-} from "@remix-run/react";
-
-import globalStylesUrl from "~/styles/global.css";
-import interFont from "@fontsource/inter/index.css";
-import inria from "@fontsource/inria-serif/index.css";
-import notoSansTC from "@fontsource/noto-sans-tc/index.css";
-import { getUser } from "./session.server";
-import { langCookie } from "./cookies";
+} from "react-router";
 import {
   LocomotiveScrollProvider,
   useLocomotiveScroll,
-} from "react-locomotive-scroll";
-import { useEffect, useRef } from "react";
-import { gsap } from "gsap";
-import ScrollTrigger from "gsap/dist/ScrollTrigger";
+} from "~/compat/react-locomotive-scroll";
+import globalStylesUrl from "~/styles/global.css?url";
+import type { Route } from "./+types/root";
+import { langCookie } from "./cookies";
+import { getUser } from "./session.server";
 
-export const links: LinksFunction = () => [
+export const links = () => [
   { rel: "stylesheet", href: interFont },
   { rel: "stylesheet", href: inria },
   { rel: "stylesheet", href: notoSansTC },
   { rel: "stylesheet", href: globalStylesUrl },
 ];
 
-export const loader: LoaderFunction = async ({ request }: LoaderArgs) => {
+export async function loader({ request }: Route.LoaderArgs) {
   const cookieHeader = request.headers.get("Cookie");
   const { lang } = (await langCookie.parse(cookieHeader)) || { lang: "zh" };
 
-  return json({
+  return {
     lang,
     user: await getUser(request),
-  });
-};
-
-export const meta: MetaFunction = ({ data }) => {
-  const lang = data ? data.lang : "en";
-  const title = lang === "zh" ? "趙 悉 尼" : "Sydney Zhao";
-  return {
-    charset: "utf-8",
-    title,
-    viewport: "width=device-width,initial-scale=1",
   };
-};
+}
 
-const ScrollTriggerProxy = () => {
+export function meta({ loaderData }: Route.MetaArgs) {
+  const lang = loaderData?.lang ?? "en";
+  const title = lang === "zh" ? "趙 悉 尼" : "Sydney Zhao";
+
+  return [
+    { title },
+    { name: "viewport", content: "width=device-width,initial-scale=1" },
+  ];
+}
+
+function ScrollTriggerProxy() {
   const { scroll } = useLocomotiveScroll();
 
-  gsap.registerPlugin(ScrollTrigger);
   useEffect(() => {
-    if (scroll) {
-      // console.log(scroll);
-      // console.log(gsap);
-      const element = scroll?.el;
+    if (!scroll) return;
 
-      scroll.on("scroll", ScrollTrigger.update);
+    gsap.registerPlugin(ScrollTrigger);
+    const element = scroll.el as HTMLElement;
+    const handleScroll = () => ScrollTrigger.update();
+    const handleRefresh = () => scroll.update?.();
 
-      ScrollTrigger.scrollerProxy(element, {
-        scrollTop(value) {
-          return arguments.length
-            ? scroll.scrollTo(value, 0, 0)
-            : scroll.scroll.instance.scroll.y;
-        },
-        getBoundingClientRect() {
-          return {
-            top: 0,
-            left: 0,
-            width: window.innerWidth,
-            height: window.innerHeight,
-          };
-        },
-        pinType: element.style.transform ? "transform" : "fixed",
-      });
+    scroll.on?.("scroll", handleScroll);
+    ScrollTrigger.scrollerProxy(element, {
+      scrollTop(value) {
+        if (arguments.length) {
+          scroll.scrollTo(value, 0, 0);
+          return value ?? 0;
+        }
+        return scroll.scroll?.instance?.scroll?.y ?? 0;
+      },
+      getBoundingClientRect() {
+        return {
+          top: 0,
+          left: 0,
+          width: window.innerWidth,
+          height: window.innerHeight,
+        };
+      },
+      pinType: element.style.transform ? "transform" : "fixed",
+    });
 
-      return () => {
-        ScrollTrigger.addEventListener("refresh", () => scroll?.update());
+    ScrollTrigger.addEventListener("refresh", handleRefresh);
+    ScrollTrigger.refresh();
 
-        ScrollTrigger.refresh();
-      };
-    }
+    return () => {
+      scroll.off?.("scroll", handleScroll);
+      ScrollTrigger.removeEventListener("refresh", handleRefresh);
+    };
   }, [scroll]);
 
   return null;
-};
+}
 
-function Document({
-  children,
-  title = `Sydney Zhao`,
-}: {
-  children: React.ReactNode;
-  title?: string;
-}) {
-  const containerRef = useRef<HTMLDivElement>(null!);
+export function Layout({ children }: { children: ReactNode }) {
+  const containerRef = useRef<HTMLDivElement>(null);
 
   return (
     <html lang="en">
       <head>
+        <meta charSet="utf-8" />
         <Meta />
         <Links />
       </head>
-      <LocomotiveScrollProvider
-        options={{ smooth: true, lerp: 0.08, multiplier: 0.9 }}
-        watch={[]}
-        containerRef={containerRef}
-        onUpdate={() => console.log("Updated,but not on location change!")}
-      >
-        <ScrollTriggerProxy />
-        <body>
+      <body>
+        <LocomotiveScrollProvider
+          options={{ smooth: true, lerp: 0.08, multiplier: 0.9 }}
+          watch={[]}
+          containerRef={containerRef}
+        >
+          <ScrollTriggerProxy />
           <div id="container" data-scroll-container ref={containerRef}>
             {children}
           </div>
-          <ScrollRestoration />
-          <Scripts />
-          <LiveReload />
-        </body>
-      </LocomotiveScrollProvider>
+        </LocomotiveScrollProvider>
+        <ScrollRestoration />
+        <Scripts />
+      </body>
     </html>
   );
 }
 
 export default function App() {
-  return (
-    <Document>
-      <Outlet />
-    </Document>
-  );
+  return <Outlet />;
 }
 
-export function CatchBoundary() {
-  const caught = useCatch();
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  let title = "Uh-oh!";
+  let message = "Something went wrong. Please try again soon.";
+  let details: string | undefined;
+
+  if (isRouteErrorResponse(error)) {
+    title = `${error.status} ${error.statusText}`;
+    message = error.data?.message ?? error.statusText;
+  } else if (error instanceof Error) {
+    details = error.message;
+  }
 
   return (
-    <Document title={`${caught.status} ${caught.statusText}`}>
-      <div className="error-container">
-        <h1>
-          {caught.status} {caught.statusText}
-        </h1>
-      </div>
-    </Document>
-  );
-}
-
-export function ErrorBoundary({ error }: { error: Error }) {
-  return (
-    <Document title="Uh-oh!">
-      <div className="error-container">
-        <h1>\(o_o)/</h1>
-        <h2>Something went wrong. Please try again soon.</h2>
-        <pre>{error.message}</pre>
-      </div>
-    </Document>
+    <div className="error-container">
+      <h1>{title}</h1>
+      <h2>{message}</h2>
+      {details ? <pre>{details}</pre> : null}
+    </div>
   );
 }

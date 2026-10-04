@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useMatches } from "@remix-run/react";
+import { useMatches } from "react-router";
 import type { User } from "./models/user.server";
 
 export function useMatchesData(id: string) {
@@ -9,16 +9,21 @@ export function useMatchesData(id: string) {
     [matchingRoutes, id]
   );
 
-  return route?.data;
+  return route?.loaderData;
 }
 
-export function isUser(user: User) {
-  return user && typeof user === "object";
+export function isUser(user: unknown): user is User {
+  return Boolean(user) && typeof user === "object";
 }
 
 export function useOptionalUser() {
   const data = useMatchesData("root");
-  if (!data || !isUser(data.user)) {
+  if (
+    !data ||
+    typeof data !== "object" ||
+    !("user" in data) ||
+    !isUser(data.user)
+  ) {
     return undefined;
   }
   return data.user;

@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/iframe-has-title */
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData } from "react-router";
 import classNames from "classnames";
 import React, { useState } from "react";
 import { useForwardedRef } from "~/hooks/useForwardedRef";
