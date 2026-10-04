@@ -13,17 +13,14 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
   function Partfolio({ isZh }, ref) {
     const { works } = useLoaderData<LoaderData>();
     const partfolioRef = useForwardedRef(ref);
-    const [workImg, setWorkImg] = useState<string>(works[0].imageUri);
+    const [workImg, setWorkImg] = useState<string>(works[0]?.imageUri ?? "");
 
-    const handleHover = (src: string) => (e: MouseEvent) => {
-      e.preventDefault();
+    const handleHover = (src: string) => () => {
       setWorkImg(src);
     };
 
     return (
       <section id="partfolio" ref={partfolioRef}>
-        <div className="tv-nav-activer"></div>
-        <div className="tv-animation-trigger"></div>
         <div className="tv-box-stickytainer">
           <div className="tv-box-pinner">
             <div className="tv-box-mask">
@@ -31,12 +28,14 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
                 <div className="tv-all-vids">
                   <div className="tv-blackscreen"></div>
                   <div className="tv-showreel">
-                    <img
-                      loading="eager"
-                      className="tv-cover"
-                      src={workImg}
-                      alt="cover"
-                    />
+                    {workImg ? (
+                      <img
+                        loading="eager"
+                        className="tv-cover"
+                        src={workImg}
+                        alt="cover"
+                      />
+                    ) : null}
                   </div>
                   <div className="tv-vids-container">
                     <div className="tv-video-box"></div>
@@ -60,7 +59,7 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
               <div
                 key={work.id}
                 className={classNames("work-item", { zh: isZh })}
-                onMouseEnter={handleHover(work.imageUri) as any}
+                onMouseEnter={handleHover(work.imageUri)}
               >
                 <div className="work-item-entry">
                   <div className="work-item-topline"></div>
