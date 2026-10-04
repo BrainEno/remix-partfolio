@@ -283,9 +283,9 @@
   .work-item,
   .work-item.zh {
     height: auto;
-    min-height: 76px;
+    min-height: clamp(120px, 24svh, 220px);
     margin: 0;
-    padding: 13px 0 11px;
+    padding: 18px 0 16px;
     justify-content: center;
   }
 
@@ -324,7 +324,7 @@
   .work-teaser {
     position: relative;
     right: auto;
-    margin: 8px 0 0;
+    margin: 10px 0 0;
     font-size: 11px;
     line-height: 1.25em;
     flex-wrap: wrap;
