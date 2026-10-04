@@ -114,10 +114,14 @@ export default function Index() {
         handlePartfolio={handlePartifolio}
         handleContact={handleContact}
       />
-      <div id="home">
-        <Intro isZh={isZh} />
-        <Partifolio isZh={isZh} />
-        <Contact isZh={isZh} />
+      <div id="smooth-wrapper">
+        <div id="smooth-content">
+          <div id="home">
+            <Intro isZh={isZh} />
+            <Partifolio isZh={isZh} />
+            <Contact isZh={isZh} />
+          </div>
+        </div>
       </div>
     </div>
   );
