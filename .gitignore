@@ -1,7 +1,8 @@
 node_modules
-
-/.cache
-/public/build
-/.netlify
+build
+.react-router
+.cache
+.vite
+.netlify
 .env
-yarn.error.log
+*.log
