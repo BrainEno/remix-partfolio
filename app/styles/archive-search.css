@@ -1,0 +1,55 @@
+.archive-toolbar {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.archive-filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.archive-search {
+  flex: 1 1 280px;
+  max-width: 420px;
+}
+
+.archive-search input {
+  width: 100%;
+  min-height: 36px;
+  border: 0;
+  border-bottom: 1px solid #111;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.archive-search input:focus {
+  border-bottom-width: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 760px) {
+  .archive-toolbar {
+    align-items: stretch;
+  }
+
+  .archive-filter-group,
+  .archive-search {
+    width: 100%;
+    max-width: none;
+  }
+}

@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import homeStylesUrl from "~/styles/index.css?url";
+import { archiveContent } from "../archive/content";
 import Contact from "../components/Contact";
 import Header from "../components/Header";
 import Intro from "../components/Intro";
 import Partifolio from "../components/Partfolio";
+import { useSiteLanguage } from "../hooks/useSiteLanguage";
 import { localize, portfolioContent } from "../portfolio/content";
-import type { Language, PortfolioSection } from "../portfolio/types";
+import type { PortfolioSection } from "../portfolio/types";
 import { setupMobileChoreography } from "../scroll/mobile-choreography.client";
 import {
   scrollToPortfolioSection,
@@ -14,40 +16,16 @@ import {
 
 export const links = () => [{ rel: "stylesheet", href: homeStylesUrl }];
 
-const LANGUAGE_STORAGE_KEY = "portfolio-language";
-
 export default function Index() {
   const works = portfolioContent.works.items;
   const [section, setSection] = useState<PortfolioSection>("intro");
-  const [language, setLanguage] = useState<Language>("zh");
-  const [languageReady, setLanguageReady] = useState(false);
+  const { language, setLanguage, languageReady } = useSiteLanguage();
   const [activeWorkIndex, setActiveWorkIndex] = useState(-1);
   const pageRef = useRef<HTMLDivElement | null>(null);
   const isZh = language === "zh";
 
   useEffect(() => {
-    try {
-      const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-      if (storedLanguage === "zh" || storedLanguage === "en") {
-        setLanguage(storedLanguage);
-      }
-    } catch {
-      // Storage can be unavailable in restrictive/private browser contexts.
-    } finally {
-      setLanguageReady(true);
-    }
-  }, []);
-
-  useEffect(() => {
     if (!languageReady) return;
-
-    try {
-      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
-    } catch {
-      // The in-memory language switch still works when storage is unavailable.
-    }
-
-    document.documentElement.lang = language === "zh" ? "zh-Hant" : "en";
     document.title = localize(portfolioContent.identity.pageTitle, language);
   }, [language, languageReady]);
 
@@ -108,6 +86,7 @@ export default function Index() {
         setLanguage={setLanguage}
         section={section}
         content={portfolioContent}
+        archiveLabel={localize(archiveContent.labels.archive, language)}
         onNavigate={handleNavigate}
       />
       <div id="smooth-wrapper">
