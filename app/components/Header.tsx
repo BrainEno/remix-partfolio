@@ -3,7 +3,8 @@ import classNames from "classnames";
 import type { MouseEvent } from "react";
 import React from "react";
 import { motion } from "framer-motion";
-import { isMobile } from "react-device-detect";
+import { useMediaQuery } from "~/hooks/useMediaQuery";
+import { MOBILE_MEDIA_QUERY } from "~/portfolio/media";
 import type { Language, PortfolioSection } from "~/portfolio/types";
 
 interface HeaderProps {
@@ -24,6 +25,7 @@ const Header: React.FC<HeaderProps> = ({
   handlePartfolio,
 }) => {
   const isZh = lang === "zh";
+  const isMobile = useMediaQuery(MOBILE_MEDIA_QUERY);
 
   return (
     <header className="header">
@@ -55,10 +57,7 @@ const Header: React.FC<HeaderProps> = ({
             initial={
               isMobile
                 ? { opacity: 0, x: "-100%" }
-                : {
-                    opacity: 0,
-                    y: "100%",
-                  }
+                : { opacity: 0, y: "100%" }
             }
             animate={isMobile ? { opacity: 1, x: 0 } : { opacity: 1, y: 0 }}
             transition={{
@@ -72,10 +71,7 @@ const Header: React.FC<HeaderProps> = ({
             initial={
               isMobile
                 ? { opacity: 0, x: "-120%" }
-                : {
-                    opacity: 0,
-                    y: "100%",
-                  }
+                : { opacity: 0, y: "100%" }
             }
             animate={isMobile ? { opacity: 1, x: 0 } : { opacity: 1, y: 0 }}
             transition={{
@@ -83,8 +79,7 @@ const Header: React.FC<HeaderProps> = ({
               ease: "easeOut",
             }}
           >
-            {" "}
-            |{" "}
+            {" "}|{" "}
           </motion.span>
           <motion.button
             type="submit"
@@ -95,10 +90,7 @@ const Header: React.FC<HeaderProps> = ({
             initial={
               isMobile
                 ? { opacity: 0, x: "-140%" }
-                : {
-                    opacity: 0,
-                    y: "100%",
-                  }
+                : { opacity: 0, y: "100%" }
             }
             animate={isMobile ? { opacity: 1, x: 0 } : { opacity: 1, y: 0 }}
             transition={{
