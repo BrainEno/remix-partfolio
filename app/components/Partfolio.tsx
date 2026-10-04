@@ -1,11 +1,12 @@
 import classNames from "classnames";
-import React, { type CSSProperties } from "react";
+import React, { type CSSProperties, useEffect } from "react";
 import { useForwardedRef } from "~/hooks/useForwardedRef";
-import type { PortfolioWork } from "~/portfolio/types";
+import { localize } from "~/portfolio/content";
+import type { Language, PortfolioContent } from "~/portfolio/types";
 
 interface PartfolioProps {
-  isZh: boolean;
-  works: PortfolioWork[];
+  lang: Language;
+  content: PortfolioContent["works"];
   activeWorkIndex: number;
   onWorkPreview: (index: number) => void;
 }
@@ -16,15 +17,40 @@ type PortfolioStyle = CSSProperties & {
 
 const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
   function Partfolio(
-    { isZh, works, activeWorkIndex, onWorkPreview },
+    { lang, content, activeWorkIndex, onWorkPreview },
     ref
   ) {
     const partfolioRef = useForwardedRef(ref);
+    const isZh = lang === "zh";
+    const works = content.items;
     const activeWork =
       activeWorkIndex >= 0 ? works[activeWorkIndex] ?? null : null;
     const portfolioStyle: PortfolioStyle = {
       "--portfolio-work-space": `${Math.max(works.length, 1) * 14}svh`,
     };
+
+    useEffect(() => {
+      const section = partfolioRef.current;
+      if (!section || !("IntersectionObserver" in window)) return;
+
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry.isIntersecting) return;
+
+          const urls = [content.tvFrame.src, ...works.map((work) => work.image.src)];
+          urls.forEach((src) => {
+            const image = new Image();
+            image.decoding = "async";
+            image.src = src;
+          });
+          observer.disconnect();
+        },
+        { rootMargin: "100% 0px", threshold: 0 }
+      );
+
+      observer.observe(section);
+      return () => observer.disconnect();
+    }, [content.tvFrame.src, partfolioRef, works]);
 
     return (
       <section id="partfolio" ref={partfolioRef} style={portfolioStyle}>
@@ -34,22 +60,22 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
               <div className="tv-box">
                 <div
                   className={classNames("tv-all-vids", {
-                    "has-preview": Boolean(activeWork?.imageUri),
+                    "has-preview": Boolean(activeWork?.image.src),
                   })}
-                  data-preview-active={activeWork?.imageUri ? "true" : "false"}
+                  data-preview-active={activeWork?.image.src ? "true" : "false"}
                   aria-live="polite"
                 >
                   <div className="tv-blackscreen" />
                   <div className="tv-showreel">
-                    {activeWork?.imageUri ? (
+                    {activeWork?.image.src ? (
                       <img
                         key={activeWork.id}
                         loading="eager"
                         decoding="async"
                         draggable={false}
                         className="tv-cover"
-                        src={activeWork.imageUri}
-                        alt={isZh ? activeWork.title : activeWork.name}
+                        src={activeWork.image.src}
+                        alt={localize(activeWork.image.alt, lang)}
                       />
                     ) : null}
                   </div>
@@ -57,12 +83,13 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
                 <div className="tv-bg-box">
                   <img
                     className="tv-bg"
-                    src="/images/tv-bg.png"
+                    src={content.tvFrame.src}
                     alt=""
                     aria-hidden="true"
                     draggable={false}
-                    loading="eager"
+                    loading="lazy"
                     decoding="async"
+                    fetchPriority="low"
                   />
                 </div>
               </div>
@@ -71,7 +98,7 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
 
           <div className="work-items-box">
             <h2 className={classNames("work-items-headline", { zh: isZh })}>
-              {isZh ? "參與作品  " : "Involved Works"} 2020 - 2022
+              {localize(content.heading, lang)} {content.period}
             </h2>
 
             {works.map((work, index) => {
@@ -92,21 +119,13 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
                     <div className="work-item-topline" />
                     <div className="work-name-mask">
                       <h3 className={classNames("work-name", { zh: isZh })}>
-                        {isZh
-                          ? `《${work.title}》${
-                              work.title === "⿏疫" ? "英语版" : ""
-                            }`
-                          : work.name}
+                        {isZh ? `《${localize(work.title, lang)}》` : localize(work.title, lang)}
                       </h3>
                       <h3
                         aria-hidden="true"
                         className={classNames("work-name-hover", { zh: isZh })}
                       >
-                        {isZh
-                          ? `《${work.title}》${
-                              work.title === "⿏疫" ? "英语版" : ""
-                            }`
-                          : work.name}
+                        {isZh ? `《${localize(work.title, lang)}》` : localize(work.title, lang)}
                       </h3>
                     </div>
                     <div className="work-item-botline" />
@@ -114,7 +133,7 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
 
                   <div className="work-teaser">
                     <div className="work-teaser-mask">
-                      <span className="work-teaser-date">{work.date}</span>
+                      <span className="work-teaser-date">{work.year}</span>
                     </div>
                     <div className="work-teaser-mask" aria-hidden="true">
                       <span className="work-teaser-seperator">
@@ -123,7 +142,7 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
                     </div>
                     <div className="work-teaser-mask">
                       <span className="work-teaser-group">
-                        {isZh ? work.groupTitle : work.groupName}
+                        {localize(work.credit, lang)}
                       </span>
                     </div>
                   </div>
