@@ -249,10 +249,9 @@
 @media (max-width: 480px) {
   #partfolio {
     width: 100vw;
-    /* 220svh accounts for TV arrival + exit. Each project contributes its
-       own readable dwell interval, so adding/removing works cannot desync the
-       section height from the pinned television sequence. */
-    min-height: calc(220svh + var(--portfolio-work-count, 1) * 24svh);
+    /* 220svh accounts for TV arrival + exit. The route provides the total
+       project dwell space as a length so this remains compatible with Safari. */
+    min-height: calc(220svh + var(--portfolio-work-space, 24svh));
     overflow-x: clip;
     overflow-y: visible;
   }
