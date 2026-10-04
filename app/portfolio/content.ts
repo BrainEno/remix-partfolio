@@ -127,7 +127,7 @@ export const portfolioContent = {
     ],
     accentImages: [
       {
-        src: "/images/hairyApe.png",
+        src: "/images/hairyApe.PNG",
         alt: { zh: "作品照片", en: "Performance still" },
       },
       {
