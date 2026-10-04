@@ -24,6 +24,10 @@ export const archiveContent = {
     books: { zh: "书", en: "Books" },
     audio: { zh: "声音", en: "Audio" },
     video: { zh: "影像", en: "Video" },
+    search: {
+      zh: "搜索标题、创作者或标签",
+      en: "Search title, creator or tag",
+    },
     noMedia: {
       zh: "尚未配置媒体文件。可在 app/archive/content.ts 中添加。",
       en: "No media source yet. Add one in app/archive/content.ts.",
