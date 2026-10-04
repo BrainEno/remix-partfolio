@@ -1,6 +1,6 @@
 # Remix Portfolio
 
-A portfolio site originally built with Remix, now migrated to the current React Router Framework Mode stack while preserving the original visual design, GSAP animations, Locomotive Scroll behavior, and Netlify deployment target.
+A portfolio site originally built with Remix, now migrated to React Router Framework Mode while preserving the original visual design, animation-heavy presentation, interactive television project preview, and Netlify deployment target.
 
 ## Stack
 
@@ -8,8 +8,7 @@ A portfolio site originally built with Remix, now migrated to the current React 
 - React 19
 - Vite 8
 - TypeScript 5.9
-- GSAP / ScrollTrigger
-- Locomotive Scroll
+- GSAP / ScrollTrigger / ScrollSmoother
 - React Three Fiber / Drei
 - Supabase
 - Netlify
@@ -69,6 +68,8 @@ Run both checks together:
 npm run check
 ```
 
+The modernization CI also rejects reintroduction of Locomotive Scroll or a third-party `scrollerProxy`, so the page has a single scroll authority.
+
 ## Production preview
 
 Build first, then start the generated server bundle:
@@ -101,8 +102,19 @@ npm run build
 
 and the client output directory is `build/client`.
 
+## Scroll architecture
+
+The portfolio now uses one GSAP-native scroll pipeline:
+
+- `ScrollSmoother` owns smooth scrolling on top of the browser's native scroll position.
+- `ScrollTrigger` owns pinned sections and scroll-driven timelines.
+- Section navigation calls `ScrollSmoother.scrollTo()` rather than a second scrolling library.
+- The television is pinned for the portfolio section while its inner television artwork is animated separately. The pinned element itself is not animated, which keeps ScrollTrigger measurements stable.
+- ScrollTrigger instances are created through GSAP contexts and reverted on React effect cleanup, avoiding duplicate timelines after re-renders or route remounts.
+- Responsive animation branches use `gsap.matchMedia()` rather than mixing device detection with separate virtual-scroll coordinates.
+
+The older Locomotive Scroll provider, `react-locomotive-scroll` compatibility layer, Locomotive CSS, and `ScrollTrigger.scrollerProxy()` integration have been removed.
+
 ## Migration notes
 
 The project no longer uses the Classic Remix compiler, the legacy custom Netlify Remix server entry, or the old Remix browser/server entry files. Routing, type generation, and builds now use React Router Framework Mode and Vite.
-
-The old `react-locomotive-scroll` wrapper was replaced with a small local adapter around `locomotive-scroll` so the original scrolling behavior can be preserved on React 19 without keeping an abandoned React 18-only wrapper dependency.
