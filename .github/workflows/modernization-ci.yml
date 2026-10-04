@@ -38,47 +38,63 @@ jobs:
             exit 1
           fi
 
+      - name: Verify retired dependencies stay removed
+        shell: bash
+        run: |
+          if grep -RInE '@supabase/supabase-js|framer-motion|tiny-invariant|@react-router/serve|@netlify/vite-plugin-react-router|@fontsource/noto-sans-tc' app package.json vite.config.ts; then
+            echo 'A retired database/auth/server/animation/font dependency was reintroduced.'
+            exit 1
+          fi
+
       - name: Typecheck
         run: npm run typecheck
 
       - name: Build
         run: npm run build
 
-      - name: Verify browser-only libraries stay out of SSR
+      - name: Verify static production contract
         shell: bash
         run: |
-          if grep -RInF '"gsap"' build/server || \
-             grep -RInF "'gsap'" build/server || \
-             grep -RInF 'gsap/Scroll' build/server || \
-             grep -RInF 'gsap/dist/' build/server; then
-            echo 'GSAP leaked into the server bundle.'
+          test -f build/client/index.html
+          test -f build/client/__spa-fallback.html
+          test -f build/client/_redirects
+          test -f build/client/generated/tv-bg.webp
+          grep -q 'data-portfolio-template="ready"' build/client/index.html
+          grep -q 'publish = "build/client"' netlify.toml
+
+          # React Router may emit build/server as a build-time prerender helper even
+          # with ssr:false. It is not a runtime deployment artifact. The production
+          # contract is that Netlify publishes only build/client and has no server
+          # adapter or functions configuration.
+          if grep -RInE 'build/server|\[functions\]|\[edge_functions\]' netlify.toml; then
+            echo 'Netlify configuration references a runtime server/functions path.'
             exit 1
           fi
 
-          if grep -RInF '@react-three/' build/server || \
-             grep -RInF '"three"' build/server || \
-             grep -RInF "'three'" build/server; then
-            echo 'Three.js or React Three Fiber leaked into the server bundle.'
+          tv_bytes=$(stat -c%s build/client/generated/tv-bg.webp)
+          echo "Optimized TV artwork: ${tv_bytes} bytes"
+          if [ "$tv_bytes" -gt 3000000 ]; then
+            echo 'Optimized TV artwork exceeded the 3 MB performance budget.'
             exit 1
           fi
 
-      - name: Smoke test production server
+      - name: Smoke test static production site
         shell: bash
         run: |
-          npm run start > /tmp/remix-portfolio.log 2>&1 &
+          npm run start > /tmp/portfolio-static.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
 
           for attempt in {1..30}; do
             if curl --fail --silent --show-error http://127.0.0.1:3000/ > /tmp/homepage.html; then
               test -s /tmp/homepage.html
-              grep -q 'Seeing You Through The River' /tmp/homepage.html
+              grep -q 'data-portfolio-template="ready"' /tmp/homepage.html
               exit 0
             fi
             sleep 1
           done
 
-          cat /tmp/remix-portfolio.log
+          cat /tmp/portfolio-static.log
           exit 1
 
       - name: Install Playwright WebKit
@@ -100,8 +116,8 @@ jobs:
               "$PREVIEW_URL" || true)
 
             if [ "$status" = "200" ] && \
-               grep -q 'Seeing You Through The River' /tmp/netlify-preview.html; then
-              echo "Netlify Deploy Preview is serving the portfolio successfully."
+               grep -q 'data-portfolio-template="ready"' /tmp/netlify-preview.html; then
+              echo "Netlify Deploy Preview is serving the static portfolio successfully."
               exit 0
             fi
 

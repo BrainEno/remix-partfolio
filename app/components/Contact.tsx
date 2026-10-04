@@ -1,21 +1,36 @@
-import { motion } from "framer-motion";
-import React, { useEffect, useRef, useState } from "react";
-import type { ComponentType } from "react";
-import { useForwardedRef } from "~/hooks/useForwardedRef";
+import { useEffect, useRef, useState, type ComponentType } from "react";
+import { localize } from "~/portfolio/content";
+import type { Language, PortfolioContent } from "~/portfolio/types";
 
 interface Props {
-  isZh: boolean;
+  lang: Language;
+  content: PortfolioContent["contact"];
 }
 
-const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
-  { isZh },
-  ref
-) {
-  const contactRef = useForwardedRef(ref);
+type SceneStatus = "idle" | "loading" | "ready" | "error";
+
+const MARQUEE_WORDS = Array.from({ length: 10 }, (_, index) => index);
+let telephoneScenePromise: Promise<{ default: ComponentType }> | null = null;
+
+function loadTelephoneScene() {
+  telephoneScenePromise ??= import("../3d/TelephoneScene.client");
+  return telephoneScenePromise;
+}
+
+export default function Contact({ lang, content }: Props) {
   const contactInnerRef = useRef<HTMLDivElement | null>(null);
+  const mountedRef = useRef(true);
   const [sceneActive, setSceneActive] = useState(false);
+  const [sceneStatus, setSceneStatus] = useState<SceneStatus>("idle");
   const [TelephoneScene, setTelephoneScene] =
     useState<ComponentType | null>(null);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const target = contactInnerRef.current;
@@ -40,121 +55,84 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
   }, []);
 
   useEffect(() => {
-    if (!sceneActive || TelephoneScene) return;
+    if (!sceneActive || TelephoneScene || sceneStatus === "loading") return;
 
-    let cancelled = false;
-    void import("../3d/TelephoneScene.client").then(({ default: Scene }) => {
-      if (!cancelled) setTelephoneScene(() => Scene);
-    });
+    setSceneStatus("loading");
+    void loadTelephoneScene()
+      .then(({ default: Scene }) => {
+        if (!mountedRef.current) return;
+        setTelephoneScene(() => Scene);
+        setSceneStatus("ready");
+      })
+      .catch((error: unknown) => {
+        telephoneScenePromise = null;
+        if (!mountedRef.current) return;
+        setSceneStatus("error");
+        console.error("Failed to load the Contact WebGL scene", error);
+      });
+  }, [sceneActive, sceneStatus, TelephoneScene]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [sceneActive, TelephoneScene]);
+  const mailto = `mailto:${content.email}`;
+  const marqueeLabel = localize(content.marquee, lang);
 
   return (
-    <section id="contact" ref={contactRef}>
+    <section id="contact">
       <div className="contact-text-box">
-        <p className="contact-number">+86 - 1897 - 111 - 3243</p>
+        <p className="contact-number">{content.phone}</p>
       </div>
       <div className="contact-inner" ref={contactInnerRef}>
-        <h2 className="contact-headline contact-hl1">CALL ME</h2>
-        <h2 className="contact-headline">FOR THE</h2>
-        <h2 className="contact-headline contact-hl3">MARQUEE MOON</h2>
+        {content.headlines.map((headline, index) => (
+          <h2
+            key={`${headline}-${index}`}
+            className={`contact-headline contact-hl${index + 1}`}
+          >
+            {headline}
+          </h2>
+        ))}
+
         <div
           className="canvas-container"
           aria-hidden="true"
           data-scene-active={sceneActive ? "true" : "false"}
+          data-scene-status={sceneStatus}
         >
           {sceneActive && TelephoneScene ? <TelephoneScene /> : null}
         </div>
-        <a
-          href="mailto:sydzhao@outlook.com"
-          type="email"
-          className="contact-link"
-        >
+
+        <a href={mailto} className="contact-link" aria-label={content.email}>
           <div className="runningtext-bufferdiv">
-            <div className="runningtext">
-              <motion.div
-                className="runningtext-l1"
-                animate={{ x: ["0%", "-100%"] }}
-                transition={{
-                  repeat: Infinity,
-                  repeatType: "loop",
-                  duration: 80,
-                  ease: "linear",
-                }}
-              >
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me </span>
-              </motion.div>
-              <motion.div
-                className="runningtext-l2"
-                animate={{ x: ["0%", "-100%"] }}
-                transition={{
-                  repeat: Infinity,
-                  repeatType: "loop",
-                  duration: 80,
-                  ease: "linear",
-                }}
-              >
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me </span>
-              </motion.div>
+            <div className="runningtext" aria-hidden="true">
+              {["runningtext-l1", "runningtext-l2"].map((trackClass) => (
+                <div className={trackClass} key={trackClass}>
+                  {MARQUEE_WORDS.map((index) => (
+                    <span className="runningtext-word" key={index}>
+                      {marqueeLabel}
+                    </span>
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
         </a>
-        <a
-          href="mailto:sydzhao@outlook.com"
-          type="email"
-          className="contact-email-link"
-        >
-          <p className="contact-email">sydzhao@outlook.com</p>
+
+        <a href={mailto} className="contact-email-link">
+          <p className="contact-email">{content.email}</p>
         </a>
-        <h3>© 2023 Sydney Zhao. All rights resrved.</h3>
+        <h3>{content.copyright}</h3>
         <p>
-          Webdesign + WebDev by{" "}
+          {localize(content.credit.prefix, lang)}{" "}
           <span>
             <a
-              href="https://github.com/BrainEno"
-              type="link"
+              href={content.credit.url}
               target="_blank"
               className="github-link"
               rel="noreferrer"
             >
-              Bottom Think - BrainEno
+              {content.credit.name}
             </a>
           </span>
         </p>
       </div>
     </section>
   );
-});
-
-export default Contact;
+}

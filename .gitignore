@@ -6,3 +6,4 @@ build
 .netlify
 .env
 *.log
+public/generated
