@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link, useParams } from "react-router";
 import { archiveContent } from "../archive/content";
-import { getArchiveItem } from "../archive/catalog";
+import { getArchiveItem, resolveArchiveCreators } from "../archive/catalog";
 import ArchiveShell from "../components/archive/ArchiveShell";
 import MediaPreview from "../components/archive/MediaPreview";
 import { useSiteLanguage } from "../hooks/useSiteLanguage";
@@ -17,6 +17,7 @@ export default function ArchiveItemRoute() {
   const { itemId = "" } = useParams();
   const item = getArchiveItem(itemId);
   const { language, setLanguage, languageReady } = useSiteLanguage();
+  const creators = item ? resolveArchiveCreators(item) : [];
 
   useEffect(() => {
     if (!languageReady || !item) return;
@@ -43,7 +44,7 @@ export default function ArchiveItemRoute() {
       language={language}
       setLanguage={setLanguage}
       title={item.title[language]}
-      description={item.creators.join(" · ")}
+      description={creators.map((creator) => creator.name[language]).join(" · ")}
     >
       <article className="archive-detail">
         <div className="archive-detail-meta">
@@ -52,6 +53,14 @@ export default function ArchiveItemRoute() {
             <Link to={`/archive/year/${encodeURIComponent(item.year)}`}>{item.year}</Link>
           ) : null}
           {item.demo ? <span>TEMPLATE DATA</span> : null}
+        </div>
+
+        <div className="archive-detail-creators" aria-label="Creators">
+          {creators.map((creator) => (
+            <Link key={creator.id} to={`/archive/creator/${creator.id}`}>
+              {creator.name[language]}
+            </Link>
+          ))}
         </div>
 
         {item.image ? (

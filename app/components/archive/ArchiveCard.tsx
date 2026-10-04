@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { resolveArchiveCreators } from "../../archive/catalog";
 import type { ArchiveItem } from "../../archive/types";
 import type { Language } from "../../portfolio/types";
 
@@ -15,6 +16,8 @@ export default function ArchiveCard({
   rank,
   note,
 }: ArchiveCardProps) {
+  const creators = resolveArchiveCreators(item);
+
   return (
     <article className="archive-card" data-archive-kind={item.kind}>
       <Link to={`/archive/${item.id}`} className="archive-card-link">
@@ -29,7 +32,9 @@ export default function ArchiveCard({
             {item.demo ? <span>template data</span> : null}
           </div>
           <h2>{item.title[language]}</h2>
-          <p className="archive-card-creators">{item.creators.join(" · ")}</p>
+          <p className="archive-card-creators">
+            {creators.map((creator) => creator.name[language]).join(" · ")}
+          </p>
           {item.summary ? (
             <p className="archive-card-summary">{item.summary[language]}</p>
           ) : null}

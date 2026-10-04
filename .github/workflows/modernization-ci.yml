@@ -68,10 +68,11 @@ jobs:
           test -f build/client/archive/type/video/index.html
           test -f build/client/archive/tag/demo/index.html
           test -f build/client/archive/year/2026/index.html
+          test -f build/client/archive/creator/sample-author/index.html
+          test -f build/client/archive/creator/sample-audio-creator/index.html
           grep -q 'data-portfolio-template="ready"' build/client/index.html
           grep -q 'data-archive-template="ready"' build/client/archive/index.html
-          grep -q 'data-archive-template="ready"' build/client/lists/index.html
-          grep -q 'data-archive-template="ready"' build/client/archive/type/video/index.html
+          grep -q 'data-archive-template="ready"' build/client/archive/creator/sample-author/index.html
           grep -q 'publish = "build/client"' netlify.toml
 
           if grep -RInE 'build/server|\[functions\]|\[edge_functions\]' netlify.toml; then
@@ -99,10 +100,10 @@ jobs:
               grep -q 'data-portfolio-template="ready"' /tmp/homepage.html
               curl --fail --silent --show-error http://127.0.0.1:3000/archive/ > /tmp/archive.html
               curl --fail --silent --show-error http://127.0.0.1:3000/lists/ > /tmp/lists.html
-              curl --fail --silent --show-error http://127.0.0.1:3000/archive/type/video/ > /tmp/archive-video.html
+              curl --fail --silent --show-error http://127.0.0.1:3000/archive/creator/sample-author/ > /tmp/archive-creator.html
               grep -q 'data-archive-template="ready"' /tmp/archive.html
               grep -q 'data-archive-template="ready"' /tmp/lists.html
-              grep -q 'data-archive-template="ready"' /tmp/archive-video.html
+              grep -q 'data-archive-template="ready"' /tmp/archive-creator.html
               exit 0
             fi
             sleep 1
@@ -124,35 +125,24 @@ jobs:
           PREVIEW_URL: https://deploy-preview-${{ github.event.pull_request.number }}--sydneyzhao.netlify.app/
         run: |
           for attempt in {1..60}; do
-            status=$(curl -L --silent --show-error \
-              --output /tmp/netlify-preview.html \
-              --write-out '%{http_code}' \
-              "$PREVIEW_URL" || true)
+            status=$(curl -L --silent --show-error --output /tmp/netlify-preview.html --write-out '%{http_code}' "$PREVIEW_URL" || true)
+            archive_status=$(curl -L --silent --show-error --output /tmp/netlify-archive.html --write-out '%{http_code}' "${PREVIEW_URL}archive/" || true)
+            creator_status=$(curl -L --silent --show-error --output /tmp/netlify-creator.html --write-out '%{http_code}' "${PREVIEW_URL}archive/creator/sample-author/" || true)
 
-            archive_status=$(curl -L --silent --show-error \
-              --output /tmp/netlify-archive.html \
-              --write-out '%{http_code}' \
-              "${PREVIEW_URL}archive/" || true)
-
-            facet_status=$(curl -L --silent --show-error \
-              --output /tmp/netlify-facet.html \
-              --write-out '%{http_code}' \
-              "${PREVIEW_URL}archive/type/video/" || true)
-
-            if [ "$status" = "200" ] && [ "$archive_status" = "200" ] && [ "$facet_status" = "200" ] && \
+            if [ "$status" = "200" ] && [ "$archive_status" = "200" ] && [ "$creator_status" = "200" ] && \
                grep -q 'data-portfolio-template="ready"' /tmp/netlify-preview.html && \
                grep -q 'data-archive-template="ready"' /tmp/netlify-archive.html && \
-               grep -q 'data-archive-template="ready"' /tmp/netlify-facet.html; then
-              echo "Netlify Deploy Preview is serving the static portfolio, archive and facets successfully."
+               grep -q 'data-archive-template="ready"' /tmp/netlify-creator.html; then
+              echo "Netlify Deploy Preview is serving the static portfolio and creator archive successfully."
               exit 0
             fi
 
-            echo "Waiting for healthy Netlify Deploy Preview (attempt $attempt/60, home $status, archive $archive_status, facet $facet_status)..."
+            echo "Waiting for healthy Netlify Deploy Preview (attempt $attempt/60, home $status, archive $archive_status, creator $creator_status)..."
             sleep 2
           done
 
           echo 'Netlify Deploy Preview never became healthy.'
           cat /tmp/netlify-preview.html || true
           cat /tmp/netlify-archive.html || true
-          cat /tmp/netlify-facet.html || true
+          cat /tmp/netlify-creator.html || true
           exit 1
