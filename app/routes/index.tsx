@@ -1,64 +1,43 @@
-import type { ActionArgs, LinksFunction, LoaderArgs } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
 import type { MouseEvent } from "react";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
-import type { LoaderFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "react-router";
+import type { Route } from "./+types/index";
 import homeStylesUrl from "~/styles/index.css?url";
-import Intro from "../components/Intro";
-import Header from "../components/Header";
-import { getInfroListItems } from "../models/work.server";
-import Partifolio from "../components/Partfolio";
 import Contact from "../components/Contact";
+import Header from "../components/Header";
+import Intro from "../components/Intro";
+import Partifolio from "../components/Partfolio";
 import { langCookie } from "../cookies";
+import { getInfroListItems } from "../models/work.server";
+import type { Language, PortfolioWork } from "../portfolio/types";
 import {
   scrollToPortfolioSection,
   setupPortfolioScroll,
 } from "../scroll/portfolio-scroll";
 
-export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: homeStylesUrl },
-];
+export const links = () => [{ rel: "stylesheet", href: homeStylesUrl }];
 
-export type Language = "zh" | "en";
-export type SectionOptions = "intro" | "partfolio" | "contact";
-export type IntroItem = {
-  id: string;
-  name: string;
-  title: string;
-  date: string;
-  imageUri: string;
-  groupName: string;
-  groupTitle: string;
-};
-
-export type LoaderData = {
-  lang: Language;
-  works: IntroItem[];
-};
-
-export const loader: LoaderFunction = async ({ request }: LoaderArgs) => {
-  const works = (await getInfroListItems()) ?? [];
+export async function loader({ request }: Route.LoaderArgs) {
+  const works = ((await getInfroListItems()) ?? []) as PortfolioWork[];
   const cookieHeader = request.headers.get("Cookie");
-  let lang: string = "zh";
+
   try {
     const cookie = await langCookie.parse(cookieHeader);
-    if (cookie.lang) {
-      lang = cookie.lang;
-    }
-  } catch (error) {
-    return json({ lang, works });
+    const lang: Language = cookie?.lang === "en" ? "en" : "zh";
+    return { lang, works };
+  } catch {
+    return { lang: "zh" as Language, works };
   }
-  return json({ lang, works });
-};
+}
 
-export const action = async ({ request }: ActionArgs) => {
+export async function action({ request }: Route.ActionArgs) {
   const cookieHeader = request.headers.get("Cookie");
   const cookie = (await langCookie.parse(cookieHeader)) || { lang: "zh" };
   const formData = await request.formData();
+  const requestedLang = formData.get("lang");
 
-  if (formData.get("lang")) {
-    cookie.lang = formData.get("lang");
+  if (requestedLang === "zh" || requestedLang === "en") {
+    cookie.lang = requestedLang;
   }
 
   return redirect("/", {
@@ -66,14 +45,25 @@ export const action = async ({ request }: ActionArgs) => {
       "Set-Cookie": await langCookie.serialize(cookie),
     },
   });
-};
+}
 
-export default function Index() {
-  const [section, setSection] = useState<SectionOptions>("intro");
-  const { lang } = useLoaderData<LoaderData>();
+export default function Index({ loaderData }: Route.ComponentProps) {
+  const { lang, works } = loaderData;
+  const [section, setSection] = useState<"intro" | "partfolio" | "contact">(
+    "intro"
+  );
   const [language, setLanguage] = useState<Language>(lang ?? "zh");
+  const [activeWorkIndex, setActiveWorkIndex] = useState(0);
   const pageRef = useRef<HTMLDivElement | null>(null);
   const isZh = language === "zh";
+
+  const handleWorkPreview = useCallback(
+    (index: number) => {
+      if (index < 0 || index >= works.length) return;
+      setActiveWorkIndex((current) => (current === index ? current : index));
+    },
+    [works.length]
+  );
 
   useLayoutEffect(() => {
     const scope = pageRef.current;
@@ -83,8 +73,9 @@ export default function Index() {
       scope,
       isZh,
       onSectionChange: setSection,
+      onWorkPreview: handleWorkPreview,
     });
-  }, [isZh]);
+  }, [handleWorkPreview, isZh]);
 
   const handleIntro = useCallback((e: MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -118,7 +109,12 @@ export default function Index() {
         <div id="smooth-content">
           <div id="home">
             <Intro isZh={isZh} />
-            <Partifolio isZh={isZh} />
+            <Partifolio
+              isZh={isZh}
+              works={works}
+              activeWorkIndex={activeWorkIndex}
+              onWorkPreview={handleWorkPreview}
+            />
             <Contact isZh={isZh} />
           </div>
         </div>
