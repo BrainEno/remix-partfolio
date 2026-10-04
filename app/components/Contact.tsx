@@ -1,14 +1,18 @@
-import { motion } from "framer-motion";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType } from "react";
 import { useForwardedRef } from "~/hooks/useForwardedRef";
+import { localize } from "~/portfolio/content";
+import type { Language, PortfolioContent } from "~/portfolio/types";
 
 interface Props {
-  isZh: boolean;
+  lang: Language;
+  content: PortfolioContent["contact"];
 }
 
+const MARQUEE_REPEAT_COUNT = 10;
+
 const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
-  { isZh },
+  { lang, content },
   ref
 ) {
   const contactRef = useForwardedRef(ref);
@@ -16,6 +20,10 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
   const [sceneActive, setSceneActive] = useState(false);
   const [TelephoneScene, setTelephoneScene] =
     useState<ComponentType | null>(null);
+  const marqueeWords = useMemo(
+    () => Array.from({ length: MARQUEE_REPEAT_COUNT }, (_, index) => index),
+    []
+  );
 
   useEffect(() => {
     const target = contactInnerRef.current;
@@ -52,15 +60,24 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
     };
   }, [sceneActive, TelephoneScene]);
 
+  const mailto = `mailto:${content.email}`;
+  const marqueeLabel = localize(content.marquee, lang);
+
   return (
     <section id="contact" ref={contactRef}>
       <div className="contact-text-box">
-        <p className="contact-number">+86 - 1897 - 111 - 3243</p>
+        <p className="contact-number">{content.phone}</p>
       </div>
       <div className="contact-inner" ref={contactInnerRef}>
-        <h2 className="contact-headline contact-hl1">CALL ME</h2>
-        <h2 className="contact-headline">FOR THE</h2>
-        <h2 className="contact-headline contact-hl3">MARQUEE MOON</h2>
+        {content.headlines.map((headline, index) => (
+          <h2
+            key={`${headline}-${index}`}
+            className={`contact-headline contact-hl${index + 1}`}
+          >
+            {headline}
+          </h2>
+        ))}
+
         <div
           className="canvas-container"
           aria-hidden="true"
@@ -68,87 +85,37 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
         >
           {sceneActive && TelephoneScene ? <TelephoneScene /> : null}
         </div>
-        <a
-          href="mailto:sydzhao@outlook.com"
-          type="email"
-          className="contact-link"
-        >
+
+        <a href={mailto} className="contact-link" aria-label={content.email}>
           <div className="runningtext-bufferdiv">
-            <div className="runningtext">
-              <motion.div
-                className="runningtext-l1"
-                animate={{ x: ["0%", "-100%"] }}
-                transition={{
-                  repeat: Infinity,
-                  repeatType: "loop",
-                  duration: 80,
-                  ease: "linear",
-                }}
-              >
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me </span>
-              </motion.div>
-              <motion.div
-                className="runningtext-l2"
-                animate={{ x: ["0%", "-100%"] }}
-                transition={{
-                  repeat: Infinity,
-                  repeatType: "loop",
-                  duration: 80,
-                  ease: "linear",
-                }}
-              >
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me —</span>
-                <span className="runningtext-word">Contact me </span>
-              </motion.div>
+            <div className="runningtext" aria-hidden="true">
+              {["runningtext-l1", "runningtext-l2"].map((trackClass) => (
+                <div className={trackClass} key={trackClass}>
+                  {marqueeWords.map((index) => (
+                    <span className="runningtext-word" key={index}>
+                      {marqueeLabel}
+                    </span>
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
         </a>
-        <a
-          href="mailto:sydzhao@outlook.com"
-          type="email"
-          className="contact-email-link"
-        >
-          <p className="contact-email">sydzhao@outlook.com</p>
+
+        <a href={mailto} className="contact-email-link">
+          <p className="contact-email">{content.email}</p>
         </a>
-        <h3>© 2023 Sydney Zhao. All rights resrved.</h3>
+        <h3>{content.copyright}</h3>
         <p>
-          Webdesign + WebDev by{" "}
+          {localize(content.credit.prefix, lang)}{" "}
           <span>
             <a
-              href="https://github.com/BrainEno"
-              type="link"
+              href={content.credit.url}
               target="_blank"
               className="github-link"
               rel="noreferrer"
             >
-              Bottom Think - BrainEno
+              {content.credit.name}
             </a>
           </span>
         </p>
@@ -157,4 +124,4 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
   );
 });
 
-export default Contact;
+export default React.memo(Contact);
