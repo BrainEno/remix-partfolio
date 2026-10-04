@@ -114,7 +114,6 @@ export default function Partfolio({
                 })}
                 data-work-index={index}
                 onMouseEnter={() => onWorkPreview(index)}
-                onMouseLeave={() => onWorkPreview(-1)}
               >
                 <div className="work-item-entry">
                   <div className="work-item-topline" />
