@@ -5,7 +5,7 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
-    "start": "react-router-serve ./build/server/index.js",
+    "start": "sirv build/client --single --port 3000",
     "typecheck": "react-router typegen && tsc",
     "test:scroll": "playwright test tests/scroll-runtime.spec.ts tests/template-runtime.spec.ts --project=webkit-mobile",
     "format": "prettier --write .",
@@ -16,7 +16,6 @@
     "@fontsource/inria-serif": "^4.5.8",
     "@fontsource/inter": "^4.5.14",
     "@react-router/node": "^8.4.0",
-    "@react-router/serve": "^8.4.0",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.1",
     "classnames": "^2.5.1",
@@ -28,7 +27,6 @@
     "three": "^0.186.1"
   },
   "devDependencies": {
-    "@netlify/vite-plugin-react-router": "^4.0.0",
     "@playwright/test": "^1.63.0",
     "@react-router/dev": "^8.4.0",
     "@types/node": "^22.19.19",
@@ -36,6 +34,7 @@
     "@types/react-dom": "^19.2.7",
     "@types/three": "^0.186.0",
     "prettier": "^3.8.3",
+    "sirv-cli": "^3.0.1",
     "typescript": "^5.9.3",
     "vite": "^8.0.3"
   },
