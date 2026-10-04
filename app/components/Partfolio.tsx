@@ -20,9 +20,10 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
     ref
   ) {
     const partfolioRef = useForwardedRef(ref);
-    const activeWork = works[activeWorkIndex] ?? works[0] ?? null;
+    const activeWork =
+      activeWorkIndex >= 0 ? works[activeWorkIndex] ?? null : null;
     const portfolioStyle: PortfolioStyle = {
-      "--portfolio-work-space": `${Math.max(works.length, 1) * 24}svh`,
+      "--portfolio-work-space": `${Math.max(works.length, 1) * 14}svh`,
     };
 
     return (
@@ -31,7 +32,13 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
           <div className="tv-box-pinner">
             <div className="tv-box-mask">
               <div className="tv-box">
-                <div className="tv-all-vids" aria-live="polite">
+                <div
+                  className={classNames("tv-all-vids", {
+                    "has-preview": Boolean(activeWork?.imageUri),
+                  })}
+                  data-preview-active={activeWork?.imageUri ? "true" : "false"}
+                  aria-live="polite"
+                >
                   <div className="tv-blackscreen" />
                   <div className="tv-showreel">
                     {activeWork?.imageUri ? (
@@ -79,6 +86,7 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
                   })}
                   data-work-index={index}
                   onMouseEnter={() => onWorkPreview(index)}
+                  onMouseLeave={() => onWorkPreview(-1)}
                 >
                   <div className="work-item-entry">
                     <div className="work-item-topline" />
