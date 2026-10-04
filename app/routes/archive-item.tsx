@@ -6,8 +6,12 @@ import ArchiveShell from "../components/archive/ArchiveShell";
 import MediaPreview from "../components/archive/MediaPreview";
 import { useSiteLanguage } from "../hooks/useSiteLanguage";
 import archiveStylesUrl from "../styles/archive.css?url";
+import archiveIndexesStylesUrl from "../styles/archive-indexes.css?url";
 
-export const links = () => [{ rel: "stylesheet", href: archiveStylesUrl }];
+export const links = () => [
+  { rel: "stylesheet", href: archiveStylesUrl },
+  { rel: "stylesheet", href: archiveIndexesStylesUrl },
+];
 
 export default function ArchiveItemRoute() {
   const { itemId = "" } = useParams();
