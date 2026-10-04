@@ -10,6 +10,10 @@ import Partifolio from "../components/Partfolio";
 import { langCookie } from "../cookies";
 import type { Language, PortfolioSection } from "../portfolio/types";
 import { portfolioWorks } from "../portfolio/works";
+import {
+  scrollToPortfolioSection,
+  setupPortfolioScroll,
+} from "../scroll/portfolio-scroll.client";
 
 export const links = () => [{ rel: "stylesheet", href: homeStylesUrl }];
 
@@ -60,33 +64,32 @@ export default function Index({ loaderData }: Route.ComponentProps) {
 
   useEffect(() => {
     const scope = pageRef.current;
-    if (!scope) return;
+    if (!scope || !setupPortfolioScroll) return;
 
-    let disposed = false;
-    let cleanup: (() => void) | undefined;
+    scope.dataset.scrollRuntime = "initializing";
 
-    void import("../scroll/portfolio-scroll.client").then(
-      ({ setupPortfolioScroll }) => {
-        if (disposed) return;
-        cleanup = setupPortfolioScroll({
-          scope,
-          isZh,
-          onSectionChange: setSection,
-          onWorkPreview: handleWorkPreview,
-        });
-      }
-    );
+    try {
+      const cleanup = setupPortfolioScroll({
+        scope,
+        isZh,
+        onSectionChange: setSection,
+        onWorkPreview: handleWorkPreview,
+      });
+      scope.dataset.scrollRuntime = "ready";
 
-    return () => {
-      disposed = true;
-      cleanup?.();
-    };
+      return () => {
+        cleanup?.();
+        delete scope.dataset.scrollRuntime;
+      };
+    } catch (error) {
+      scope.dataset.scrollRuntime = "error";
+      console.error("Portfolio scroll runtime failed to initialize", error);
+    }
   }, [handleWorkPreview, isZh]);
 
   const scrollToSection = useCallback((target: PortfolioSection) => {
-    void import("../scroll/portfolio-scroll.client").then(
-      ({ scrollToPortfolioSection }) => scrollToPortfolioSection(target)
-    );
+    if (!scrollToPortfolioSection) return;
+    scrollToPortfolioSection(target);
   }, []);
 
   const handleIntro = useCallback(
