@@ -31,13 +31,15 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
           <div className="tv-box-pinner">
             <div className="tv-box-mask">
               <div className="tv-box">
-                <div className="tv-all-vids">
+                <div className="tv-all-vids" aria-live="polite">
                   <div className="tv-blackscreen" />
                   <div className="tv-showreel">
                     {activeWork?.imageUri ? (
                       <img
                         key={activeWork.id}
                         loading="eager"
+                        decoding="async"
+                        draggable={false}
                         className="tv-cover"
                         src={activeWork.imageUri}
                         alt={isZh ? activeWork.title : activeWork.name}
@@ -51,6 +53,9 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
                     src="/images/tv-bg.png"
                     alt=""
                     aria-hidden="true"
+                    draggable={false}
+                    loading="eager"
+                    decoding="async"
                   />
                 </div>
               </div>
@@ -118,6 +123,8 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
               );
             })}
           </div>
+
+          <div className="tv-exit-spacer" aria-hidden="true" />
         </div>
       </section>
     );
