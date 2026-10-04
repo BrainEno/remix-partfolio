@@ -9,7 +9,7 @@ import Intro from "../components/Intro";
 import Partifolio from "../components/Partfolio";
 import { langCookie } from "../cookies";
 import { getInfroListItems } from "../models/work.server";
-import type { Language, PortfolioWork } from "../portfolio/types";
+import type { Language, PortfolioSection } from "../portfolio/types";
 import {
   scrollToPortfolioSection,
   setupPortfolioScroll,
@@ -18,7 +18,7 @@ import {
 export const links = () => [{ rel: "stylesheet", href: homeStylesUrl }];
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const works = ((await getInfroListItems()) ?? []) as PortfolioWork[];
+  const works = (await getInfroListItems()) ?? [];
   const cookieHeader = request.headers.get("Cookie");
 
   try {
@@ -49,9 +49,7 @@ export async function action({ request }: Route.ActionArgs) {
 
 export default function Index({ loaderData }: Route.ComponentProps) {
   const { lang, works } = loaderData;
-  const [section, setSection] = useState<"intro" | "partfolio" | "contact">(
-    "intro"
-  );
+  const [section, setSection] = useState<PortfolioSection>("intro");
   const [language, setLanguage] = useState<Language>(lang ?? "zh");
   const [activeWorkIndex, setActiveWorkIndex] = useState(0);
   const pageRef = useRef<HTMLDivElement | null>(null);
