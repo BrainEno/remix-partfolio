@@ -58,6 +58,14 @@ jobs:
           test -f build/client/index.html
           grep -q 'data-portfolio-template="ready"' build/client/index.html
           test -f build/client/_redirects
+          test -f build/client/generated/tv-bg.webp
+
+          tv_bytes=$(stat -c%s build/client/generated/tv-bg.webp)
+          echo "Optimized TV artwork: ${tv_bytes} bytes"
+          if [ "$tv_bytes" -gt 3000000 ]; then
+            echo 'Optimized TV artwork exceeded the 3 MB performance budget.'
+            exit 1
+          fi
 
           if [ -d build/server ]; then
             echo 'Unexpected runtime server bundle detected. The portfolio must remain static-only.'
