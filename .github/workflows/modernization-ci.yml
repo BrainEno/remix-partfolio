@@ -14,7 +14,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       URL: http://127.0.0.1:3000
       PORT: 3000
@@ -49,6 +49,7 @@ jobs:
         run: |
           if grep -RInF '"gsap"' build/server || \
              grep -RInF "'gsap'" build/server || \
+             grep -RInF 'gsap/Scroll' build/server || \
              grep -RInF 'gsap/dist/' build/server; then
             echo 'GSAP leaked into the server bundle.'
             exit 1
@@ -79,6 +80,12 @@ jobs:
 
           cat /tmp/remix-portfolio.log
           exit 1
+
+      - name: Install Playwright WebKit
+        run: npx playwright install --with-deps webkit
+
+      - name: Verify mobile scroll choreography in WebKit
+        run: npm run test:scroll
 
       - name: Smoke test Netlify Deploy Preview
         if: github.event_name == 'pull_request'
