@@ -21,15 +21,7 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
     };
 
     return (
-      <section
-        id="partfolio"
-        data-scroll
-        data-scroll-section
-        data-scroll-id="partfolio"
-        data-scroll-call="partfolio"
-        data-scroll-repeat
-        ref={partfolioRef}
-      >
+      <section id="partfolio" ref={partfolioRef}>
         <div className="tv-nav-activer"></div>
         <div className="tv-animation-trigger"></div>
         <div className="tv-box-stickytainer">
@@ -108,7 +100,6 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
               </div>
             ))}
           </div>
-          <div className="tv-transition-trigger"></div>
         </div>
       </section>
     );
