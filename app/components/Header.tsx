@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import React from "react";
-import { NavLink, useFetcher } from "react-router";
+import { NavLink } from "react-router";
 import { useMediaQuery } from "~/hooks/useMediaQuery";
 import { localize } from "~/portfolio/content";
 import { MOBILE_MEDIA_QUERY } from "~/portfolio/media";
@@ -27,25 +27,27 @@ const Header: React.FC<HeaderProps> = ({
   content,
   onNavigate,
 }) => {
-  const fetcher = useFetcher();
   const isMobile = useMediaQuery(MOBILE_MEDIA_QUERY);
 
   return (
     <header className="header">
       <div className="header-left">
-        <NavLink to="/" className="header-link" aria-label={content.identity.displayName}>
+        <NavLink
+          to="/"
+          className="header-link"
+          aria-label={content.identity.displayName}
+        >
           <span className="header-reveal">{content.identity.displayName}</span>
         </NavLink>
 
-        <fetcher.Form method="post" className="lang-switch" aria-label="Language">
+        <div className="lang-switch" aria-label="Language">
           <button
-            type="submit"
-            name="lang"
-            value="zh"
+            type="button"
             onClick={() => setLanguage("zh")}
             className={classNames("lang zh header-reveal", {
               "lang-selected": lang === "zh",
             })}
+            aria-pressed={lang === "zh"}
           >
             {isMobile ? "Zh" : "中文"}
           </button>
@@ -53,17 +55,16 @@ const Header: React.FC<HeaderProps> = ({
             {" "}|{" "}
           </span>
           <button
-            type="submit"
-            name="lang"
-            value="en"
+            type="button"
             onClick={() => setLanguage("en")}
             className={classNames("lang header-reveal", {
               "lang-selected": lang === "en",
             })}
+            aria-pressed={lang === "en"}
           >
             {isMobile ? "En" : "English"}
           </button>
-        </fetcher.Form>
+        </div>
       </div>
 
       <nav className="nav" aria-label="Portfolio sections">
