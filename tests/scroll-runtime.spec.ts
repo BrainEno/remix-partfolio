@@ -37,7 +37,9 @@ function parseCssRgb(value: string) {
             .map((character) => character + character)
             .join("")
         : hexMatch[1];
-    return [0, 2, 4].map((offset) => Number.parseInt(hex.slice(offset, offset + 2), 16));
+    return [0, 2, 4].map((offset) =>
+      Number.parseInt(hex.slice(offset, offset + 2), 16)
+    );
   }
 
   const rgbMatch = normalized.match(/rgba?\(([^)]+)\)/i);
@@ -87,7 +89,9 @@ test("mobile GSAP runtime animates the required scenes", async ({ page }) => {
     (element) => getComputedStyle(element).transform
   );
 
-  await page.evaluate(() => window.scrollTo(0, Math.min(360, document.body.scrollHeight)));
+  await page.evaluate(() =>
+    window.scrollTo(0, Math.min(360, document.body.scrollHeight))
+  );
   await page.waitForTimeout(450);
 
   const headlineAfter = await headline.evaluate(
@@ -153,7 +157,8 @@ test("mobile second intro gallery enters from the right while the copy travels w
   const copyBefore = await copy.boundingBox();
   expect(galleryBefore).not.toBeNull();
   expect(copyBefore).not.toBeNull();
-  if (galleryBefore) expect(galleryBefore.x).toBeGreaterThan(viewportWidth * 0.75);
+  if (galleryBefore)
+    expect(galleryBefore.x).toBeGreaterThan(viewportWidth * 0.75);
   if (copyBefore) expect(copyBefore.x).toBeGreaterThan(viewportWidth * 0.7);
 
   await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.65));
@@ -163,8 +168,10 @@ test("mobile second intro gallery enters from the right while the copy travels w
   const copyAfter = await copy.boundingBox();
   expect(galleryAfter).not.toBeNull();
   expect(copyAfter).not.toBeNull();
-  if (galleryBefore && galleryAfter) expect(galleryAfter.x).toBeLessThan(galleryBefore.x);
-  if (copyBefore && copyAfter) expect(copyAfter.x).toBeLessThan(copyBefore.x);
+  if (galleryBefore && galleryAfter)
+    expect(galleryAfter.x).toBeLessThan(galleryBefore.x);
+  if (copyBefore && copyAfter)
+    expect(copyAfter.x).toBeLessThan(copyBefore.x);
 });
 
 test("mobile TV is grey before works, previews only inside the screen, then fades grey-green to black to white before Contact appears", async ({
@@ -237,8 +244,6 @@ test("mobile TV is grey before works, previews only inside the screen, then fade
     (element) => getComputedStyle(element).transform
   );
 
-  // First phase: the project is gone, the TV is enlarging/rotating and its
-  // grey-green CRT is darkening toward black. Contact must still be hidden.
   await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.46));
   await waitForScroll(page, 420);
 
@@ -258,8 +263,11 @@ test("mobile TV is grey before works, previews only inside the screen, then fade
   expect(backgroundOpacity).toBeLessThan(1);
   await expect(contactHeadline).toBeHidden();
 
-  // Contact is intentionally revealed during the black -> white passage.
-  for (let step = 0; step < 24 && !(await contactHeadline.isVisible()); step += 1) {
+  for (
+    let step = 0;
+    step < 24 && !(await contactHeadline.isVisible());
+    step += 1
+  ) {
     await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.05));
     await waitForScroll(page, 110);
   }
@@ -273,8 +281,6 @@ test("mobile TV is grey before works, previews only inside the screen, then fade
   );
   expect(contactRevealLuma).toBeGreaterThan(blackPhaseLuma + 5);
 
-  // Continue through the same transition and require a clearly brighter late
-  // phase so the intended black -> white handoff cannot silently disappear.
   for (let step = 0; step < 12; step += 1) {
     await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.04));
     await waitForScroll(page, 90);
@@ -299,21 +305,26 @@ test("mobile WebGL scene mounts only when its observed Contact content is near t
   await page.goto("/", { waitUntil: "networkidle" });
   const sceneContainer = page.locator(".canvas-container");
   const contactInner = page.locator(".contact-inner");
+  const canvas = sceneContainer.locator("canvas");
 
   await expect(sceneContainer).toHaveAttribute("data-scene-active", "false");
-  await expect(page.locator(".contact-webgl canvas")).toHaveCount(0);
+  await expect(sceneContainer).toHaveAttribute("data-scene-status", "idle");
+  await expect(canvas).toHaveCount(0);
 
   await contactInner.scrollIntoViewIfNeeded();
   await expect(sceneContainer).toHaveAttribute("data-scene-active", "true");
-  await expect(page.locator(".contact-webgl canvas")).toHaveCount(1);
+  await expect(sceneContainer).toHaveAttribute("data-scene-status", "ready");
+  await expect(canvas).toHaveCount(1);
 
   await page.locator("#intro").scrollIntoViewIfNeeded();
   await expect(sceneContainer).toHaveAttribute("data-scene-active", "false");
-  await expect(page.locator(".contact-webgl canvas")).toHaveCount(0);
+  await expect(sceneContainer).toHaveAttribute("data-scene-status", "ready");
+  await expect(canvas).toHaveCount(0);
 
   await contactInner.scrollIntoViewIfNeeded();
   await expect(sceneContainer).toHaveAttribute("data-scene-active", "true");
-  await expect(page.locator(".contact-webgl canvas")).toHaveCount(1);
+  await expect(sceneContainer).toHaveAttribute("data-scene-status", "ready");
+  await expect(canvas).toHaveCount(1);
 
   expect(pageErrors).toEqual([]);
 });
