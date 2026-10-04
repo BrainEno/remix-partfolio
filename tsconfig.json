@@ -14,9 +14,7 @@
     "jsx": "react-jsx",
     "rootDirs": [".", "./.react-router/types"],
     "paths": {
-      "~/*": ["./app/*"],
-      "@remix-run/node": ["./app/compat/remix-node.ts"],
-      "@remix-run/react": ["./app/compat/remix-react.ts"]
+      "~/*": ["./app/*"]
     },
     "esModuleInterop": true,
     "verbatimModuleSyntax": true,
