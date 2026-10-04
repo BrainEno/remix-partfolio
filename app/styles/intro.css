@@ -25,6 +25,7 @@
   height: 18vw;
   text-transform: uppercase;
   mix-blend-mode: difference;
+  will-change: transform;
 }
 
 .intro-headline-word.zh h1 {
@@ -100,6 +101,7 @@
   height: 150%;
   object-fit: cover;
   mix-blend-mode: difference;
+  will-change: transform;
 }
 
 .bar-1 .intro-headline-bar-image {
@@ -132,6 +134,7 @@
   top: -100px;
   object-fit: cover;
   mix-blend-mode: difference;
+  will-change: transform;
 }
 
 .intro-subheadline-stickytainer {
@@ -365,7 +368,8 @@
   #intro {
     padding: 100px 20px;
     width: 100vw;
-    overflow: hidden;
+    overflow-x: clip;
+    overflow-y: visible;
   }
 
   .intro-headline-box {
@@ -409,6 +413,8 @@
     top: 180px;
   }
 
+  /* The original mobile composition intentionally hid the two narrow strips;
+     their parallax remains a desktop-only effect. */
   .intro-headline-bar {
     display: none;
   }
