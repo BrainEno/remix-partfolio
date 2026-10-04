@@ -13,6 +13,8 @@ import {
 import globalStylesUrl from "~/styles/global.css?url";
 import type { Route } from "./+types/root";
 import { langCookie } from "./cookies";
+import { localize, portfolioContent } from "./portfolio/content";
+import type { Language } from "./portfolio/types";
 
 export const links = () => [
   { rel: "stylesheet", href: interFont },
@@ -23,23 +25,16 @@ export const links = () => [
 
 export async function loader({ request }: Route.LoaderArgs) {
   const cookieHeader = request.headers.get("Cookie");
-  const { lang } = (await langCookie.parse(cookieHeader)) || { lang: "zh" };
-
-  return {
-    lang,
-    // The public portfolio currently has no authenticated surface. Keeping
-    // this field preserves the existing loader shape without importing the
-    // expired Supabase-backed session stack into the Netlify function.
-    user: null,
-  };
+  const cookie = await langCookie.parse(cookieHeader);
+  const lang: Language = cookie?.lang === "en" ? "en" : "zh";
+  return { lang };
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  const lang = loaderData?.lang ?? "en";
-  const title = lang === "zh" ? "趙 悉 尼" : "Sydney Zhao";
+  const lang: Language = loaderData?.lang === "en" ? "en" : "zh";
 
   return [
-    { title },
+    { title: localize(portfolioContent.identity.pageTitle, lang) },
     { name: "viewport", content: "width=device-width,initial-scale=1" },
   ];
 }
