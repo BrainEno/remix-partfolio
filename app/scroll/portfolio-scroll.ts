@@ -77,11 +77,46 @@ function setupSectionTracking(
   });
 }
 
+function setupIntroParallax() {
+  gsap.fromTo(
+    ".intro-headline-bar-image",
+    { yPercent: -15 },
+    {
+      yPercent: 15,
+      ease: "none",
+      scrollTrigger: {
+        trigger: ".intro-headline-box",
+        start: "top bottom",
+        end: "bottom top",
+        scrub: true,
+        invalidateOnRefresh: true,
+      },
+    }
+  );
+
+  gsap.fromTo(
+    ".intro-photo",
+    { yPercent: 7 },
+    {
+      yPercent: -7,
+      ease: "none",
+      scrollTrigger: {
+        trigger: ".intro-headline-box",
+        start: "top top",
+        end: "bottom top",
+        scrub: true,
+        invalidateOnRefresh: true,
+      },
+    }
+  );
+}
+
 function setupTelevisionPin() {
   ScrollTrigger.create({
-    trigger: "#partfolio",
-    start: "top top",
-    end: "bottom bottom",
+    trigger: ".tv-box",
+    start: "center center",
+    endTrigger: ".work-items-box",
+    end: "bottom top",
     pin: ".tv-box-pinner",
     pinSpacing: false,
     anticipatePin: 1,
@@ -92,9 +127,9 @@ function setupTelevisionPin() {
 function setupTelevisionExit(scale: number) {
   const timeline = gsap.timeline({
     scrollTrigger: {
-      trigger: ".tv-transition-trigger",
-      start: "top center",
-      end: () => `+=${window.innerHeight * 2}`,
+      trigger: ".work-items-box",
+      start: "bottom top",
+      end: () => `+=${window.innerHeight * 1.5}`,
       scrub: true,
       invalidateOnRefresh: true,
     },
@@ -431,6 +466,7 @@ export function setupPortfolioScroll({
 
   const context = gsap.context(() => {
     setupSectionTracking(onSectionChange);
+    setupIntroParallax();
   }, scope);
 
   const media = gsap.matchMedia();
