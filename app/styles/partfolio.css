@@ -6,23 +6,6 @@
   height: 320vh;
 }
 
-.tv-nav-activer {
-  position: absolute;
-  height: calc(100% - 120vh);
-  width: 0;
-  top: 0;
-  left: 120px;
-}
-
-.tv-animation-trigger {
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 0;
-}
-
 .tv-box-stickytainer {
   position: relative;
   width: 100vw;
