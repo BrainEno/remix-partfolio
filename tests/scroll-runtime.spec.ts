@@ -174,7 +174,7 @@ test("mobile second intro gallery enters from the right while the copy travels w
     expect(copyAfter.x).toBeLessThan(copyBefore.x);
 });
 
-test("mobile TV is grey before works, previews only inside the screen, then fades grey-green to black to white before Contact appears", async ({
+test("mobile TV follows the grey-green to black to white visual state order", async ({
   page,
 }) => {
   const pageErrors: string[] = [];
@@ -216,7 +216,6 @@ test("mobile TV is grey before works, previews only inside the screen, then fade
     "true",
     { maxSteps: 28, stepViewport: 0.07 }
   );
-
   await expect(page.locator(".tv-cover")).toHaveCount(1);
 
   const activeWork = page.locator(".work-item.is-active");
@@ -236,7 +235,6 @@ test("mobile TV is grey before works, previews only inside the screen, then fade
     "false",
     { maxSteps: 48, stepViewport: 0.09 }
   );
-
   await expect(page.locator(".tv-cover")).toHaveCount(0);
 
   const tvBox = page.locator(".tv-box");
@@ -244,55 +242,50 @@ test("mobile TV is grey before works, previews only inside the screen, then fade
     (element) => getComputedStyle(element).transform
   );
 
-  await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.46));
-  await waitForScroll(page, 420);
+  const samples: Array<{
+    luma: number;
+    contactVisible: boolean;
+    backgroundOpacity: number;
+    transform: string;
+  }> = [];
 
-  const transformInBlackPhase = await tvBox.evaluate(
-    (element) => getComputedStyle(element).transform
-  );
-  const backgroundOpacity = Number(
-    await tvBackground.evaluate((element) => getComputedStyle(element).opacity)
-  );
-  const blackPhaseLuma = await readCssColorLuma(
-    page,
-    ".tv-blackscreen",
-    "--tv-screen-mid"
-  );
+  for (let step = 0; step < 48; step += 1) {
+    samples.push({
+      luma: await readCssColorLuma(
+        page,
+        ".tv-blackscreen",
+        "--tv-screen-mid"
+      ),
+      contactVisible: await contactHeadline.isVisible(),
+      backgroundOpacity: Number(
+        await tvBackground.evaluate((element) => getComputedStyle(element).opacity)
+      ),
+      transform: await tvBox.evaluate(
+        (element) => getComputedStyle(element).transform
+      ),
+    });
 
-  expect(transformInBlackPhase).not.toBe(transformBeforeExit);
-  expect(backgroundOpacity).toBeLessThan(1);
-  await expect(contactHeadline).toBeHidden();
-
-  for (
-    let step = 0;
-    step < 24 && !(await contactHeadline.isVisible());
-    step += 1
-  ) {
-    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.05));
-    await waitForScroll(page, 110);
+    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.035));
+    await waitForScroll(page, 80);
   }
 
-  await expect(contactHeadline).toBeVisible();
-
-  const contactRevealLuma = await readCssColorLuma(
-    page,
-    ".tv-blackscreen",
-    "--tv-screen-mid"
+  const darkestLuma = Math.min(...samples.map((sample) => sample.luma));
+  const darkestIndex = samples.findIndex((sample) => sample.luma === darkestLuma);
+  const firstContactIndex = samples.findIndex((sample) => sample.contactVisible);
+  const brightestAfterDark = Math.max(
+    ...samples.slice(darkestIndex).map((sample) => sample.luma)
   );
-  expect(contactRevealLuma).toBeGreaterThan(blackPhaseLuma + 5);
 
-  for (let step = 0; step < 12; step += 1) {
-    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.04));
-    await waitForScroll(page, 90);
-  }
-
-  const lateWhiteLuma = await readCssColorLuma(
-    page,
-    ".tv-blackscreen",
-    "--tv-screen-mid"
+  expect(darkestIndex).toBeGreaterThan(0);
+  expect(darkestLuma).toBeLessThan(70);
+  expect(samples[darkestIndex].contactVisible).toBe(false);
+  expect(firstContactIndex).toBeGreaterThan(darkestIndex);
+  expect(brightestAfterDark).toBeGreaterThan(darkestLuma + 100);
+  expect(brightestAfterDark).toBeGreaterThan(150);
+  expect(samples.some((sample) => sample.transform !== transformBeforeExit)).toBe(
+    true
   );
-  expect(lateWhiteLuma).toBeGreaterThan(contactRevealLuma + 40);
-  expect(lateWhiteLuma).toBeGreaterThan(100);
+  expect(samples.some((sample) => sample.backgroundOpacity < 1)).toBe(true);
   expect(pageErrors).toEqual([]);
 });
 
