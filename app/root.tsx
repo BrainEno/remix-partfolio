@@ -13,7 +13,6 @@ import {
 import globalStylesUrl from "~/styles/global.css?url";
 import type { Route } from "./+types/root";
 import { langCookie } from "./cookies";
-import { getUser } from "./session.server";
 
 export const links = () => [
   { rel: "stylesheet", href: interFont },
@@ -28,7 +27,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   return {
     lang,
-    user: await getUser(request),
+    // The public portfolio currently has no authenticated surface. Keeping
+    // this field preserves the existing loader shape without importing the
+    // expired Supabase-backed session stack into the Netlify function.
+    user: null,
   };
 }
 
