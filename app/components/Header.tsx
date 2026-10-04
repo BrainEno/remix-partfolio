@@ -43,6 +43,7 @@ const Header: React.FC<HeaderProps> = ({
         <div className="lang-switch" aria-label="Language">
           <button
             type="button"
+            data-language="zh"
             onClick={() => setLanguage("zh")}
             className={classNames("lang zh header-reveal", {
               "lang-selected": lang === "zh",
@@ -56,6 +57,7 @@ const Header: React.FC<HeaderProps> = ({
           </span>
           <button
             type="button"
+            data-language="en"
             onClick={() => setLanguage("en")}
             className={classNames("lang header-reveal", {
               "lang-selected": lang === "en",
