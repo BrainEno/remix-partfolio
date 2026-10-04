@@ -13,16 +13,7 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
   const introRef = useForwardedRef<HTMLDivElement>(ref);
 
   return (
-    <section
-      id="intro"
-      data-scroll
-      data-scroll-section
-      data-scroll-id="intro"
-      data-scroll-call="intro"
-      data-scroll-repeat
-      className="section"
-      ref={introRef}
-    >
+    <section id="intro" className="section" ref={introRef}>
       <div className="intro-headline-box">
         <span
           className={classNames("intro-headline-word word-1", { zh: isZh })}
@@ -41,34 +32,24 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
         </span>
 
         <div className="intro-headline-bar bar-1">
-          <div className="intro-headline-bar-wrapper">
-            <img
-              data-scroll
-              data-scroll-speed="4"
-              className="intro-headline-bar-image"
-              src="/images/figure.webp"
-              alt="bar"
-              loading="eager"
-            />
-          </div>
+          <img
+            className="intro-headline-bar-image"
+            src="/images/figure.webp"
+            alt="bar"
+            loading="eager"
+          />
         </div>
         <div className="intro-headline-bar bar-2">
-          <div className="intro-headline-bar-wrapper">
-            <img
-              data-scroll
-              data-scroll-speed="4"
-              className="intro-headline-bar-image"
-              src="/images/figure.webp"
-              alt="bar"
-              loading="eager"
-            />
-          </div>
+          <img
+            className="intro-headline-bar-image"
+            src="/images/figure.webp"
+            alt="bar"
+            loading="eager"
+          />
         </div>
         <div className="intro-photo-box">
           <div className="intro-photo-wrapper">
             <img
-              data-scroll
-              data-scroll-speed="-2"
               className="intro-photo"
               src="/images/figure.webp"
               alt="figure"
