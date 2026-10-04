@@ -24,7 +24,8 @@ export type PortfolioContent = Readonly<{
   };
   navigation: Readonly<Record<PortfolioSection, LocalizedText>>;
   hero: {
-    headlines: readonly LocalizedText[];
+    // The current choreography targets .word-1/.word-2/.word-3 explicitly.
+    headlines: readonly [LocalizedText, LocalizedText, LocalizedText];
     image: PortfolioImage;
   };
   intro: {
@@ -33,7 +34,8 @@ export type PortfolioContent = Readonly<{
     portraitCredit: LocalizedText;
     primaryText: LocalizedText;
     gallery: readonly PortfolioImage[];
-    accentImages: readonly PortfolioImage[];
+    // CSS/GSAP target pic1 and pic2 as distinct layers.
+    accentImages: readonly [PortfolioImage, PortfolioImage];
     secondaryText: LocalizedText;
   };
   works: {
@@ -45,7 +47,8 @@ export type PortfolioContent = Readonly<{
   contact: {
     phone: string;
     email: string;
-    headlines: readonly string[];
+    // contact-hl1..3 are part of the existing visual composition.
+    headlines: readonly [string, string, string];
     marquee: LocalizedText;
     copyright: string;
     credit: {
