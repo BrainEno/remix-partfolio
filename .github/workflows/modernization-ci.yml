@@ -16,9 +16,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      SESSION_SECRET: ci-only-session-secret-not-for-production
-      SUPABASE_URL: http://127.0.0.1:9
-      SUPABASE_ANON_KEY: ci-only-placeholder
       URL: http://127.0.0.1:3000
       PORT: 3000
     steps:
@@ -47,6 +44,23 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Verify browser-only libraries stay out of SSR
+        shell: bash
+        run: |
+          if grep -RInF '"gsap"' build/server || \
+             grep -RInF "'gsap'" build/server || \
+             grep -RInF 'gsap/dist/' build/server; then
+            echo 'GSAP leaked into the server bundle.'
+            exit 1
+          fi
+
+          if grep -RInF '@react-three/' build/server || \
+             grep -RInF '"three"' build/server || \
+             grep -RInF "'three'" build/server; then
+            echo 'Three.js or React Three Fiber leaked into the server bundle.'
+            exit 1
+          fi
+
       - name: Smoke test production server
         shell: bash
         run: |
@@ -57,10 +71,37 @@ jobs:
           for attempt in {1..30}; do
             if curl --fail --silent --show-error http://127.0.0.1:3000/ > /tmp/homepage.html; then
               test -s /tmp/homepage.html
+              grep -q 'Seeing You Through The River' /tmp/homepage.html
               exit 0
             fi
             sleep 1
           done
 
           cat /tmp/remix-portfolio.log
+          exit 1
+
+      - name: Smoke test Netlify Deploy Preview
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          PREVIEW_URL: https://deploy-preview-${{ github.event.pull_request.number }}--sydneyzhao.netlify.app/
+        run: |
+          for attempt in {1..60}; do
+            status=$(curl -L --silent --show-error \
+              --output /tmp/netlify-preview.html \
+              --write-out '%{http_code}' \
+              "$PREVIEW_URL" || true)
+
+            if [ "$status" = "200" ] && \
+               grep -q 'Seeing You Through The River' /tmp/netlify-preview.html; then
+              echo "Netlify Deploy Preview is serving the portfolio successfully."
+              exit 0
+            fi
+
+            echo "Waiting for healthy Netlify Deploy Preview (attempt $attempt/60, HTTP $status)..."
+            sleep 2
+          done
+
+          echo 'Netlify Deploy Preview never became healthy.'
+          cat /tmp/netlify-preview.html || true
           exit 1
