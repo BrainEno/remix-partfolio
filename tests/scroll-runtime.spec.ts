@@ -1,11 +1,11 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-async function waitForScroll(page: Parameters<typeof test>[0]["page"], ms = 250) {
+async function waitForScroll(page: Page, ms = 250) {
   await page.waitForTimeout(ms);
 }
 
 async function scrollUntilAttribute(
-  page: Parameters<typeof test>[0]["page"],
+  page: Page,
   selector: string,
   attribute: string,
   expectedValue: string,
@@ -16,7 +16,8 @@ async function scrollUntilAttribute(
     if (value === expectedValue) return;
 
     await page.evaluate(
-      ({ stepViewport }) => window.scrollBy(0, window.innerHeight * stepViewport),
+      ({ stepViewport }: { stepViewport: number }) =>
+        window.scrollBy(0, window.innerHeight * stepViewport),
       options
     );
     await waitForScroll(page, 100);
@@ -40,12 +41,12 @@ function parseCssRgb(value: string) {
 }
 
 async function readCssColorLuma(
-  page: Parameters<typeof test>[0]["page"],
+  page: Page,
   selector: string,
   property: string
 ) {
   const color = await page.locator(selector).evaluate(
-    (element, cssProperty) =>
+    (element, cssProperty: string) =>
       getComputedStyle(element).getPropertyValue(cssProperty).trim(),
     property
   );
