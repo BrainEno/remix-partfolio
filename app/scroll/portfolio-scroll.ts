@@ -1,6 +1,10 @@
 import { gsap } from "gsap";
 import ScrollSmoother from "gsap/dist/ScrollSmoother";
 import ScrollTrigger from "gsap/dist/ScrollTrigger";
+import {
+  DESKTOP_MEDIA_QUERY,
+  MOBILE_MEDIA_QUERY,
+} from "~/portfolio/media";
 import type { PortfolioSection } from "~/portfolio/types";
 
 type SetupOptions = {
@@ -499,8 +503,8 @@ export function setupPortfolioScroll({
 
   media.add(
     {
-      isMobile: "(max-width: 480px)",
-      isDesktop: "(min-width: 481px)",
+      isMobile: MOBILE_MEDIA_QUERY,
+      isDesktop: DESKTOP_MEDIA_QUERY,
     },
     (context) => {
       const { isMobile } = context.conditions as ResponsiveConditions;
