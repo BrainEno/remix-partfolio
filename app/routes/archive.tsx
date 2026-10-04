@@ -1,4 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router";
+import {
+  getArchiveKinds,
+  getArchiveTags,
+  getArchiveYears,
+} from "../archive/catalog";
 import { archiveContent } from "../archive/content";
 import type { ArchiveKind } from "../archive/types";
 import ArchiveCard from "../components/archive/ArchiveCard";
@@ -58,6 +64,10 @@ export default function ArchiveIndex() {
     { value: "video", label: archiveContent.labels.video[language] },
   ];
 
+  const kinds = getArchiveKinds().filter(({ count }) => count > 0);
+  const years = getArchiveYears();
+  const tags = getArchiveTags();
+
   return (
     <ArchiveShell
       language={language}
@@ -90,6 +100,47 @@ export default function ArchiveIndex() {
             autoComplete="off"
           />
         </label>
+      </section>
+
+      <section className="archive-facets" aria-label="Browse archive indexes">
+        <div>
+          <h2>{language === "zh" ? "类型" : "Types"}</h2>
+          <ul>
+            {kinds.map(({ value, count }) => (
+              <li key={value}>
+                <Link to={`/archive/type/${encodeURIComponent(value)}`}>
+                  {value} <span>{count}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h2>{language === "zh" ? "年份" : "Years"}</h2>
+          <ul>
+            {years.map(({ value, count }) => (
+              <li key={value}>
+                <Link to={`/archive/year/${encodeURIComponent(value)}`}>
+                  {value} <span>{count}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h2>{language === "zh" ? "标签" : "Tags"}</h2>
+          <ul>
+            {tags.map(({ value, count }) => (
+              <li key={value}>
+                <Link to={`/archive/tag/${encodeURIComponent(value)}`}>
+                  #{value} <span>{count}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
       <section className="archive-grid" aria-live="polite">
