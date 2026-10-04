@@ -1,6 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import type { ComponentType } from "react";
-import { useForwardedRef } from "~/hooks/useForwardedRef";
+import { useEffect, useRef, useState, type ComponentType } from "react";
 import { localize } from "~/portfolio/content";
 import type { Language, PortfolioContent } from "~/portfolio/types";
 
@@ -9,21 +7,13 @@ interface Props {
   content: PortfolioContent["contact"];
 }
 
-const MARQUEE_REPEAT_COUNT = 10;
+const MARQUEE_WORDS = Array.from({ length: 10 }, (_, index) => index);
 
-const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
-  { lang, content },
-  ref
-) {
-  const contactRef = useForwardedRef(ref);
+export default function Contact({ lang, content }: Props) {
   const contactInnerRef = useRef<HTMLDivElement | null>(null);
   const [sceneActive, setSceneActive] = useState(false);
   const [TelephoneScene, setTelephoneScene] =
     useState<ComponentType | null>(null);
-  const marqueeWords = useMemo(
-    () => Array.from({ length: MARQUEE_REPEAT_COUNT }, (_, index) => index),
-    []
-  );
 
   useEffect(() => {
     const target = contactInnerRef.current;
@@ -64,7 +54,7 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
   const marqueeLabel = localize(content.marquee, lang);
 
   return (
-    <section id="contact" ref={contactRef}>
+    <section id="contact">
       <div className="contact-text-box">
         <p className="contact-number">{content.phone}</p>
       </div>
@@ -91,7 +81,7 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
             <div className="runningtext" aria-hidden="true">
               {["runningtext-l1", "runningtext-l2"].map((trackClass) => (
                 <div className={trackClass} key={trackClass}>
-                  {marqueeWords.map((index) => (
+                  {MARQUEE_WORDS.map((index) => (
                     <span className="runningtext-word" key={index}>
                       {marqueeLabel}
                     </span>
@@ -122,6 +112,4 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
       </div>
     </section>
   );
-});
-
-export default React.memo(Contact);
+}
