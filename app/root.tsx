@@ -11,9 +11,7 @@ import {
 } from "react-router";
 import globalStylesUrl from "~/styles/global.css?url";
 import type { Route } from "./+types/root";
-import { langCookie } from "./cookies";
-import { localize, portfolioContent } from "./portfolio/content";
-import type { Language } from "./portfolio/types";
+import { portfolioContent } from "./portfolio/content";
 
 export const links = () => [
   { rel: "stylesheet", href: interFont },
@@ -21,25 +19,14 @@ export const links = () => [
   { rel: "stylesheet", href: globalStylesUrl },
 ];
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const cookieHeader = request.headers.get("Cookie");
-  const cookie = await langCookie.parse(cookieHeader);
-  const lang: Language = cookie?.lang === "en" ? "en" : "zh";
-  return { lang };
-}
-
-export function meta({ loaderData }: Route.MetaArgs) {
-  const lang: Language = loaderData?.lang === "en" ? "en" : "zh";
-
-  return [
-    { title: localize(portfolioContent.identity.pageTitle, lang) },
-    { name: "viewport", content: "width=device-width,initial-scale=1" },
-  ];
-}
+export const meta = () => [
+  { title: portfolioContent.identity.displayName },
+  { name: "viewport", content: "width=device-width,initial-scale=1" },
+];
 
 export function Layout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="zh-Hant">
       <head>
         <meta charSet="utf-8" />
         <Meta />
