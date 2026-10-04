@@ -38,6 +38,14 @@ jobs:
             exit 1
           fi
 
+      - name: Verify retired runtime dependencies stay removed
+        shell: bash
+        run: |
+          if grep -RInE '@supabase/supabase-js|framer-motion|tiny-invariant' app package.json; then
+            echo 'Retired database/auth/animation runtime dependency detected.'
+            exit 1
+          fi
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -72,7 +80,7 @@ jobs:
           for attempt in {1..30}; do
             if curl --fail --silent --show-error http://127.0.0.1:3000/ > /tmp/homepage.html; then
               test -s /tmp/homepage.html
-              grep -q 'Seeing You Through The River' /tmp/homepage.html
+              grep -q 'data-portfolio-template="ready"' /tmp/homepage.html
               exit 0
             fi
             sleep 1
@@ -100,7 +108,7 @@ jobs:
               "$PREVIEW_URL" || true)
 
             if [ "$status" = "200" ] && \
-               grep -q 'Seeing You Through The River' /tmp/netlify-preview.html; then
+               grep -q 'data-portfolio-template="ready"' /tmp/netlify-preview.html; then
               echo "Netlify Deploy Preview is serving the portfolio successfully."
               exit 0
             fi
