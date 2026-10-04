@@ -1,5 +1,6 @@
 import type { Config } from "@react-router/dev/config";
 import {
+  getArchiveCreators,
   getArchiveKinds,
   getArchiveTags,
   getArchiveYears,
@@ -19,11 +20,11 @@ const tagPaths = getArchiveTags().map(
 const yearPaths = getArchiveYears().map(
   ({ value }) => `/archive/year/${encodeURIComponent(value)}`
 );
+const creatorPaths = getArchiveCreators().map(
+  ({ value }) => `/archive/creator/${encodeURIComponent(value)}`
+);
 
 export default {
-  // The site has no runtime server data. Build-time prerendering keeps complete
-  // HTML responses for the animated landing page and every configured archive
-  // index/detail URL while production remains static-only.
   ssr: false,
   prerender: [
     "/",
@@ -34,5 +35,6 @@ export default {
     ...kindPaths,
     ...tagPaths,
     ...yearPaths,
+    ...creatorPaths,
   ],
 } satisfies Config;
