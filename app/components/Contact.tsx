@@ -7,13 +7,30 @@ interface Props {
   content: PortfolioContent["contact"];
 }
 
+type SceneStatus = "idle" | "loading" | "ready" | "error";
+
 const MARQUEE_WORDS = Array.from({ length: 10 }, (_, index) => index);
+let telephoneScenePromise: Promise<{ default: ComponentType }> | null = null;
+
+function loadTelephoneScene() {
+  telephoneScenePromise ??= import("../3d/TelephoneScene.client");
+  return telephoneScenePromise;
+}
 
 export default function Contact({ lang, content }: Props) {
   const contactInnerRef = useRef<HTMLDivElement | null>(null);
+  const mountedRef = useRef(true);
   const [sceneActive, setSceneActive] = useState(false);
+  const [sceneStatus, setSceneStatus] = useState<SceneStatus>("idle");
   const [TelephoneScene, setTelephoneScene] =
     useState<ComponentType | null>(null);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const target = contactInnerRef.current;
@@ -38,17 +55,22 @@ export default function Contact({ lang, content }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!sceneActive || TelephoneScene) return;
+    if (!sceneActive || TelephoneScene || sceneStatus === "loading") return;
 
-    let cancelled = false;
-    void import("../3d/TelephoneScene.client").then(({ default: Scene }) => {
-      if (!cancelled) setTelephoneScene(() => Scene);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [sceneActive, TelephoneScene]);
+    setSceneStatus("loading");
+    void loadTelephoneScene()
+      .then(({ default: Scene }) => {
+        if (!mountedRef.current) return;
+        setTelephoneScene(() => Scene);
+        setSceneStatus("ready");
+      })
+      .catch((error: unknown) => {
+        telephoneScenePromise = null;
+        if (!mountedRef.current) return;
+        setSceneStatus("error");
+        console.error("Failed to load the Contact WebGL scene", error);
+      });
+  }, [sceneActive, sceneStatus, TelephoneScene]);
 
   const mailto = `mailto:${content.email}`;
   const marqueeLabel = localize(content.marquee, lang);
@@ -72,6 +94,7 @@ export default function Contact({ lang, content }: Props) {
           className="canvas-container"
           aria-hidden="true"
           data-scene-active={sceneActive ? "true" : "false"}
+          data-scene-status={sceneStatus}
         >
           {sceneActive && TelephoneScene ? <TelephoneScene /> : null}
         </div>
