@@ -32,6 +32,7 @@
   align-items: flex-end;
   transform-origin: 50% 64%;
   width: 100%;
+  will-change: transform, opacity;
 }
 
 .tv-all-vids {
@@ -248,8 +249,12 @@
 @media (max-width: 480px) {
   #partfolio {
     width: 100vw;
-    min-height: 320vh;
-    overflow: clip;
+    /* 220svh accounts for TV arrival + exit. Each project contributes its
+       own readable dwell interval, so adding/removing works cannot desync the
+       section height from the pinned television sequence. */
+    min-height: calc(220svh + var(--portfolio-work-count, 1) * 24svh);
+    overflow-x: clip;
+    overflow-y: visible;
   }
 
   .tv-bg-box {
