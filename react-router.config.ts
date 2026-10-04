@@ -21,7 +21,7 @@ const yearPaths = getArchiveYears().map(
   ({ value }) => `/archive/year/${encodeURIComponent(value)}`
 );
 const creatorPaths = getArchiveCreators().map(
-  ({ value }) => `/archive/creator/${encodeURIComponent(value)}`
+  ({ creator }) => `/archive/creator/${creator.id}`
 );
 
 export default {
