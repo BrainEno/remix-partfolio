@@ -15,6 +15,7 @@ interface HeaderProps {
   setLanguage: React.Dispatch<React.SetStateAction<Language>>;
   section: PortfolioSection;
   content: Pick<PortfolioContent, "identity" | "navigation">;
+  archiveLabel: string;
   onNavigate: (section: PortfolioSection) => void;
 }
 
@@ -25,6 +26,7 @@ const Header: React.FC<HeaderProps> = ({
   setLanguage,
   section,
   content,
+  archiveLabel,
   onNavigate,
 }) => {
   const isMobile = useMediaQuery(MOBILE_MEDIA_QUERY);
@@ -86,6 +88,10 @@ const Header: React.FC<HeaderProps> = ({
             </span>
           </button>
         ))}
+        <NavLink to="/archive" className="nav-entry nav-route-entry">
+          <span className="nav-entry-bg" aria-hidden="true" />
+          <span className="nav-entry-text">{archiveLabel}</span>
+        </NavLink>
       </nav>
     </header>
   );
