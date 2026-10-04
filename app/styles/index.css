@@ -38,13 +38,9 @@
   display: inline-block;
   text-transform: uppercase;
   transform: scale(1, 1.25);
-  /* Safari and Chrome */
   -webkit-transform: scale(1, 1.25);
-  /* Firefox */
   -moz-transform: scale(1, 1.25);
-  /* IE 9+ */
   -ms-transform: scale(1, 1.25);
-  /* Opera */
   -o-transform: scale(1, 1.25);
   overflow: hidden;
 }
@@ -169,10 +165,5 @@
     height: calc(100% + 10px);
     left: -10px;
     top: -5px;
-  }
-
-  body,
-  #home {
-    position: absolute;
   }
 }

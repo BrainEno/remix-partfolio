@@ -25,12 +25,14 @@
 
 ::-webkit-scrollbar {
   display: none;
-  width: 0px;
+  width: 0;
 }
 
 html {
   box-sizing: border-box;
   background-attachment: scroll !important;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
 }
 
 *,
@@ -59,6 +61,11 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 h1,
 h2,
 h3,
@@ -85,9 +92,4 @@ div {
 
 .zh {
   font-family: "Noto Sans TC", sans-serif;
-}
-
-#container {
-  width: 100%;
-  height: 100%;
 }

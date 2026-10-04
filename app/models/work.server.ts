@@ -1,17 +1,11 @@
+import type { PortfolioWork } from "~/portfolio/types";
 import type { User } from "./user.server";
 import { supabase } from "./user.server";
 
 export type MediaType = "image" | "video";
 
-export type Work = {
-  id: string;
-  name: string; //en
-  title: string; //zh
-  date: string; //year
-  groupName: string; //en
-  groupTitle: string; //zh
+export type Work = PortfolioWork & {
   mediaType: MediaType;
-  imageUri: string;
   videoUri?: string;
   description: string;
   userId: string;
@@ -19,23 +13,66 @@ export type Work = {
 
 export type CreateWorkInput = Omit<Work, "id"> & { userId: User["id"] };
 
-export async function getInfroListItems() {
-  let works: Partial<Work>[] = [];
+function normalizeImageUri(value: string) {
+  if (/^(?:https?:)?\/\//.test(value) || value.startsWith("/")) {
+    return value;
+  }
+
+  return `/${value}`;
+}
+
+function toPortfolioWork(value: unknown): PortfolioWork | null {
+  if (!value || typeof value !== "object") return null;
+
+  const work = value as Record<string, unknown>;
+  const hasValidId = typeof work.id === "string" || typeof work.id === "number";
+
+  if (
+    !hasValidId ||
+    typeof work.name !== "string" ||
+    typeof work.title !== "string" ||
+    typeof work.date !== "string" ||
+    typeof work.imageUri !== "string" ||
+    work.imageUri.length === 0 ||
+    typeof work.groupName !== "string" ||
+    typeof work.groupTitle !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    id: String(work.id),
+    name: work.name,
+    title: work.title,
+    date: work.date,
+    imageUri: normalizeImageUri(work.imageUri),
+    groupName: work.groupName,
+    groupTitle: work.groupTitle,
+  };
+}
+
+export async function getInfroListItems(): Promise<PortfolioWork[]> {
   const { data, error } = await supabase
     .from("works")
     .select("id, name, title, imageUri, date, groupName, groupTitle");
-  if (data !== null) {
-    works = data;
-  }
+
+  let source: unknown = data;
 
   if (error) {
-    const res = await fetch(`${process.env.URL}/data.json`);
-    const data = await res.json();
-    works = data;
+    try {
+      const response = await fetch(`${process.env.URL}/data.json`);
+      source = response.ok ? await response.json() : [];
+    } catch {
+      source = [];
+    }
   }
 
-  const filteredData = works.filter((d) => d.imageUri);
-  return filteredData;
+  if (!Array.isArray(source)) return [];
+
+  return source.flatMap((value) => {
+    const work = toPortfolioWork(value);
+    return work ? [work] : [];
+  });
 }
 
 export async function getWorkListItems({ userId }: { userId: User["id"] }) {
