@@ -1,4 +1,4 @@
-import { ForwardedRef, useEffect, useRef } from "react";
+import { useEffect, useRef, type ForwardedRef } from "react";
 
 export const useForwardedRef = <T,>(ref: ForwardedRef<T>) => {
   const innerRef = useRef<T>(null);
