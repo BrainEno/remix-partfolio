@@ -5,8 +5,12 @@ import ArchiveCard from "../components/archive/ArchiveCard";
 import ArchiveShell from "../components/archive/ArchiveShell";
 import { useSiteLanguage } from "../hooks/useSiteLanguage";
 import archiveStylesUrl from "../styles/archive.css?url";
+import archiveSearchStylesUrl from "../styles/archive-search.css?url";
 
-export const links = () => [{ rel: "stylesheet", href: archiveStylesUrl }];
+export const links = () => [
+  { rel: "stylesheet", href: archiveStylesUrl },
+  { rel: "stylesheet", href: archiveSearchStylesUrl },
+];
 
 export const meta = () => [
   { title: "书影音档案 / Media Archive" },
