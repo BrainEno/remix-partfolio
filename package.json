@@ -10,7 +10,7 @@
     "predev": "npm run prepare:assets",
     "build": "react-router build",
     "dev": "react-router dev",
-    "start": "sirv build/client --single --port 3000",
+    "start": "sirv build/client --single --host 127.0.0.1 --port 3000",
     "typecheck": "react-router typegen && tsc",
     "test:scroll": "playwright test tests/scroll-runtime.spec.ts tests/template-runtime.spec.ts --project=webkit-mobile",
     "format": "prettier --write .",
