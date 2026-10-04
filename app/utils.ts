@@ -9,7 +9,7 @@ export function useMatchesData(id: string) {
     [matchingRoutes, id]
   );
 
-  return route?.data;
+  return route?.loaderData;
 }
 
 export function isUser(user: unknown): user is User {
