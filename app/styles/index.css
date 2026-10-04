@@ -2,6 +2,7 @@
 @import "./intro.css";
 @import "./partfolio.css";
 @import "./contact.css";
+@import "./mobile-polish.css";
 
 .page-home {
   display: block;
