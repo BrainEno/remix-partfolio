@@ -13,6 +13,11 @@ export type ArchiveMediaSource = Readonly<{
   poster?: string;
 }>;
 
+export type ArchiveFact = Readonly<{
+  label: LocalizedText;
+  value: LocalizedText;
+}>;
+
 export type ArchiveItem = Readonly<{
   id: string;
   kind: ArchiveKind;
@@ -23,6 +28,7 @@ export type ArchiveItem = Readonly<{
   summary?: LocalizedText;
   note?: LocalizedText;
   tags: readonly string[];
+  facts?: readonly ArchiveFact[];
   media?: ArchiveMediaSource;
   externalUrl?: string;
   demo?: boolean;
