@@ -6,7 +6,7 @@ import {
   getArchiveYears,
 } from "../archive/catalog";
 import { archiveContent } from "../archive/content";
-import type { ArchiveKind } from "../archive/types";
+import type { ArchiveItem, ArchiveKind } from "../archive/types";
 import ArchiveCard from "../components/archive/ArchiveCard";
 import ArchiveShell from "../components/archive/ArchiveShell";
 import { useSiteLanguage } from "../hooks/useSiteLanguage";
@@ -40,8 +40,9 @@ export default function ArchiveIndex() {
 
   const items = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
+    const allItems: readonly ArchiveItem[] = archiveContent.items;
 
-    return archiveContent.items.filter((item) => {
+    return allItems.filter((item) => {
       if (filter !== "all" && item.kind !== filter) return false;
       if (!normalizedQuery) return true;
 
