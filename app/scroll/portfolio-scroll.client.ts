@@ -19,8 +19,6 @@ type ResponsiveConditions = {
   isDesktop: boolean;
 };
 
-const MOBILE_TV_EXIT_VIEWPORTS = 1.2;
-const DESKTOP_TV_EXIT_VIEWPORTS = 1.5;
 let pluginsRegistered = false;
 
 function registerScrollPlugins() {
@@ -42,16 +40,16 @@ function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-function getTelevisionExitDistance(viewports: number) {
-  return window.innerHeight * viewports;
-}
-
 function getPinDistance(selector: string, minimumViewports = 1) {
   const element = document.querySelector<HTMLElement>(selector);
   return Math.max(
     element?.offsetHeight ?? 0,
     window.innerHeight * minimumViewports
   );
+}
+
+function mobileScrub(value = 0.35) {
+  return prefersReducedMotion() ? false : value;
 }
 
 function disablePortfolioSmoother() {
@@ -116,21 +114,24 @@ export function scrollToPortfolioSection(section: PortfolioSection) {
 function setupSectionTracking(
   onSectionChange: (section: PortfolioSection) => void
 ) {
-  const sections: PortfolioSection[] = ["intro", "partfolio", "contact"];
+  onSectionChange("intro");
 
-  sections.forEach((section) => {
-    ScrollTrigger.create({
-      id: `section-${section}`,
-      trigger: `#${section}`,
-      start: "top 55%",
-      end: "bottom 45%",
-      onEnter: () => onSectionChange(section),
-      onEnterBack: () => onSectionChange(section),
-      onToggle: (self) => {
-        if (self.isActive) onSectionChange(section);
-      },
-      invalidateOnRefresh: true,
-    });
+  ScrollTrigger.create({
+    id: "section-partfolio",
+    trigger: "#partfolio",
+    start: "top 55%",
+    onEnter: () => onSectionChange("partfolio"),
+    onLeaveBack: () => onSectionChange("intro"),
+    invalidateOnRefresh: true,
+  });
+
+  ScrollTrigger.create({
+    id: "section-contact",
+    trigger: "#contact",
+    start: "top 55%",
+    onEnter: () => onSectionChange("contact"),
+    onLeaveBack: () => onSectionChange("partfolio"),
+    invalidateOnRefresh: true,
   });
 }
 
@@ -141,7 +142,7 @@ function setupIntroHeadlineChoreography(isZh: boolean, isMobile: boolean) {
       trigger: ".intro-headline-box",
       start: isMobile ? "top top" : "top 8%",
       end: isMobile ? "bottom 42%" : "bottom 28%",
-      scrub: prefersReducedMotion() ? false : 0.35,
+      scrub: isMobile ? mobileScrub(0.28) : prefersReducedMotion() ? false : 0.35,
       invalidateOnRefresh: true,
     },
   });
@@ -217,7 +218,7 @@ function setupIntroParallax(isMobile: boolean) {
         trigger: ".intro-headline-box",
         start: "top top",
         end: "bottom top",
-        scrub: true,
+        scrub: isMobile ? mobileScrub(0.28) : true,
         invalidateOnRefresh: true,
       },
     }
@@ -232,9 +233,9 @@ function setupFirstIntroStory(isMobile: boolean) {
       start: isMobile ? "top 12%" : "top-=100 top",
       end: () => `+=${getPinDistance(
         ".intro-subheadline-stickytainer",
-        isMobile ? 1.35 : 4
+        isMobile ? 1.3 : 4
       )}`,
-      scrub: prefersReducedMotion() ? false : true,
+      scrub: isMobile ? mobileScrub(0.32) : prefersReducedMotion() ? false : true,
       pin: true,
       anticipatePin: 1,
       invalidateOnRefresh: true,
@@ -243,7 +244,7 @@ function setupFirstIntroStory(isMobile: boolean) {
   });
 
   timeline.to(".intro-subheadline-photo-box", {
-    y: isMobile ? "18vh" : "4vw",
+    y: isMobile ? "18svh" : "4vw",
     x: isMobile ? "20vw" : "10vw",
     rotation: -18.75,
     scale: isMobile ? 1.45 : 1.2,
@@ -292,7 +293,7 @@ function setupFirstIntroStory(isMobile: boolean) {
         filter: "grayscale(0%)",
         duration: 4,
       },
-      ">+=0.5"
+      ">+=0.3"
     )
     .to(
       ".intro-subheadline-text-box1",
@@ -300,7 +301,7 @@ function setupFirstIntroStory(isMobile: boolean) {
         left: 0,
         duration: 4,
       },
-      ">+=0.5"
+      ">+=0.25"
     );
 
   if (!isMobile) {
@@ -340,46 +341,69 @@ function setupSecondIntroStory(isMobile: boolean) {
       start: "top top",
       end: () => `+=${getPinDistance(
         ".intro-subheadline-stickytainer2",
-        isMobile ? 1.2 : 4
+        isMobile ? 1.15 : 4
       )}`,
-      scrub: prefersReducedMotion() ? false : true,
+      scrub: isMobile ? mobileScrub(0.32) : prefersReducedMotion() ? false : true,
       pin: true,
       anticipatePin: 1,
       invalidateOnRefresh: true,
     },
-    defaults: { duration: 20, ease: "none" },
+    defaults: { ease: "none" },
   });
 
   if (isMobile) {
-    timeline.to(".intro-subheadline-stickytainer2", {
-      x: "-100vw",
-    });
+    // The photo rail and paragraph now start moving at the same scroll instant.
+    // The paragraph begins exactly one viewport to the right, so its leading
+    // edge enters immediately instead of waiting for a whole blank viewport.
+    timeline
+      .to(
+        ".intro-subheadline-photo-box2",
+        {
+          x: "-52vw",
+          autoAlpha: 0.35,
+          duration: 1,
+        },
+        0
+      )
+      .to(
+        ".intro-subheadline-text-box2",
+        {
+          x: "-100vw",
+          duration: 1,
+        },
+        0
+      );
     return;
   }
 
   timeline
     .to(".intro-subheadline-photo-box2", {
       x: "-=130vw",
+      duration: 20,
     })
     .to(
       ".intro-subheadline-photo-mask2",
       {
         marginRight: "5.5vw",
+        duration: 20,
       },
       "<"
     )
     .to(".intro-subheadline-slider2", {
       x: "-100vw",
+      duration: 20,
     })
     .to(
       ".intro-subheadline-photo-box2",
       {
         x: "-=100vw",
+        duration: 20,
       },
       "<"
     )
     .to(".intro-subheadline-text2", {
       marginBottom: "8vw",
+      duration: 20,
     })
     .to(
       ".intro-subheadline-text2-pic2",
@@ -401,6 +425,7 @@ function setupSecondIntroStory(isMobile: boolean) {
       "#intro",
       {
         backgroundColor: "#013171",
+        duration: 20,
       },
       ">-=2"
     );
@@ -415,8 +440,8 @@ function setupWorkPreview(onWorkPreview: (index: number) => void) {
     ScrollTrigger.create({
       id: `work-${index}`,
       trigger: row,
-      start: "top 62%",
-      end: "bottom 38%",
+      start: "top 60%",
+      end: "bottom 40%",
       onEnter: activate,
       onEnterBack: activate,
       invalidateOnRefresh: true,
@@ -428,18 +453,14 @@ function setupTelevisionSequence(
   onWorkPreview: (index: number) => void,
   isMobile: boolean
 ) {
-  const exitViewports = isMobile
-    ? MOBILE_TV_EXIT_VIEWPORTS
-    : DESKTOP_TV_EXIT_VIEWPORTS;
-
   setupWorkPreview(onWorkPreview);
 
   ScrollTrigger.create({
     id: "tv-pin",
-    trigger: ".tv-box",
-    start: "center center",
-    endTrigger: ".work-items-box",
-    end: () => `bottom+=${getTelevisionExitDistance(exitViewports)} top`,
+    trigger: isMobile ? ".tv-bg-box" : ".tv-box",
+    start: isMobile ? "top top" : "center center",
+    endTrigger: ".tv-exit-spacer",
+    end: "bottom bottom",
     pin: ".tv-box-pinner",
     pinSpacing: false,
     anticipatePin: 1,
@@ -451,51 +472,37 @@ function setupTelevisionSequence(
     },
   });
 
-  gsap
-    .timeline({
-      scrollTrigger: {
-        id: "tv-exit",
-        trigger: ".work-items-box",
-        start: "bottom top",
-        end: () => `+=${getTelevisionExitDistance(exitViewports)}`,
-        scrub: prefersReducedMotion() ? false : true,
-        invalidateOnRefresh: true,
-      },
-      defaults: { ease: "none" },
+  const exitTimeline = gsap.timeline({
+    scrollTrigger: {
+      id: "tv-exit",
+      trigger: ".tv-exit-spacer",
+      start: "top bottom",
+      end: "bottom bottom",
+      scrub: isMobile ? mobileScrub(0.4) : prefersReducedMotion() ? false : true,
+      invalidateOnRefresh: true,
+    },
+    defaults: { ease: "none" },
+  });
+
+  // Never fade the project image separately from the television. The screen
+  // image, bezel and photographic background are one composited visual unit.
+  exitTimeline
+    .to(".tv-box", {
+      rotation: isMobile ? -4 : -5,
+      scale: isMobile ? 1.18 : 1.3,
+      duration: 0.22,
     })
-    .to(".tv-cover", {
+    .to(".tv-box", {
+      rotation: isMobile ? -12 : -14,
+      scale: isMobile ? 2.8 : 4,
       autoAlpha: 0,
-      duration: 0.1,
-    })
-    .to(
-      ".tv-box",
-      {
-        rotation: -11,
-        duration: 2,
-      },
-      ">+=0.75"
-    )
-    .to(
-      ".tv-box",
-      {
-        autoAlpha: 0,
-        scale: isMobile ? 2.4 : 4,
-        zIndex: 1,
-        duration: 2,
-      },
-      "<+=0.1"
-    )
-    .to(
-      ".tv-bg",
-      {
-        autoAlpha: 0,
-        duration: 0.2,
-      },
-      "<"
-    );
+      duration: 0.78,
+    });
 }
 
-function setupContactCanvas() {
+function setupContactCanvas(isMobile: boolean) {
+  if (isMobile) return;
+
   gsap
     .timeline({
       scrollTrigger: {
@@ -525,7 +532,7 @@ function setupResponsiveAnimations(
   setupFirstIntroStory(isMobile);
   setupSecondIntroStory(isMobile);
   setupTelevisionSequence(onWorkPreview, isMobile);
-  setupContactCanvas();
+  setupContactCanvas(isMobile);
 }
 
 export function setupPortfolioScroll({
@@ -539,6 +546,8 @@ export function setupPortfolioScroll({
   registerScrollPlugins();
 
   const media = gsap.matchMedia();
+  let disposed = false;
+  let settleFrame = 0;
 
   media.add(
     {
@@ -561,18 +570,24 @@ export function setupPortfolioScroll({
   );
 
   const refresh = () => {
+    if (disposed) return;
     ScrollTrigger.refresh();
     scope.dataset.scrollTriggerCount = String(ScrollTrigger.getAll().length);
   };
 
-  const frame = window.requestAnimationFrame(() => {
+  const firstFrame = window.requestAnimationFrame(() => {
     refresh();
-    window.requestAnimationFrame(refresh);
+    settleFrame = window.requestAnimationFrame(refresh);
   });
-  void document.fonts?.ready.then(refresh);
+
+  void document.fonts?.ready.then(() => {
+    if (!disposed) refresh();
+  });
 
   return () => {
-    window.cancelAnimationFrame(frame);
+    disposed = true;
+    window.cancelAnimationFrame(firstFrame);
+    if (settleFrame) window.cancelAnimationFrame(settleFrame);
     media.revert();
     ScrollSmoother.get()?.kill();
     gsap.set("#smooth-content", { clearProps: "transform" });
