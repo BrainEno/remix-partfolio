@@ -60,9 +60,6 @@ function setupHero() {
     );
   });
 
-  // The portrait belongs to the same opening movement as the words. It should
-  // drift downward while enlarging/rotating instead of running on a separate
-  // parallax trigger that can visually fight the headline choreography.
   timeline
     .to(
       ".intro-photo-box",
@@ -106,9 +103,6 @@ function setupSecondIntroStory() {
     defaults: { ease: "none" },
   });
 
-  // Both layers begin off the right edge. The photo rail glides in first but
-  // the paragraph is already moving at the same instant, so there is no empty
-  // black beat between the two parts of the introduction.
   timeline
     .to(
       ".intro-subheadline-photo-box2",
@@ -132,28 +126,44 @@ function setupSecondIntroStory() {
 
 function setupWorkPreview(onWorkPreview: (index: number) => void) {
   const rows = gsap.utils.toArray<HTMLElement>(".work-item");
+  const screen = document.querySelector<HTMLElement>(".tv-all-vids");
+  const workItems = document.querySelector<HTMLElement>(".work-items-box");
+  if (!screen || !workItems || rows.length === 0) return;
 
-  rows.forEach((row, index) => {
-    const activate = () => onWorkPreview(index);
+  const syncPreviewToScreen = () => {
+    const screenRect = screen.getBoundingClientRect();
+    let activeIndex = -1;
+    let greatestOverlap = 0;
 
-    ScrollTrigger.create({
-      id: `mobile-work-${index}`,
-      trigger: row,
-      // The screen opening in the mobile TV sits roughly between 57% and 73%
-      // of viewport height. A row becomes active only while it traverses that
-      // visual window, so the TV remains grey before the first title arrives.
-      start: "top 72%",
-      end: "bottom 56%",
-      onEnter: activate,
-      onEnterBack: activate,
-      onLeaveBack: () => {
-        if (index === 0) onWorkPreview(-1);
-      },
-      onLeave: () => {
-        if (index === rows.length - 1) onWorkPreview(-1);
-      },
-      invalidateOnRefresh: true,
+    rows.forEach((row, index) => {
+      const entry = row.querySelector<HTMLElement>(".work-item-entry") ?? row;
+      const rowRect = entry.getBoundingClientRect();
+      const overlap = Math.max(
+        0,
+        Math.min(rowRect.bottom, screenRect.bottom) -
+          Math.max(rowRect.top, screenRect.top)
+      );
+
+      if (overlap > greatestOverlap) {
+        greatestOverlap = overlap;
+        activeIndex = index;
+      }
     });
+
+    onWorkPreview(activeIndex);
+  };
+
+  ScrollTrigger.create({
+    id: "mobile-work-preview",
+    trigger: workItems,
+    start: "top bottom",
+    end: "bottom top",
+    onEnter: syncPreviewToScreen,
+    onEnterBack: syncPreviewToScreen,
+    onUpdate: syncPreviewToScreen,
+    onLeave: () => onWorkPreview(-1),
+    onLeaveBack: () => onWorkPreview(-1),
+    invalidateOnRefresh: true,
   });
 }
 
@@ -178,7 +188,6 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
     scrollTrigger: {
       id: "mobile-tv-exit",
       trigger: ".tv-exit-spacer",
-      // Start after the last work row has left the TV screen opening.
       start: "top 56%",
       end: "bottom bottom",
       scrub: mobileScrub(0.34),
@@ -189,10 +198,6 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
     defaults: { ease: "none" },
   });
 
-  // The final transition deliberately echoes the original site: the screen is
-  // grey again first, then the whole television grows/rotates until the screen
-  // becomes the page background. The photographic TV layer fades away while
-  // the underlying screen darkens to black.
   exitTimeline
     .to(
       ".tv-box",
@@ -206,8 +211,11 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
     .to(
       ".tv-blackscreen",
       {
-        backgroundColor: "#555754",
-        duration: 0.16,
+        "--tv-screen-top": "#6d726b",
+        "--tv-screen-mid": "#5d635b",
+        "--tv-screen-bottom": "#4f554d",
+        "--tv-screen-glow": "rgba(255,255,255,0.04)",
+        duration: 0.18,
       },
       0
     )
@@ -216,7 +224,7 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
       {
         rotation: -31,
         scale: 10,
-        duration: 0.82,
+        duration: 0.64,
       },
       0.18
     )
@@ -224,30 +232,59 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
       ".tv-bg",
       {
         autoAlpha: 0,
-        duration: 0.52,
+        duration: 0.42,
       },
-      0.38
+      0.28
     )
     .to(
       ".tv-blackscreen",
       {
-        backgroundColor: "#000",
-        duration: 0.52,
+        "--tv-screen-top": "#000000",
+        "--tv-screen-mid": "#000000",
+        "--tv-screen-bottom": "#000000",
+        "--tv-screen-glow": "rgba(255,255,255,0)",
+        duration: 0.4,
       },
-      0.38
+      0.28
+    )
+    .to(
+      ".tv-blackscreen",
+      {
+        "--tv-screen-top": "#ffffff",
+        "--tv-screen-mid": "#ffffff",
+        "--tv-screen-bottom": "#ffffff",
+        duration: 0.42,
+      },
+      0.72
+    )
+    .to(
+      ["#partfolio", ".tv-box-stickytainer", ".tv-box-pinner", ".tv-box-mask"],
+      {
+        backgroundColor: "#ffffff",
+        duration: 0.42,
+      },
+      0.72
     )
     .fromTo(
       ["#contact .contact-text-box", "#contact .contact-headline", ".canvas-container"],
       {
         autoAlpha: 0,
-        y: "10svh",
+        y: "9svh",
       },
       {
         autoAlpha: 1,
         y: 0,
         duration: 0.34,
       },
-      0.62
+      0.78
+    )
+    .to(
+      ".tv-box",
+      {
+        autoAlpha: 0,
+        duration: 0.08,
+      },
+      1.1
     );
 }
 
