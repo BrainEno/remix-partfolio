@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link, useParams } from "react-router";
 import {
+  getArchiveCreator,
   getArchiveItemsByCreator,
   getArchiveItemsByKind,
   getArchiveItemsByTag,
@@ -37,7 +38,6 @@ function resolveFacet(facet: string, value: string) {
     label = value;
   } else if (facet === "creator") {
     items = getArchiveItemsByCreator(value);
-    label = value;
   }
 
   return { items, label, valid: items.length > 0 };
@@ -47,19 +47,25 @@ export default function ArchiveFacetRoute() {
   const { facet = "", value = "" } = useParams();
   const { language, setLanguage, languageReady } = useSiteLanguage();
   const resolved = resolveFacet(facet, value);
-  const displayLabel =
-    facet === "type" && validKinds.includes(value as ArchiveKind)
+  const creator = facet === "creator" ? getArchiveCreator(value) : undefined;
+  const displayLabel = creator
+    ? creator.name[language]
+    : facet === "type" && validKinds.includes(value as ArchiveKind)
       ? archiveContent.labels[
           value === "book" ? "books" : value === "audio" ? "audio" : "video"
         ][language]
       : resolved.label;
+  const description = creator?.bio?.[language] ??
+    (language === "zh"
+      ? `${resolved.items.length} 项`
+      : `${resolved.items.length} item${resolved.items.length === 1 ? "" : "s"}`);
 
   useEffect(() => {
     if (!languageReady) return;
     document.title = `${displayLabel} — ${archiveContent.identity.title[language]}`;
   }, [displayLabel, language, languageReady]);
 
-  if (!resolved.valid) {
+  if (!resolved.valid || (facet === "creator" && !creator)) {
     return (
       <ArchiveShell
         language={language}
@@ -79,12 +85,19 @@ export default function ArchiveFacetRoute() {
       language={language}
       setLanguage={setLanguage}
       title={displayLabel}
-      description={
-        language === "zh"
-          ? `${resolved.items.length} 项`
-          : `${resolved.items.length} item${resolved.items.length === 1 ? "" : "s"}`
-      }
+      description={description}
     >
+      {creator?.externalUrl ? (
+        <a
+          className="archive-external-link archive-creator-external"
+          href={creator.externalUrl}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {archiveContent.labels.externalLink[language]} ↗
+        </a>
+      ) : null}
+
       <section className="archive-grid">
         {resolved.items.map((item) => (
           <ArchiveCard key={item.id} item={item} language={language} />
