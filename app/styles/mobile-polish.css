@@ -19,11 +19,25 @@
     left: 100vw;
   }
 
-  /* Idle TV state: no work is visible until a title reaches the screen zone. */
+  /* Idle CRT palette. The exit timeline animates these variables through the
+     intended grey-green -> black -> white sequence. */
   .tv-blackscreen {
+    --tv-screen-top: #777a76;
+    --tv-screen-mid: #626560;
+    --tv-screen-bottom: #545651;
+    --tv-screen-glow: rgba(255, 255, 255, 0.08);
     background:
-      radial-gradient(circle at 48% 42%, rgba(255, 255, 255, 0.08), transparent 46%),
-      linear-gradient(180deg, #777a76 0%, #626560 54%, #545651 100%);
+      radial-gradient(
+        circle at 48% 42%,
+        var(--tv-screen-glow),
+        transparent 46%
+      ),
+      linear-gradient(
+        180deg,
+        var(--tv-screen-top) 0%,
+        var(--tv-screen-mid) 54%,
+        var(--tv-screen-bottom) 100%
+      );
   }
 
   .tv-showreel {
@@ -35,9 +49,6 @@
     opacity: 1;
   }
 
-  /* A work row is slightly shorter than the physical TV screen opening. This
-     makes each title read as content passing through the television rather than
-     as a full-screen headline layer. */
   .work-item,
   .work-item.zh {
     min-height: 13.5svh;
@@ -71,21 +82,22 @@
   }
 
   .tv-exit-spacer {
-    height: 118svh;
+    height: 126svh;
   }
 
-  /* Pull the beginning of Contact into the final TV transition. The top of the
-     section is transparent over the black TV scene, then it gradually becomes
-     the original white Contact canvas. */
+  /* Contact overlaps the enlarged CRT. There is a deliberate black plateau,
+     followed by a gradual fade into the original white bottom section. */
   #contact {
-    margin-top: -48svh;
+    margin-top: -50svh;
     background: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 0,
-      rgba(0, 0, 0, 0.92) 20svh,
-      rgba(36, 36, 36, 0.72) 44svh,
-      rgba(255, 255, 255, 0.96) 82svh,
-      #fff 104svh
+      #000 18svh,
+      #000 38svh,
+      #4a4a4a 62svh,
+      #d8d8d8 86svh,
+      #fff 106svh,
+      #fff 100%
     );
   }
 
