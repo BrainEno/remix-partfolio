@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
-import React, { Suspense } from "react";
+import React, { useEffect, useState } from "react";
+import type { ComponentType } from "react";
 import { useForwardedRef } from "~/hooks/useForwardedRef";
-import CanvasWrapper from "../3d/CanvasWrapper";
-import Telephone from "../3d/Telephone";
 
 interface Props {
   isZh: boolean;
@@ -13,6 +12,20 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
   ref
 ) {
   const contactRef = useForwardedRef(ref);
+  const [TelephoneScene, setTelephoneScene] =
+    useState<ComponentType | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    void import("../3d/TelephoneScene.client").then(({ default: Scene }) => {
+      if (mounted) setTelephoneScene(() => Scene);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <section id="contact" ref={contactRef}>
@@ -23,12 +36,8 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
         <h2 className="contact-headline contact-hl1">CALL ME</h2>
         <h2 className="contact-headline">FOR THE</h2>
         <h2 className="contact-headline contact-hl3">MARQUEE MOON</h2>
-        <div className="canvas-container">
-          <Suspense fallback={null}>
-            <CanvasWrapper>
-              <Telephone />
-            </CanvasWrapper>
-          </Suspense>
+        <div className="canvas-container" aria-hidden="true">
+          {TelephoneScene ? <TelephoneScene /> : null}
         </div>
         <a
           href="mailto:sydzhao@outlook.com"
