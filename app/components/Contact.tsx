@@ -15,15 +15,7 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
   const contactRef = useForwardedRef(ref);
 
   return (
-    <section
-      id="contact"
-      data-scroll
-      data-scroll-section
-      data-scroll-id="contact"
-      data-scroll-call="contact"
-      data-scroll-repeat
-      ref={contactRef}
-    >
+    <section id="contact" ref={contactRef}>
       <div className="contact-text-box">
         <p className="contact-number">+86 - 1897 - 111 - 3243</p>
       </div>
@@ -73,7 +65,6 @@ const Contact = React.forwardRef<HTMLDivElement, Props>(function Contact(
               </motion.div>
               <motion.div
                 className="runningtext-l2"
-                // animate={{ translateX: "-100%" }}
                 animate={{ x: ["0%", "-100%"] }}
                 transition={{
                   repeat: Infinity,
