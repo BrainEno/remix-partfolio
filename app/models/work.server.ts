@@ -1,17 +1,11 @@
+import type { PortfolioWork } from "~/portfolio/types";
 import type { User } from "./user.server";
 import { supabase } from "./user.server";
 
 export type MediaType = "image" | "video";
 
-export type Work = {
-  id: string;
-  name: string; //en
-  title: string; //zh
-  date: string; //year
-  groupName: string; //en
-  groupTitle: string; //zh
+export type Work = PortfolioWork & {
   mediaType: MediaType;
-  imageUri: string;
   videoUri?: string;
   description: string;
   userId: string;
@@ -19,23 +13,39 @@ export type Work = {
 
 export type CreateWorkInput = Omit<Work, "id"> & { userId: User["id"] };
 
-export async function getInfroListItems() {
-  let works: Partial<Work>[] = [];
+function isPortfolioWork(value: unknown): value is PortfolioWork {
+  if (!value || typeof value !== "object") return false;
+
+  const work = value as Record<string, unknown>;
+  return (
+    typeof work.id === "string" &&
+    typeof work.name === "string" &&
+    typeof work.title === "string" &&
+    typeof work.date === "string" &&
+    typeof work.imageUri === "string" &&
+    work.imageUri.length > 0 &&
+    typeof work.groupName === "string" &&
+    typeof work.groupTitle === "string"
+  );
+}
+
+export async function getInfroListItems(): Promise<PortfolioWork[]> {
   const { data, error } = await supabase
     .from("works")
     .select("id, name, title, imageUri, date, groupName, groupTitle");
-  if (data !== null) {
-    works = data;
-  }
+
+  let source: unknown = data;
 
   if (error) {
-    const res = await fetch(`${process.env.URL}/data.json`);
-    const data = await res.json();
-    works = data;
+    try {
+      const response = await fetch(`${process.env.URL}/data.json`);
+      source = response.ok ? await response.json() : [];
+    } catch {
+      source = [];
+    }
   }
 
-  const filteredData = works.filter((d) => d.imageUri);
-  return filteredData;
+  return Array.isArray(source) ? source.filter(isPortfolioWork) : [];
 }
 
 export async function getWorkListItems({ userId }: { userId: User["id"] }) {
