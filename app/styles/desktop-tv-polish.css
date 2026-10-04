@@ -1,0 +1,95 @@
+@media (min-width: 481px) {
+  /* Treat the complete TV artwork as a viewport-sized stage. The previous
+     1px pinner + negative top offset could expose the black section beneath
+     the photograph as a visible horizontal seam. */
+  .tv-box-pinner {
+    width: 100vw;
+    height: 100vh;
+    height: 100svh;
+    background: #000;
+  }
+
+  .tv-box-mask {
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100svh;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .tv-box {
+    width: 100vw;
+    height: 100vh;
+    height: 100svh;
+    align-items: center;
+    transform-origin: 50% 50%;
+  }
+
+  .tv-bg-box {
+    position: absolute;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100svh;
+  }
+
+  .tv-bg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 50%;
+  }
+
+  /* These percentages describe the transparent screen opening in the TV
+     artwork. Keeping them relative to the full viewport stage makes the
+     project image travel with the television instead of appearing detached. */
+  .tv-all-vids {
+    width: 16%;
+    height: 16%;
+    left: 41.3%;
+    bottom: 27%;
+    margin-left: -0.1%;
+  }
+
+  /* The pinner itself now contributes one viewport of layout space, so the
+     old extra 100vh margin is no longer needed. */
+  .work-items-box {
+    margin-top: 0;
+    min-height: 100vh;
+    min-height: 100svh;
+    padding-top: 16vh;
+    padding-top: 16svh;
+    padding-bottom: 12vh;
+    padding-bottom: 12svh;
+    box-sizing: border-box;
+    background: transparent;
+  }
+
+  /* Scroll activation should look the same as pointer hover: when a project
+     supplies the TV image, its title/metadata must visibly become active too. */
+  .work-item.is-active .work-item-topline,
+  .work-item.is-active .work-item-botline {
+    opacity: 1;
+  }
+
+  .work-item.is-active .work-name,
+  .work-item.is-active .work-name-hover {
+    transform: translateY(-100%);
+  }
+
+  .work-item.is-active .work-teaser-date,
+  .work-item.is-active .work-teaser-seperator,
+  .work-item.is-active .work-teaser-group {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* Give the exit enough scroll distance to remain calm after the last work
+     before the large television transition into Contact. */
+  .tv-exit-spacer {
+    height: 190vh;
+    height: 190svh;
+    background: #000;
+  }
+}
