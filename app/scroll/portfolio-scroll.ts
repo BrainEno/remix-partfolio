@@ -1,13 +1,18 @@
 import { gsap } from "gsap";
 import ScrollSmoother from "gsap/dist/ScrollSmoother";
 import ScrollTrigger from "gsap/dist/ScrollTrigger";
-
-export type PortfolioSection = "intro" | "partfolio" | "contact";
+import type { PortfolioSection } from "~/portfolio/types";
 
 type SetupOptions = {
   scope: HTMLElement;
   isZh: boolean;
   onSectionChange: (section: PortfolioSection) => void;
+  onWorkPreview: (index: number) => void;
+};
+
+type ResponsiveConditions = {
+  isMobile: boolean;
+  isDesktop: boolean;
 };
 
 let pluginsRegistered = false;
@@ -111,6 +116,23 @@ function setupIntroParallax() {
   );
 }
 
+function setupMobileWorkPreview(onWorkPreview: (index: number) => void) {
+  const rows = gsap.utils.toArray<HTMLElement>(".work-item");
+
+  rows.forEach((row, index) => {
+    const activate = () => onWorkPreview(index);
+
+    ScrollTrigger.create({
+      trigger: row,
+      start: "top 68%",
+      end: "bottom 32%",
+      onEnter: activate,
+      onEnterBack: activate,
+      invalidateOnRefresh: true,
+    });
+  });
+}
+
 function setupTelevisionPin() {
   ScrollTrigger.create({
     trigger: ".tv-box",
@@ -125,18 +147,17 @@ function setupTelevisionPin() {
 }
 
 function setupTelevisionExit(scale: number) {
-  const timeline = gsap.timeline({
-    scrollTrigger: {
-      trigger: ".work-items-box",
-      start: "bottom top",
-      end: () => `+=${window.innerHeight * 1.5}`,
-      scrub: true,
-      invalidateOnRefresh: true,
-    },
-    defaults: { duration: 2, ease: "none" },
-  });
-
-  timeline
+  gsap
+    .timeline({
+      scrollTrigger: {
+        trigger: ".work-items-box",
+        start: "bottom top",
+        end: () => `+=${window.innerHeight * 1.5}`,
+        scrub: true,
+        invalidateOnRefresh: true,
+      },
+      defaults: { duration: 2, ease: "none" },
+    })
     .to(".tv-cover", {
       autoAlpha: 0,
       duration: 0.1,
@@ -185,7 +206,10 @@ function setupContactCanvas() {
     });
 }
 
-function setupMobileAnimations(isZh: boolean) {
+function setupMobileAnimations(
+  isZh: boolean,
+  onWorkPreview: (index: number) => void
+) {
   const headline = gsap.timeline({
     scrollTrigger: {
       trigger: ".intro-headline-box",
@@ -297,6 +321,7 @@ function setupMobileAnimations(isZh: boolean) {
       transform: "translate3d(-100vw,0px,0px)",
     });
 
+  setupMobileWorkPreview(onWorkPreview);
   setupTelevisionPin();
   setupTelevisionExit(2);
   setupContactCanvas();
@@ -458,26 +483,34 @@ export function setupPortfolioScroll({
   scope,
   isZh,
   onSectionChange,
+  onWorkPreview,
 }: SetupOptions) {
   if (typeof window === "undefined") return () => undefined;
 
   registerScrollPlugins();
   ensurePortfolioSmoother();
 
-  const context = gsap.context(() => {
-    setupSectionTracking(onSectionChange);
-    setupIntroParallax();
-  }, scope);
-
   const media = gsap.matchMedia();
-  media.add("(max-width: 480px)", () => {
-    const mobileContext = gsap.context(() => setupMobileAnimations(isZh), scope);
-    return () => mobileContext.revert();
-  });
-  media.add("(min-width: 481px)", () => {
-    const desktopContext = gsap.context(setupDesktopAnimations, scope);
-    return () => desktopContext.revert();
-  });
+
+  media.add(
+    {
+      isMobile: "(max-width: 480px)",
+      isDesktop: "(min-width: 481px)",
+    },
+    (context) => {
+      const { isMobile } = context.conditions as ResponsiveConditions;
+
+      setupSectionTracking(onSectionChange);
+      setupIntroParallax();
+
+      if (isMobile) {
+        setupMobileAnimations(isZh, onWorkPreview);
+      } else {
+        setupDesktopAnimations();
+      }
+    },
+    scope
+  );
 
   const refresh = () => ScrollTrigger.refresh();
   const frame = window.requestAnimationFrame(refresh);
@@ -486,6 +519,5 @@ export function setupPortfolioScroll({
   return () => {
     window.cancelAnimationFrame(frame);
     media.revert();
-    context.revert();
   };
 }
