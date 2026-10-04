@@ -15,6 +15,7 @@ type ResponsiveConditions = {
   isDesktop: boolean;
 };
 
+const TELEVISION_EXIT_VIEWPORTS = 1.5;
 let pluginsRegistered = false;
 
 function registerScrollPlugins() {
@@ -22,6 +23,10 @@ function registerScrollPlugins() {
 
   gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
   pluginsRegistered = true;
+}
+
+function getTelevisionExitDistance() {
+  return window.innerHeight * TELEVISION_EXIT_VIEWPORTS;
 }
 
 export function ensurePortfolioSmoother() {
@@ -138,7 +143,7 @@ function setupTelevisionPin() {
     trigger: ".tv-box",
     start: "center center",
     endTrigger: ".work-items-box",
-    end: "bottom top",
+    end: () => `bottom+=${getTelevisionExitDistance()} top`,
     pin: ".tv-box-pinner",
     pinSpacing: false,
     anticipatePin: 1,
@@ -152,7 +157,7 @@ function setupTelevisionExit(scale: number) {
       scrollTrigger: {
         trigger: ".work-items-box",
         start: "bottom top",
-        end: () => `+=${window.innerHeight * 1.5}`,
+        end: () => `+=${getTelevisionExitDistance()}`,
         scrub: true,
         invalidateOnRefresh: true,
       },
