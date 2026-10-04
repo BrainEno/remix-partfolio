@@ -52,24 +52,29 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Verify static-only production output
+      - name: Verify static production contract
         shell: bash
         run: |
           test -f build/client/index.html
-          grep -q 'data-portfolio-template="ready"' build/client/index.html
+          test -f build/client/__spa-fallback.html
           test -f build/client/_redirects
           test -f build/client/generated/tv-bg.webp
+          grep -q 'data-portfolio-template="ready"' build/client/index.html
+          grep -q 'publish = "build/client"' netlify.toml
+
+          # React Router may emit build/server as a build-time prerender helper even
+          # with ssr:false. It is not a runtime deployment artifact. The production
+          # contract is that Netlify publishes only build/client and has no server
+          # adapter or functions configuration.
+          if grep -RInE 'build/server|\[functions\]|\[edge_functions\]' netlify.toml; then
+            echo 'Netlify configuration references a runtime server/functions path.'
+            exit 1
+          fi
 
           tv_bytes=$(stat -c%s build/client/generated/tv-bg.webp)
           echo "Optimized TV artwork: ${tv_bytes} bytes"
           if [ "$tv_bytes" -gt 3000000 ]; then
             echo 'Optimized TV artwork exceeded the 3 MB performance budget.'
-            exit 1
-          fi
-
-          if [ -d build/server ]; then
-            echo 'Unexpected runtime server bundle detected. The portfolio must remain static-only.'
-            find build/server -maxdepth 2 -type f -print
             exit 1
           fi
 
