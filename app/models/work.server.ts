@@ -13,20 +13,42 @@ export type Work = PortfolioWork & {
 
 export type CreateWorkInput = Omit<Work, "id"> & { userId: User["id"] };
 
-function isPortfolioWork(value: unknown): value is PortfolioWork {
-  if (!value || typeof value !== "object") return false;
+function normalizeImageUri(value: string) {
+  if (/^(?:https?:)?\/\//.test(value) || value.startsWith("/")) {
+    return value;
+  }
+
+  return `/${value}`;
+}
+
+function toPortfolioWork(value: unknown): PortfolioWork | null {
+  if (!value || typeof value !== "object") return null;
 
   const work = value as Record<string, unknown>;
-  return (
-    typeof work.id === "string" &&
-    typeof work.name === "string" &&
-    typeof work.title === "string" &&
-    typeof work.date === "string" &&
-    typeof work.imageUri === "string" &&
-    work.imageUri.length > 0 &&
-    typeof work.groupName === "string" &&
-    typeof work.groupTitle === "string"
-  );
+  const hasValidId = typeof work.id === "string" || typeof work.id === "number";
+
+  if (
+    !hasValidId ||
+    typeof work.name !== "string" ||
+    typeof work.title !== "string" ||
+    typeof work.date !== "string" ||
+    typeof work.imageUri !== "string" ||
+    work.imageUri.length === 0 ||
+    typeof work.groupName !== "string" ||
+    typeof work.groupTitle !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    id: String(work.id),
+    name: work.name,
+    title: work.title,
+    date: work.date,
+    imageUri: normalizeImageUri(work.imageUri),
+    groupName: work.groupName,
+    groupTitle: work.groupTitle,
+  };
 }
 
 export async function getInfroListItems(): Promise<PortfolioWork[]> {
@@ -45,7 +67,12 @@ export async function getInfroListItems(): Promise<PortfolioWork[]> {
     }
   }
 
-  return Array.isArray(source) ? source.filter(isPortfolioWork) : [];
+  if (!Array.isArray(source)) return [];
+
+  return source.flatMap((value) => {
+    const work = toPortfolioWork(value);
+    return work ? [work] : [];
+  });
 }
 
 export async function getWorkListItems({ userId }: { userId: User["id"] }) {
