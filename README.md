@@ -109,12 +109,24 @@ The portfolio now uses one GSAP-native scroll pipeline:
 - `ScrollSmoother` owns smooth scrolling on top of the browser's native scroll position.
 - `ScrollTrigger` owns pinned sections and scroll-driven timelines.
 - Section navigation calls `ScrollSmoother.scrollTo()` rather than a second scrolling library.
-- The television is pinned for the portfolio section while its inner television artwork is animated separately. The pinned element itself is not animated, which keeps ScrollTrigger measurements stable.
-- ScrollTrigger instances are created through GSAP contexts and reverted on React effect cleanup, avoiding duplicate timelines after re-renders or route remounts.
-- Responsive animation branches use `gsap.matchMedia()` rather than mixing device detection with separate virtual-scroll coordinates.
+- The television starts pinning only when its visual center reaches the viewport center.
+- The television remains pinned while the real project list scrolls through; the pin duration follows the actual list height rather than a hard-coded pixel endpoint.
+- On desktop, hovering a project row changes the image shown in the television.
+- On mobile, project rows activate as they pass through a ScrollTrigger focus band, so the television cycles through project images without relying on hover.
+- Mobile project rows intentionally occupy a meaningful vertical interval so each preview image has visible dwell time before the next work becomes active.
+- The television stays pinned through its final exit animation and is only released after it has visually left the scene, preventing a visible unpin jump.
+- The pinned element itself is never animated; rotation, scale and opacity are applied to its inner television artwork so ScrollTrigger measurements stay stable.
+- Responsive animation branches use `gsap.matchMedia()` and are reverted automatically when the breakpoint changes.
+- The first-screen strip-image parallax formerly powered by Locomotive `data-scroll-speed` is reproduced with ScrollTrigger timelines.
 
-The older Locomotive Scroll provider, `react-locomotive-scroll` compatibility layer, Locomotive CSS, and `ScrollTrigger.scrollerProxy()` integration have been removed.
+The older Locomotive Scroll provider, `react-locomotive-scroll` compatibility layer, Locomotive CSS, `data-scroll-*` attributes, and `ScrollTrigger.scrollerProxy()` integration have been removed.
+
+## Portfolio data flow
+
+The home route owns the active project index. The portfolio component is presentation-only and receives the project list, the active index, and a selection callback. Desktop hover and mobile scroll activation therefore update the same React state rather than maintaining separate image-selection systems.
+
+Supabase work-list data and the bundled `public/data.json` fallback are normalized to the same portfolio-work shape before rendering. Numeric fallback IDs are converted to strings and local image paths are normalized, so the television preview behaves consistently with either data source.
 
 ## Migration notes
 
-The project no longer uses the Classic Remix compiler, the legacy custom Netlify Remix server entry, or the old Remix browser/server entry files. Routing, type generation, and builds now use React Router Framework Mode and Vite.
+The project no longer uses the Classic Remix compiler, the legacy custom Netlify Remix server entry, old Remix browser/server entry files, or the temporary `@remix-run/*` compatibility aliases. Routing, generated route types, loaders/actions, builds, and rendering now use React Router Framework Mode directly.
