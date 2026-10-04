@@ -16,9 +16,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      SESSION_SECRET: ci-only-session-secret-not-for-production
-      SUPABASE_URL: http://127.0.0.1:9
-      SUPABASE_ANON_KEY: ci-only-placeholder
       URL: http://127.0.0.1:3000
       PORT: 3000
     steps:
@@ -47,6 +44,14 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Verify GSAP is client-only
+        shell: bash
+        run: |
+          if grep -RInE 'from[[:space:]]+["'"']gsap|gsap/dist/Scroll(Smoother|Trigger)' build/server; then
+            echo 'GSAP leaked into the server bundle.'
+            exit 1
+          fi
+
       - name: Smoke test production server
         shell: bash
         run: |
@@ -57,6 +62,7 @@ jobs:
           for attempt in {1..30}; do
             if curl --fail --silent --show-error http://127.0.0.1:3000/ > /tmp/homepage.html; then
               test -s /tmp/homepage.html
+              grep -q 'Seeing You Through The River' /tmp/homepage.html
               exit 0
             fi
             sleep 1
