@@ -16,8 +16,7 @@
     "paths": {
       "~/*": ["./app/*"],
       "@remix-run/node": ["./app/compat/remix-node.ts"],
-      "@remix-run/react": ["./app/compat/remix-react.ts"],
-      "react-locomotive-scroll": ["./app/compat/react-locomotive-scroll.tsx"]
+      "@remix-run/react": ["./app/compat/remix-react.ts"]
     },
     "esModuleInterop": true,
     "verbatimModuleSyntax": true,
