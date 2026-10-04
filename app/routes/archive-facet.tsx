@@ -11,8 +11,12 @@ import ArchiveCard from "../components/archive/ArchiveCard";
 import ArchiveShell from "../components/archive/ArchiveShell";
 import { useSiteLanguage } from "../hooks/useSiteLanguage";
 import archiveStylesUrl from "../styles/archive.css?url";
+import archiveIndexesStylesUrl from "../styles/archive-indexes.css?url";
 
-export const links = () => [{ rel: "stylesheet", href: archiveStylesUrl }];
+export const links = () => [
+  { rel: "stylesheet", href: archiveStylesUrl },
+  { rel: "stylesheet", href: archiveIndexesStylesUrl },
+];
 
 const validKinds: readonly ArchiveKind[] = ["book", "audio", "video"];
 
@@ -38,13 +42,18 @@ function resolveFacet(facet: string, value: string) {
 export default function ArchiveFacetRoute() {
   const { facet = "", value = "" } = useParams();
   const { language, setLanguage, languageReady } = useSiteLanguage();
-  const decodedValue = decodeURIComponent(value);
-  const resolved = resolveFacet(facet, decodedValue);
+  const resolved = resolveFacet(facet, value);
+  const displayLabel =
+    facet === "type" && validKinds.includes(value as ArchiveKind)
+      ? archiveContent.labels[
+          value === "book" ? "books" : value === "audio" ? "audio" : "video"
+        ][language]
+      : resolved.label;
 
   useEffect(() => {
     if (!languageReady) return;
-    document.title = `${resolved.label} — ${archiveContent.identity.title[language]}`;
-  }, [language, languageReady, resolved.label]);
+    document.title = `${displayLabel} — ${archiveContent.identity.title[language]}`;
+  }, [displayLabel, language, languageReady]);
 
   if (!resolved.valid) {
     return (
@@ -52,7 +61,7 @@ export default function ArchiveFacetRoute() {
         language={language}
         setLanguage={setLanguage}
         title="404"
-        description="Archive index not found."
+        description={language === "zh" ? "未找到该档案索引。" : "Archive index not found."}
       >
         <Link to="/archive" className="archive-back-link">
           ← {archiveContent.labels.backToArchive[language]}
@@ -65,8 +74,12 @@ export default function ArchiveFacetRoute() {
     <ArchiveShell
       language={language}
       setLanguage={setLanguage}
-      title={resolved.label}
-      description={`${resolved.items.length} item${resolved.items.length === 1 ? "" : "s"}`}
+      title={displayLabel}
+      description={
+        language === "zh"
+          ? `${resolved.items.length} 项`
+          : `${resolved.items.length} item${resolved.items.length === 1 ? "" : "s"}`
+      }
     >
       <section className="archive-grid">
         {resolved.items.map((item) => (
