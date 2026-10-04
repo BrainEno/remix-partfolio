@@ -1,9 +1,7 @@
 import interFont from "@fontsource/inter/index.css?url";
 import inria from "@fontsource/inria-serif/index.css?url";
 import notoSansTC from "@fontsource/noto-sans-tc/index.css?url";
-import { gsap } from "gsap";
-import ScrollTrigger from "gsap/dist/ScrollTrigger";
-import { useEffect, useRef, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import {
   isRouteErrorResponse,
   Links,
@@ -12,10 +10,6 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
-import {
-  LocomotiveScrollProvider,
-  useLocomotiveScroll,
-} from "~/compat/react-locomotive-scroll";
 import globalStylesUrl from "~/styles/global.css?url";
 import type { Route } from "./+types/root";
 import { langCookie } from "./cookies";
@@ -48,52 +42,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
   ];
 }
 
-function ScrollTriggerProxy() {
-  const { scroll } = useLocomotiveScroll();
-
-  useEffect(() => {
-    if (!scroll) return;
-
-    gsap.registerPlugin(ScrollTrigger);
-    const element = scroll.el as HTMLElement;
-    const handleScroll = () => ScrollTrigger.update();
-    const handleRefresh = () => scroll.update?.();
-
-    scroll.on?.("scroll", handleScroll);
-    ScrollTrigger.scrollerProxy(element, {
-      scrollTop(value) {
-        if (arguments.length) {
-          scroll.scrollTo(value, 0, 0);
-          return value ?? 0;
-        }
-        return scroll.scroll?.instance?.scroll?.y ?? 0;
-      },
-      getBoundingClientRect() {
-        return {
-          top: 0,
-          left: 0,
-          width: window.innerWidth,
-          height: window.innerHeight,
-        };
-      },
-      pinType: element.style.transform ? "transform" : "fixed",
-    });
-
-    ScrollTrigger.addEventListener("refresh", handleRefresh);
-    ScrollTrigger.refresh();
-
-    return () => {
-      scroll.off?.("scroll", handleScroll);
-      ScrollTrigger.removeEventListener("refresh", handleRefresh);
-    };
-  }, [scroll]);
-
-  return null;
-}
-
 export function Layout({ children }: { children: ReactNode }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
   return (
     <html lang="en">
       <head>
@@ -102,16 +51,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <Links />
       </head>
       <body>
-        <LocomotiveScrollProvider
-          options={{ smooth: true, lerp: 0.08, multiplier: 0.9 }}
-          watch={[]}
-          containerRef={containerRef}
-        >
-          <ScrollTriggerProxy />
-          <div id="container" data-scroll-container ref={containerRef}>
-            {children}
-          </div>
-        </LocomotiveScrollProvider>
+        {children}
         <ScrollRestoration />
         <Scripts />
       </body>
