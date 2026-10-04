@@ -1,6 +1,4 @@
 import classNames from "classnames";
-import React from "react";
-import { useForwardedRef } from "~/hooks/useForwardedRef";
 import { localize } from "~/portfolio/content";
 import type { Language, PortfolioContent } from "~/portfolio/types";
 
@@ -9,16 +7,12 @@ interface IntroProps {
   content: Pick<PortfolioContent, "hero" | "intro">;
 }
 
-const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
-  { lang, content },
-  ref
-) {
-  const introRef = useForwardedRef<HTMLDivElement>(ref);
+export default function Intro({ lang, content }: IntroProps) {
   const isZh = lang === "zh";
   const { hero, intro } = content;
 
   return (
-    <section id="intro" className="section" ref={introRef}>
+    <section id="intro" className="section">
       <div className="intro-headline-box">
         {hero.headlines.map((headline, index) => (
           <span
@@ -153,6 +147,4 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
       </section>
     </section>
   );
-});
-
-export default Intro;
+}
