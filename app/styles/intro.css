@@ -366,7 +366,7 @@
 /** Mobile */
 @media (max-width: 480px) {
   #intro {
-    padding: 100px 20px;
+    padding: 100px 20px 0;
     width: 100vw;
     overflow-x: clip;
     overflow-y: visible;
@@ -399,7 +399,7 @@
   }
 
   .intro-headline-word.word-1.zh {
-    left: 0px;
+    left: 0;
     top: -40px;
   }
 
@@ -422,37 +422,38 @@
   .intro-subheadline-stickytainer {
     position: relative;
     width: 100vw;
-    height: 100vh;
+    height: 100svh;
   }
 
   .intro-subheadline-slider {
     width: 100vw;
+    height: 100svh;
   }
 
   .intro-subheadline-wrapper {
     position: absolute;
     width: 100vw;
-    height: 100vh;
+    height: 100svh;
     flex-direction: row;
   }
 
   .intro-subheadline-photo-box {
-    height: 50vh;
-    top: -20vh;
+    height: 50svh;
+    top: -20svh;
   }
 
   .intro-subheadline-pic-info {
     display: none;
   }
 
-  .intro-subheadline-ghost-photo-mask,
+  .intro-subheadline-photo-ghost-mask,
   .intro-subheadline-ghost-photo {
     display: none;
   }
 
   .intro-subheadline-photo-mask {
-    height: 40vh;
-    width: 25vh;
+    height: 40svh;
+    width: 25svh;
   }
 
   .intro-subheadline-title {
@@ -460,37 +461,73 @@
   }
 
   .intro-subheadline-text {
-    font-size: 23.5px;
-    text-indent: 6vh;
-    margin-top: 0.45vh;
+    font-size: clamp(20px, 5.9vw, 24px);
+    text-indent: 6svh;
+    margin-top: 0.45svh;
     width: 90vw;
+    line-height: 1.28;
   }
 
+  /* Keep the second story in the viewport from the instant it is pinned.
+     Previously the entire 100vw-wide scene started one full viewport to the
+     right, creating the long empty black interval seen on iOS. */
   .intro-subheadline-stickytainer2 {
     display: flex;
     position: relative;
     width: 100vw;
-    height: 100vh;
-    transform: translate3d(100vw, 0, 0);
+    height: 100svh;
+    transform: none;
   }
 
   .intro-subheadline-wrapper2 {
     position: absolute;
     display: flex;
     width: 100vw;
-    height: 100vh;
+    height: 100svh;
     flex-direction: row;
   }
 
   .intro-subheadline-photo-box2 {
+    left: 4vw;
+    top: 3svh;
+    width: 34vw;
+    height: 94svh;
     flex-direction: column;
+    align-items: stretch;
+    justify-content: space-between;
     margin-right: 0;
-    justify-content: space-around;
+    will-change: transform;
+  }
+
+  .intro-subheadline-photo-mask2 {
+    width: 34vw;
+    height: 16svh;
+    margin: 0;
+    overflow: hidden;
+    contain: paint;
+  }
+
+  .intro-subheadline-slider2 {
+    width: 100vw;
+    height: 100svh;
   }
 
   .intro-subheadline-text-box2 {
+    left: 100vw;
+    bottom: 8svh;
     width: 100vw;
     padding-left: 20px;
     padding-right: 20px;
+    will-change: transform;
+  }
+
+  .intro-subheadline-text2 {
+    width: calc(100vw - 40px);
+    margin: 0;
+  }
+
+  .intro-subheadline-text2-pic1,
+  .intro-subheadline-text2-pic2 {
+    display: none;
   }
 }
