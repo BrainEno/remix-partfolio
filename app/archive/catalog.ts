@@ -1,5 +1,20 @@
 import { archiveContent } from "./content";
-import type { ArchiveItem, ArchiveKind, ArchiveList } from "./types";
+import { archiveCreators } from "./creators";
+import type {
+  ArchiveCreator,
+  ArchiveItem,
+  ArchiveKind,
+  ArchiveList,
+} from "./types";
+
+const creatorById = new Map<string, ArchiveCreator>();
+
+for (const creator of archiveCreators) {
+  if (creatorById.has(creator.id)) {
+    throw new Error(`Duplicate archive creator id: ${creator.id}`);
+  }
+  creatorById.set(creator.id, creator);
+}
 
 const itemById = new Map<string, ArchiveItem>();
 
@@ -7,6 +22,15 @@ for (const item of archiveContent.items) {
   if (itemById.has(item.id)) {
     throw new Error(`Duplicate archive item id: ${item.id}`);
   }
+
+  for (const creatorId of item.creatorIds) {
+    if (!creatorById.has(creatorId)) {
+      throw new Error(
+        `Archive item ${item.id} references unknown creator: ${creatorId}`
+      );
+    }
+  }
+
   itemById.set(item.id, item);
 }
 
@@ -31,8 +55,16 @@ export function getArchiveItem(id: string) {
   return itemById.get(id);
 }
 
+export function getArchiveCreator(id: string) {
+  return creatorById.get(id);
+}
+
 export function getArchiveList(id: string) {
   return listById.get(id);
+}
+
+export function resolveArchiveCreators(item: ArchiveItem) {
+  return item.creatorIds.map((creatorId) => creatorById.get(creatorId)!);
 }
 
 export function resolveArchiveList(list: ArchiveList) {
@@ -58,12 +90,9 @@ export function getArchiveItemsByYear(year: string) {
   return archiveContent.items.filter((item) => item.year === year);
 }
 
-export function getArchiveItemsByCreator(creator: string) {
-  const normalizedCreator = creator.toLocaleLowerCase();
+export function getArchiveItemsByCreator(creatorId: string) {
   return archiveContent.items.filter((item) =>
-    item.creators.some(
-      (value) => value.toLocaleLowerCase() === normalizedCreator
-    )
+    item.creatorIds.includes(creatorId)
   );
 }
 
@@ -103,15 +132,11 @@ export function getArchiveYears() {
 }
 
 export function getArchiveCreators() {
-  const counts = new Map<string, number>();
-
-  archiveContent.items.forEach((item) => {
-    item.creators.forEach((creator) => {
-      counts.set(creator, (counts.get(creator) ?? 0) + 1);
-    });
-  });
-
-  return [...counts.entries()]
-    .map(([value, count]) => ({ value, count }))
-    .sort((a, b) => a.value.localeCompare(b.value));
+  return archiveCreators
+    .map((creator) => ({
+      creator,
+      count: getArchiveItemsByCreator(creator.id).length,
+    }))
+    .filter(({ count }) => count > 0)
+    .sort((a, b) => a.creator.name.en.localeCompare(b.creator.name.en));
 }
