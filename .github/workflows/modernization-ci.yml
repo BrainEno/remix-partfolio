@@ -33,6 +33,14 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Verify single scroll engine
+        shell: bash
+        run: |
+          if grep -RInE 'locomotive-scroll|react-locomotive-scroll|scrollerProxy' app package.json tsconfig.json; then
+            echo 'Legacy or competing scroll controller detected.'
+            exit 1
+          fi
+
       - name: Typecheck
         run: npm run typecheck
 
