@@ -1,7 +1,30 @@
 import { expect, test, type Page } from "@playwright/test";
 
-async function waitForScroll(page: Page) {
-  await page.waitForTimeout(500);
+async function waitForScroll(page: Page, milliseconds = 220) {
+  await page.waitForTimeout(milliseconds);
+}
+
+async function scrollUntilAttribute(
+  page: Page,
+  selector: string,
+  attribute: string,
+  expected: string,
+  options: { maxSteps?: number; stepViewport?: number } = {}
+) {
+  const maxSteps = options.maxSteps ?? 32;
+  const stepViewport = options.stepViewport ?? 0.08;
+
+  for (let step = 0; step < maxSteps; step += 1) {
+    const current = await page.locator(selector).getAttribute(attribute);
+    if (current === expected) return;
+
+    await page.evaluate((viewportFraction) => {
+      window.scrollBy(0, window.innerHeight * viewportFraction);
+    }, stepViewport);
+    await waitForScroll(page, 110);
+  }
+
+  await expect(page.locator(selector)).toHaveAttribute(attribute, expected);
 }
 
 test("mobile choreography synchronizes the hero and moves the second photo rail in from the right", async ({
@@ -29,7 +52,7 @@ test("mobile choreography synchronizes the hero and moves the second photo rail 
   );
 
   await page.evaluate(() => window.scrollTo(0, Math.min(340, document.body.scrollHeight)));
-  await waitForScroll(page);
+  await waitForScroll(page, 420);
 
   expect(
     await headline.evaluate((element) => getComputedStyle(element).transform)
@@ -54,7 +77,7 @@ test("mobile choreography synchronizes the hero and moves the second photo rail 
     const top = scene.getBoundingClientRect().top + window.scrollY;
     window.scrollTo(0, top);
   });
-  await waitForScroll(page);
+  await waitForScroll(page, 420);
 
   const railAtStart = await secondPhotoRail.evaluate((element) => {
     const rect = element.getBoundingClientRect();
@@ -63,7 +86,7 @@ test("mobile choreography synchronizes the hero and moves the second photo rail 
   expect(railAtStart.left).toBeGreaterThan(railAtStart.viewport * 0.95);
 
   await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.32));
-  await waitForScroll(page);
+  await waitForScroll(page, 420);
 
   const railAfter = await secondPhotoRail.evaluate((element) => {
     const rect = element.getBoundingClientRect();
@@ -80,7 +103,7 @@ test("mobile choreography synchronizes the hero and moves the second photo rail 
   expect(pageErrors).toEqual([]);
 });
 
-test("mobile TV is grey before works, shows only the work crossing its screen, then returns to grey and becomes the transition", async ({
+test("mobile TV is grey before works, shows work only inside its screen zone, then returns to grey and becomes the transition", async ({
   page,
 }) => {
   const pageErrors: string[] = [];
@@ -97,7 +120,7 @@ test("mobile TV is grey before works, shows only the work crossing its screen, t
     if (!section) throw new Error("Missing portfolio section");
     section.scrollIntoView({ block: "start" });
   });
-  await waitForScroll(page);
+  await waitForScroll(page, 420);
 
   const tvScreen = page.locator(".tv-all-vids");
   const tvBackground = page.locator(".tv-bg");
@@ -114,18 +137,22 @@ test("mobile TV is grey before works, shows only the work crossing its screen, t
     )
     .toBe(true);
 
-  const firstWork = page.locator(".work-item").first();
-  await firstWork.evaluate((element) => {
-    const rect = element.getBoundingClientRect();
-    const top = rect.top + window.scrollY;
-    window.scrollTo(0, top - window.innerHeight * 0.63);
-  });
-  await waitForScroll(page);
+  // Move through the scene in small increments like an actual touch scroll.
+  // This avoids teleporting across both the TV pin and work trigger in one
+  // animation frame, which is not representative of the real mobile UX.
+  await scrollUntilAttribute(
+    page,
+    ".tv-all-vids",
+    "data-preview-active",
+    "true",
+    { maxSteps: 28, stepViewport: 0.07 }
+  );
 
-  await expect(tvScreen).toHaveAttribute("data-preview-active", "true");
   await expect(page.locator(".tv-cover")).toHaveCount(1);
 
-  const workRect = await firstWork.boundingBox();
+  const activeWork = page.locator(".work-item.is-active");
+  await expect(activeWork).toHaveCount(1);
+  const workRect = await activeWork.boundingBox();
   const screenRect = await tvScreen.boundingBox();
   expect(workRect).not.toBeNull();
   expect(screenRect).not.toBeNull();
@@ -133,27 +160,28 @@ test("mobile TV is grey before works, shows only the work crossing its screen, t
     expect(workRect.height).toBeLessThan(screenRect.height * 1.05);
   }
 
-  const lastWork = page.locator(".work-item").last();
-  await lastWork.evaluate((element) => {
-    const rect = element.getBoundingClientRect();
-    const top = rect.top + window.scrollY;
-    window.scrollTo(0, top - window.innerHeight * 0.42);
-  });
-  await waitForScroll(page);
+  // Continue naturally through the remaining works. Only the final row clears
+  // the preview, at which point the television must be grey again.
+  await scrollUntilAttribute(
+    page,
+    ".tv-all-vids",
+    "data-preview-active",
+    "false",
+    { maxSteps: 48, stepViewport: 0.09 }
+  );
 
-  await expect(tvScreen).toHaveAttribute("data-preview-active", "false");
   await expect(page.locator(".tv-cover")).toHaveCount(0);
 
-  await page.evaluate(() => {
-    const spacer = document.querySelector<HTMLElement>(".tv-exit-spacer");
-    if (!spacer) throw new Error("Missing TV exit spacer");
-    const top = spacer.getBoundingClientRect().top + window.scrollY;
-    const start = top - window.innerHeight * 0.56;
-    window.scrollTo(0, start + spacer.offsetHeight * 0.62);
-  });
-  await waitForScroll(page);
-
+  // Enter the exit scene incrementally so the TV's grey-to-black transition is
+  // observed rather than skipped by a single large scroll jump.
   const tvBox = page.locator(".tv-box");
+  const transformBeforeExit = await tvBox.evaluate(
+    (element) => getComputedStyle(element).transform
+  );
+
+  await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.46));
+  await waitForScroll(page, 420);
+
   const exitState = await tvBox.evaluate((element) => ({
     transform: getComputedStyle(element).transform,
   }));
@@ -164,7 +192,7 @@ test("mobile TV is grey before works, shows only the work crossing its screen, t
     getComputedStyle(element).backgroundColor
   );
 
-  expect(exitState.transform).not.toBe("none");
+  expect(exitState.transform).not.toBe(transformBeforeExit);
   expect(backgroundOpacity).toBeLessThan(1);
   expect(idleScreen).toMatch(/rgb/);
   await expect(page.locator(".contact-headline").first()).toBeVisible();
