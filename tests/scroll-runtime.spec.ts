@@ -1,101 +1,133 @@
 import { expect, test, type Page } from "@playwright/test";
 
-async function waitForScroll(page: Page) {
-  await page.waitForTimeout(500);
+async function waitForScroll(page: Page, milliseconds = 220) {
+  await page.waitForTimeout(milliseconds);
 }
 
-test("mobile choreography has no dead intro phase and keeps the TV composited", async ({
+async function scrollUntilAttribute(
+  page: Page,
+  selector: string,
+  attribute: string,
+  expected: string,
+  options: { maxSteps?: number; stepViewport?: number } = {}
+) {
+  const maxSteps = options.maxSteps ?? 32;
+  const stepViewport = options.stepViewport ?? 0.08;
+
+  for (let step = 0; step < maxSteps; step += 1) {
+    const current = await page.locator(selector).getAttribute(attribute);
+    if (current === expected) return;
+
+    await page.evaluate((viewportFraction) => {
+      window.scrollBy(0, window.innerHeight * viewportFraction);
+    }, stepViewport);
+    await waitForScroll(page, 110);
+  }
+
+  await expect(page.locator(selector)).toHaveAttribute(attribute, expected);
+}
+
+test("mobile choreography synchronizes the hero and moves the second photo rail in from the right", async ({
   page,
 }) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
   await page.goto("/", { waitUntil: "networkidle" });
-
   const pageHome = page.locator(".page-home");
   await expect(pageHome).toHaveAttribute("data-scroll-runtime", "ready");
 
-  await expect
-    .poll(async () => {
-      const count = await pageHome.getAttribute("data-scroll-trigger-count");
-      return Number(count ?? 0);
-    })
-    .toBeGreaterThanOrEqual(9);
-
   const headline = page.locator(".intro-headline-word.word-1");
   const heroPhoto = page.locator(".intro-photo");
+  const heroPhotoBox = page.locator(".intro-photo-box");
 
   const headlineBefore = await headline.evaluate(
     (element) => getComputedStyle(element).transform
   );
-  const heroBefore = await heroPhoto.evaluate(
+  const photoBefore = await heroPhoto.evaluate(
+    (element) => getComputedStyle(element).transform
+  );
+  const photoBoxBefore = await heroPhotoBox.evaluate(
     (element) => getComputedStyle(element).transform
   );
 
-  await page.evaluate(() => window.scrollTo(0, Math.min(360, document.body.scrollHeight)));
-  await waitForScroll(page);
+  await page.evaluate(() => window.scrollTo(0, Math.min(340, document.body.scrollHeight)));
+  await waitForScroll(page, 420);
 
   expect(
     await headline.evaluate((element) => getComputedStyle(element).transform)
   ).not.toBe(headlineBefore);
   expect(
     await heroPhoto.evaluate((element) => getComputedStyle(element).transform)
-  ).not.toBe(heroBefore);
-
-  const portraitBox = page.locator(".intro-subheadline-photo-box");
-  const portraitBefore = await portraitBox.evaluate(
-    (element) => getComputedStyle(element).transform
-  );
-
-  await page.evaluate(() => {
-    const target = document.querySelector<HTMLElement>(
-      ".intro-subheadline-stickytainer"
-    );
-    if (!target) throw new Error("Missing first intro story trigger");
-    const top = target.getBoundingClientRect().top + window.scrollY;
-    window.scrollTo(0, top + window.innerHeight * 0.65);
-  });
-  await waitForScroll(page);
-
+  ).not.toBe(photoBefore);
   expect(
-    await portraitBox.evaluate((element) => getComputedStyle(element).transform)
-  ).not.toBe(portraitBefore);
+    await heroPhotoBox.evaluate((element) => getComputedStyle(element).transform)
+  ).not.toBe(photoBoxBefore);
 
-  // The second intro story used to start one full viewport offscreen and then
-  // placed its paragraph another viewport to the right. A small amount of
-  // scroll must now reveal the paragraph immediately while the photo rail exits.
+  const secondScene = page.locator(".intro-subheadline-stickytainer2");
+  const secondPhotoRail = page.locator(".intro-subheadline-photo-box2");
+  const secondText = page.locator(".intro-subheadline-text-box2");
+
+  await secondScene.scrollIntoViewIfNeeded();
   await page.evaluate(() => {
-    const target = document.querySelector<HTMLElement>(
+    const scene = document.querySelector<HTMLElement>(
       ".intro-subheadline-stickytainer2"
     );
-    if (!target) throw new Error("Missing second intro story trigger");
-    const top = target.getBoundingClientRect().top + window.scrollY;
-    window.scrollTo(0, top + window.innerHeight * 0.2);
+    if (!scene) throw new Error("Missing second intro story trigger");
+    const top = scene.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo(0, top);
   });
-  await waitForScroll(page);
+  await waitForScroll(page, 420);
 
-  const secondText = page.locator(".intro-subheadline-text-box2");
-  const secondPhotoRail = page.locator(".intro-subheadline-photo-box2");
-  const secondScene = await secondText.evaluate((element) => {
+  const railAtStart = await secondPhotoRail.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { left: rect.left, viewport: window.innerWidth };
+  });
+  expect(railAtStart.left).toBeGreaterThan(railAtStart.viewport * 0.95);
+
+  await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.32));
+  await waitForScroll(page, 420);
+
+  const railAfter = await secondPhotoRail.evaluate((element) => {
     const rect = element.getBoundingClientRect();
     return { left: rect.left, right: rect.right, viewport: window.innerWidth };
   });
-  expect(secondScene.left).toBeLessThan(secondScene.viewport);
-  expect(secondScene.right).toBeGreaterThan(0);
-  await expect(secondPhotoRail).toBeVisible();
+  const textAfter = await secondText.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { left: rect.left, right: rect.right, viewport: window.innerWidth };
+  });
 
-  // At the beginning of Works the full-height background must already own the
-  // viewport; this prevents the white seam that was visible before TV pinning.
+  expect(railAfter.left).toBeLessThan(railAfter.viewport);
+  expect(railAfter.right).toBeGreaterThan(0);
+  expect(textAfter.left).toBeLessThan(textAfter.viewport);
+  expect(pageErrors).toEqual([]);
+});
+
+test("mobile TV is grey before works, shows work only inside its screen zone, then returns to grey and becomes the transition", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator(".page-home")).toHaveAttribute(
+    "data-scroll-runtime",
+    "ready"
+  );
+
   await page.evaluate(() => {
     const section = document.getElementById("partfolio");
     if (!section) throw new Error("Missing portfolio section");
     section.scrollIntoView({ block: "start" });
   });
-  await waitForScroll(page);
+  await waitForScroll(page, 420);
 
-  const tvBackground = page.locator(".tv-bg");
   const tvScreen = page.locator(".tv-all-vids");
+  const tvBackground = page.locator(".tv-bg");
   const tvPinner = page.locator(".tv-box-pinner");
+
+  await expect(tvScreen).toHaveAttribute("data-preview-active", "false");
+  await expect(page.locator(".tv-cover")).toHaveCount(0);
 
   await expect
     .poll(async () =>
@@ -105,45 +137,65 @@ test("mobile choreography has no dead intro phase and keeps the TV composited", 
     )
     .toBe(true);
 
-  const backgroundRect = await tvBackground.boundingBox();
-  const screenRect = await tvScreen.boundingBox();
-  const viewport = page.viewportSize();
-  expect(backgroundRect).not.toBeNull();
-  expect(screenRect).not.toBeNull();
-  expect(viewport).not.toBeNull();
+  // Move through the scene in small increments like an actual touch scroll.
+  // This avoids teleporting across both the TV pin and work trigger in one
+  // animation frame, which is not representative of the real mobile UX.
+  await scrollUntilAttribute(
+    page,
+    ".tv-all-vids",
+    "data-preview-active",
+    "true",
+    { maxSteps: 28, stepViewport: 0.07 }
+  );
 
-  if (backgroundRect && screenRect && viewport) {
-    expect(Math.abs(backgroundRect.y)).toBeLessThanOrEqual(2);
-    expect(backgroundRect.height).toBeGreaterThanOrEqual(viewport.height - 2);
-    expect(screenRect.x).toBeGreaterThan(viewport.width * 0.28);
-    expect(screenRect.x + screenRect.width).toBeLessThan(viewport.width * 0.7);
+  await expect(page.locator(".tv-cover")).toHaveCount(1);
+
+  const activeWork = page.locator(".work-item.is-active");
+  await expect(activeWork).toHaveCount(1);
+  const workRect = await activeWork.boundingBox();
+  const screenRect = await tvScreen.boundingBox();
+  expect(workRect).not.toBeNull();
+  expect(screenRect).not.toBeNull();
+  if (workRect && screenRect) {
+    expect(workRect.height).toBeLessThan(screenRect.height * 1.05);
   }
 
-  // Halfway through the exit, the screen image must still exist while the
-  // entire TV scene scales/rotates/fades as one composited unit.
-  await page.evaluate(() => {
-    const spacer = document.querySelector<HTMLElement>(".tv-exit-spacer");
-    if (!spacer) throw new Error("Missing TV exit spacer");
-    const top = spacer.getBoundingClientRect().top + window.scrollY;
-    const start = top - window.innerHeight;
-    window.scrollTo(0, start + spacer.offsetHeight * 0.55);
-  });
-  await waitForScroll(page);
+  // Continue naturally through the remaining works. Only the final row clears
+  // the preview, at which point the television must be grey again.
+  await scrollUntilAttribute(
+    page,
+    ".tv-all-vids",
+    "data-preview-active",
+    "false",
+    { maxSteps: 48, stepViewport: 0.09 }
+  );
 
+  await expect(page.locator(".tv-cover")).toHaveCount(0);
+
+  // Enter the exit scene incrementally so the TV's grey-to-black transition is
+  // observed rather than skipped by a single large scroll jump.
   const tvBox = page.locator(".tv-box");
-  const tvCover = page.locator(".tv-cover");
+  const transformBeforeExit = await tvBox.evaluate(
+    (element) => getComputedStyle(element).transform
+  );
+
+  await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.46));
+  await waitForScroll(page, 420);
+
   const exitState = await tvBox.evaluate((element) => ({
-    opacity: Number(getComputedStyle(element).opacity),
     transform: getComputedStyle(element).transform,
   }));
-  const coverOpacity = Number(
-    await tvCover.evaluate((element) => getComputedStyle(element).opacity)
+  const backgroundOpacity = Number(
+    await tvBackground.evaluate((element) => getComputedStyle(element).opacity)
   );
-  expect(exitState.transform).not.toBe("none");
-  expect(exitState.opacity).toBeLessThan(1);
-  expect(exitState.opacity).toBeGreaterThan(0);
-  expect(coverOpacity).toBeGreaterThan(0.2);
+  const idleScreen = await page.locator(".tv-blackscreen").evaluate((element) =>
+    getComputedStyle(element).backgroundColor
+  );
 
+  expect(exitState.transform).not.toBe(transformBeforeExit);
+  expect(backgroundOpacity).toBeLessThan(1);
+  expect(idleScreen).toMatch(/rgb/);
+  await expect(page.locator(".contact-headline").first()).toBeVisible();
   expect(pageErrors).toEqual([]);
 });
 

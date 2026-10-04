@@ -10,6 +10,7 @@ import Partifolio from "../components/Partfolio";
 import { langCookie } from "../cookies";
 import type { Language, PortfolioSection } from "../portfolio/types";
 import { portfolioWorks } from "../portfolio/works";
+import { setupMobileChoreography } from "../scroll/mobile-choreography.client";
 import {
   scrollToPortfolioSection,
   setupPortfolioScroll,
@@ -50,13 +51,13 @@ export default function Index({ loaderData }: Route.ComponentProps) {
   const { lang, works } = loaderData;
   const [section, setSection] = useState<PortfolioSection>("intro");
   const [language, setLanguage] = useState<Language>(lang ?? "zh");
-  const [activeWorkIndex, setActiveWorkIndex] = useState(0);
+  const [activeWorkIndex, setActiveWorkIndex] = useState(-1);
   const pageRef = useRef<HTMLDivElement | null>(null);
   const isZh = language === "zh";
 
   const handleWorkPreview = useCallback(
     (index: number) => {
-      if (index < 0 || index >= works.length) return;
+      if (index < -1 || index >= works.length) return;
       setActiveWorkIndex((current) => (current === index ? current : index));
     },
     [works.length]
@@ -69,16 +70,21 @@ export default function Index({ loaderData }: Route.ComponentProps) {
     scope.dataset.scrollRuntime = "initializing";
 
     try {
-      const cleanup = setupPortfolioScroll({
+      const cleanupBase = setupPortfolioScroll({
         scope,
         isZh,
         onSectionChange: setSection,
         onWorkPreview: handleWorkPreview,
       });
+      const cleanupMobile = setupMobileChoreography({
+        scope,
+        onWorkPreview: handleWorkPreview,
+      });
       scope.dataset.scrollRuntime = "ready";
 
       return () => {
-        cleanup?.();
+        cleanupMobile?.();
+        cleanupBase?.();
         delete scope.dataset.scrollRuntime;
       };
     } catch (error) {
