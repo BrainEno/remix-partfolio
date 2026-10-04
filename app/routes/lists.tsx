@@ -27,20 +27,24 @@ export default function ListsIndex() {
       }
     >
       <section className="archive-lists-grid">
-        {archiveContent.lists.map((list) => (
-          <article className="archive-list-card" key={list.id}>
-            <Link to={`/lists/${list.id}`}>
-              <div className="archive-list-card-meta">
-                <span>{String(list.entries.length).padStart(2, "0")} items</span>
-                {list.updatedAt ? <span>{list.updatedAt}</span> : null}
-                {list.demo ? <span>template data</span> : null}
-              </div>
-              <h2>{list.title[language]}</h2>
-              {list.description ? <p>{list.description[language]}</p> : null}
-              <span className="archive-list-open">Open list →</span>
-            </Link>
-          </article>
-        ))}
+        {archiveContent.lists.map((list) => {
+          const updatedAt = "updatedAt" in list ? list.updatedAt : undefined;
+
+          return (
+            <article className="archive-list-card" key={list.id}>
+              <Link to={`/lists/${list.id}`}>
+                <div className="archive-list-card-meta">
+                  <span>{String(list.entries.length).padStart(2, "0")} items</span>
+                  {updatedAt ? <span>{updatedAt}</span> : null}
+                  {list.demo ? <span>template data</span> : null}
+                </div>
+                <h2>{list.title[language]}</h2>
+                {list.description ? <p>{list.description[language]}</p> : null}
+                <span className="archive-list-open">Open list →</span>
+              </Link>
+            </article>
+          );
+        })}
       </section>
     </ArchiveShell>
   );
