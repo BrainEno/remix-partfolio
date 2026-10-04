@@ -4,13 +4,24 @@ import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const contentPath = resolve(root, "app/portfolio/content.ts");
-const source = await readFile(contentPath, "utf8");
-const paths = [...source.matchAll(/\bsrc:\s*["']([^"']+)["']/g)].map(
-  (match) => match[1]
-);
+const contentPaths = [
+  resolve(root, "app/portfolio/content.ts"),
+  resolve(root, "app/archive/content.ts"),
+];
 
-const localPaths = [...new Set(paths.filter((path) => path.startsWith("/")))];
+const configuredPaths = [];
+for (const contentPath of contentPaths) {
+  const source = await readFile(contentPath, "utf8");
+  configuredPaths.push(
+    ...[...source.matchAll(/\b(?:src|poster):\s*["']([^"']+)["']/g)].map(
+      (match) => match[1]
+    )
+  );
+}
+
+const localPaths = [
+  ...new Set(configuredPaths.filter((path) => path.startsWith("/"))),
+];
 const missing = [];
 
 for (const assetPath of localPaths) {
@@ -23,9 +34,9 @@ for (const assetPath of localPaths) {
 }
 
 if (missing.length > 0) {
-  console.error("Configured portfolio assets are missing or have incorrect case:");
+  console.error("Configured local content assets are missing or have incorrect case:");
   missing.forEach((path) => console.error(`  - ${path}`));
   process.exit(1);
 }
 
-console.log(`Validated ${localPaths.length} configured portfolio assets.`);
+console.log(`Validated ${localPaths.length} configured local content assets.`);
