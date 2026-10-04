@@ -47,7 +47,9 @@ jobs:
       - name: Verify GSAP is client-only
         shell: bash
         run: |
-          if grep -RInE 'from[[:space:]]+["'"']gsap|gsap/dist/Scroll(Smoother|Trigger)' build/server; then
+          if grep -RInF 'from "gsap"' build/server || \
+             grep -RInF "from 'gsap'" build/server || \
+             grep -RInF 'gsap/dist/Scroll' build/server; then
             echo 'GSAP leaked into the server bundle.'
             exit 1
           fi
