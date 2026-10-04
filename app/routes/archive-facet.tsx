@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link, useParams } from "react-router";
 import {
+  getArchiveItemsByCreator,
   getArchiveItemsByKind,
   getArchiveItemsByTag,
   getArchiveItemsByYear,
@@ -33,6 +34,9 @@ function resolveFacet(facet: string, value: string) {
     label = `#${value}`;
   } else if (facet === "year") {
     items = getArchiveItemsByYear(value);
+    label = value;
+  } else if (facet === "creator") {
+    items = getArchiveItemsByCreator(value);
     label = value;
   }
 
