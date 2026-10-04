@@ -1,140 +1,91 @@
-import { Form, NavLink } from "react-router";
 import classNames from "classnames";
-import type { MouseEvent } from "react";
 import React from "react";
-import { motion } from "framer-motion";
+import { NavLink, useFetcher } from "react-router";
 import { useMediaQuery } from "~/hooks/useMediaQuery";
+import { localize } from "~/portfolio/content";
 import { MOBILE_MEDIA_QUERY } from "~/portfolio/media";
-import type { Language, PortfolioSection } from "~/portfolio/types";
+import type {
+  Language,
+  PortfolioContent,
+  PortfolioSection,
+} from "~/portfolio/types";
 
 interface HeaderProps {
   lang: Language;
   setLanguage: React.Dispatch<React.SetStateAction<Language>>;
   section: PortfolioSection;
-  handleIntro: (e: MouseEvent<HTMLDivElement>) => void;
-  handlePartfolio: (e: MouseEvent<HTMLDivElement>) => void;
-  handleContact: (e: MouseEvent<HTMLDivElement>) => void;
+  content: Pick<PortfolioContent, "identity" | "navigation">;
+  onNavigate: (section: PortfolioSection) => void;
 }
+
+const sections: readonly PortfolioSection[] = ["intro", "partfolio", "contact"];
 
 const Header: React.FC<HeaderProps> = ({
   lang,
   setLanguage,
   section,
-  handleContact,
-  handleIntro,
-  handlePartfolio,
+  content,
+  onNavigate,
 }) => {
-  const isZh = lang === "zh";
+  const fetcher = useFetcher();
   const isMobile = useMediaQuery(MOBILE_MEDIA_QUERY);
 
   return (
     <header className="header">
       <div className="header-left">
-        <NavLink to="/" className="header-link">
-          <motion.span
-            initial={{
-              opacity: 0,
-              y: "100%",
-            }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.6,
-              ease: "easeOut",
-            }}
-          >
-            SydeyZhao
-          </motion.span>
+        <NavLink to="/" className="header-link" aria-label={content.identity.displayName}>
+          <span className="header-reveal">{content.identity.displayName}</span>
         </NavLink>
-        <Form method="post" className="lang-switch">
-          <motion.button
+
+        <fetcher.Form method="post" className="lang-switch" aria-label="Language">
+          <button
             type="submit"
             name="lang"
             value="zh"
             onClick={() => setLanguage("zh")}
-            className={classNames("lang zh", {
+            className={classNames("lang zh header-reveal", {
               "lang-selected": lang === "zh",
             })}
-            initial={
-              isMobile
-                ? { opacity: 0, x: "-100%" }
-                : { opacity: 0, y: "100%" }
-            }
-            animate={isMobile ? { opacity: 1, x: 0 } : { opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.6,
-              ease: "easeOut",
-            }}
           >
             {isMobile ? "Zh" : "中文"}
-          </motion.button>
-          <motion.span
-            initial={
-              isMobile
-                ? { opacity: 0, x: "-120%" }
-                : { opacity: 0, y: "100%" }
-            }
-            animate={isMobile ? { opacity: 1, x: 0 } : { opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.6,
-              ease: "easeOut",
-            }}
-          >
+          </button>
+          <span className="header-reveal" aria-hidden="true">
             {" "}|{" "}
-          </motion.span>
-          <motion.button
+          </span>
+          <button
             type="submit"
             name="lang"
             value="en"
             onClick={() => setLanguage("en")}
-            className={classNames("lang", { "lang-selected": lang === "en" })}
-            initial={
-              isMobile
-                ? { opacity: 0, x: "-140%" }
-                : { opacity: 0, y: "100%" }
-            }
-            animate={isMobile ? { opacity: 1, x: 0 } : { opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.6,
-              ease: "easeOut",
-            }}
+            className={classNames("lang header-reveal", {
+              "lang-selected": lang === "en",
+            })}
           >
             {isMobile ? "En" : "English"}
-          </motion.button>
-        </Form>
+          </button>
+        </fetcher.Form>
       </div>
-      <nav className="nav">
-        <div
-          className={classNames("nav-entry", {
-            "nav-active": section === "intro",
-          })}
-          onClick={handleIntro}
-        >
-          <div className="nav-entry-bg" />
-          <span className="nav-entry-text">{isZh ? "簡介" : "Intro"}</span>
-        </div>
-        <div
-          className={classNames("nav-entry", {
-            "nav-active": section === "partfolio",
-          })}
-          onClick={handlePartfolio}
-        >
-          <div className="nav-entry-bg" />
-          <span className="nav-entry-text">{isZh ? "作品集" : "Works"}</span>
-        </div>
-        <div
-          className={classNames("nav-entry", {
-            "nav-active": section === "contact",
-          })}
-          onClick={handleContact}
-        >
-          <div className="nav-entry-bg" />
-          <span className="nav-entry-text">
-            {isZh ? "聯絡方式" : "Contact"}
-          </span>
-        </div>
+
+      <nav className="nav" aria-label="Portfolio sections">
+        {sections.map((target) => (
+          <button
+            key={target}
+            type="button"
+            className={classNames("nav-entry", {
+              "nav-active": section === target,
+            })}
+            onClick={() => onNavigate(target)}
+            aria-current={section === target ? "page" : undefined}
+          >
+            <span className="nav-entry-bg" aria-hidden="true" />
+            <span className="nav-entry-text">
+              {localize(content.navigation[target], lang)}
+            </span>
+          </button>
+        ))}
       </nav>
     </header>
   );
 };
 
-export default Header;
+export default React.memo(Header);
