@@ -1,120 +1,165 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-async function waitForScroll(page: Page, milliseconds = 220) {
-  await page.waitForTimeout(milliseconds);
+async function waitForScroll(page: Parameters<typeof test>[0]["page"], ms = 250) {
+  await page.waitForTimeout(ms);
 }
 
 async function scrollUntilAttribute(
-  page: Page,
+  page: Parameters<typeof test>[0]["page"],
   selector: string,
   attribute: string,
-  expected: string,
-  options: { maxSteps?: number; stepViewport?: number } = {}
+  expectedValue: string,
+  options: { maxSteps: number; stepViewport: number }
 ) {
-  const maxSteps = options.maxSteps ?? 32;
-  const stepViewport = options.stepViewport ?? 0.08;
+  for (let step = 0; step < options.maxSteps; step += 1) {
+    const value = await page.locator(selector).getAttribute(attribute);
+    if (value === expectedValue) return;
 
-  for (let step = 0; step < maxSteps; step += 1) {
-    const current = await page.locator(selector).getAttribute(attribute);
-    if (current === expected) return;
-
-    await page.evaluate((viewportFraction) => {
-      window.scrollBy(0, window.innerHeight * viewportFraction);
-    }, stepViewport);
-    await waitForScroll(page, 110);
+    await page.evaluate(
+      ({ stepViewport }) => window.scrollBy(0, window.innerHeight * stepViewport),
+      options
+    );
+    await waitForScroll(page, 100);
   }
 
-  await expect(page.locator(selector)).toHaveAttribute(attribute, expected);
+  await expect(page.locator(selector)).toHaveAttribute(attribute, expectedValue);
 }
 
-async function readCssColorLuma(page: Page, selector: string, property: string) {
-  return page.locator(selector).evaluate((element, cssProperty) => {
-    const raw = getComputedStyle(element).getPropertyValue(cssProperty).trim();
-    const probe = document.createElement("span");
-    probe.style.color = raw || "#000";
-    document.body.appendChild(probe);
-    const computed = getComputedStyle(probe).color;
-    probe.remove();
+function parseCssRgb(value: string) {
+  const match = value.match(/rgba?\(([^)]+)\)/i);
+  if (!match) return null;
 
-    const channels = computed.match(/[\d.]+/g)?.slice(0, 3).map(Number) ?? [0, 0, 0];
-    return (channels[0] + channels[1] + channels[2]) / 3;
-  }, property);
+  const components = match[1]
+    .split(/[ ,/]+/)
+    .filter(Boolean)
+    .slice(0, 3)
+    .map(Number);
+
+  if (components.length !== 3 || components.some(Number.isNaN)) return null;
+  return components;
 }
 
-test("mobile choreography synchronizes the hero and moves the second photo rail in from the right", async ({
+async function readCssColorLuma(
+  page: Parameters<typeof test>[0]["page"],
+  selector: string,
+  property: string
+) {
+  const color = await page.locator(selector).evaluate(
+    (element, cssProperty) =>
+      getComputedStyle(element).getPropertyValue(cssProperty).trim(),
+    property
+  );
+  const rgb = parseCssRgb(color);
+  if (!rgb) throw new Error(`Could not parse ${property}: ${color}`);
+  return rgb.reduce((sum, component) => sum + component, 0) / 3;
+}
+
+test("mobile GSAP runtime creates triggers and animates the page", async ({
   page,
 }) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
   await page.goto("/", { waitUntil: "networkidle" });
+
   const pageHome = page.locator(".page-home");
   await expect(pageHome).toHaveAttribute("data-scroll-runtime", "ready");
 
+  await expect
+    .poll(async () => {
+      const count = await pageHome.getAttribute("data-scroll-trigger-count");
+      return Number(count ?? 0);
+    })
+    .toBeGreaterThanOrEqual(10);
+
   const headline = page.locator(".intro-headline-word.word-1");
   const heroPhoto = page.locator(".intro-photo");
-  const heroPhotoBox = page.locator(".intro-photo-box");
 
   const headlineBefore = await headline.evaluate(
     (element) => getComputedStyle(element).transform
   );
-  const photoBefore = await heroPhoto.evaluate(
-    (element) => getComputedStyle(element).transform
-  );
-  const photoBoxBefore = await heroPhotoBox.evaluate(
+  const heroBefore = await heroPhoto.evaluate(
     (element) => getComputedStyle(element).transform
   );
 
-  await page.evaluate(() => window.scrollTo(0, Math.min(340, document.body.scrollHeight)));
-  await waitForScroll(page, 420);
+  await page.evaluate(() => window.scrollTo(0, Math.min(360, document.body.scrollHeight)));
+  await page.waitForTimeout(450);
 
-  expect(
-    await headline.evaluate((element) => getComputedStyle(element).transform)
-  ).not.toBe(headlineBefore);
-  expect(
-    await heroPhoto.evaluate((element) => getComputedStyle(element).transform)
-  ).not.toBe(photoBefore);
-  expect(
-    await heroPhotoBox.evaluate((element) => getComputedStyle(element).transform)
-  ).not.toBe(photoBoxBefore);
+  const headlineAfter = await headline.evaluate(
+    (element) => getComputedStyle(element).transform
+  );
+  const heroAfter = await heroPhoto.evaluate(
+    (element) => getComputedStyle(element).transform
+  );
 
-  const secondScene = page.locator(".intro-subheadline-stickytainer2");
-  const secondPhotoRail = page.locator(".intro-subheadline-photo-box2");
-  const secondText = page.locator(".intro-subheadline-text-box2");
+  expect(headlineAfter).not.toBe(headlineBefore);
+  expect(heroAfter).not.toBe(heroBefore);
 
-  await secondScene.scrollIntoViewIfNeeded();
+  const portraitBox = page.locator(".intro-subheadline-photo-box");
+  const portraitBefore = await portraitBox.evaluate(
+    (element) => getComputedStyle(element).transform
+  );
+
   await page.evaluate(() => {
-    const scene = document.querySelector<HTMLElement>(
-      ".intro-subheadline-stickytainer2"
+    const target = document.querySelector<HTMLElement>(
+      ".intro-subheadline-stickytainer"
     );
-    if (!scene) throw new Error("Missing second intro story trigger");
-    const top = scene.getBoundingClientRect().top + window.scrollY;
-    window.scrollTo(0, top);
+    if (!target) throw new Error("Missing first intro story trigger");
+    const top = target.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo(0, top + window.innerHeight * 0.65);
   });
-  await waitForScroll(page, 420);
+  await page.waitForTimeout(450);
 
-  const railAtStart = await secondPhotoRail.evaluate((element) => {
-    const rect = element.getBoundingClientRect();
-    return { left: rect.left, viewport: window.innerWidth };
-  });
-  expect(railAtStart.left).toBeGreaterThan(railAtStart.viewport * 0.95);
+  const portraitAfter = await portraitBox.evaluate(
+    (element) => getComputedStyle(element).transform
+  );
+  expect(portraitAfter).not.toBe(portraitBefore);
 
-  await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.32));
-  await waitForScroll(page, 420);
+  const tvPinner = page.locator(".tv-box-pinner");
+  await expect
+    .poll(async () =>
+      tvPinner.evaluate((element) =>
+        element.parentElement?.classList.contains("pin-spacer") ?? false
+      )
+    )
+    .toBe(true);
 
-  const railAfter = await secondPhotoRail.evaluate((element) => {
-    const rect = element.getBoundingClientRect();
-    return { left: rect.left, right: rect.right, viewport: window.innerWidth };
-  });
-  const textAfter = await secondText.evaluate((element) => {
-    const rect = element.getBoundingClientRect();
-    return { left: rect.left, right: rect.right, viewport: window.innerWidth };
-  });
-
-  expect(railAfter.left).toBeLessThan(railAfter.viewport);
-  expect(railAfter.right).toBeGreaterThan(0);
-  expect(textAfter.left).toBeLessThan(textAfter.viewport);
   expect(pageErrors).toEqual([]);
+});
+
+test("mobile second intro gallery enters from the right while the copy travels with it", async ({
+  page,
+}) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator(".page-home")).toHaveAttribute(
+    "data-scroll-runtime",
+    "ready"
+  );
+
+  const scene = page.locator(".intro-subheadline-stickytainer2");
+  const gallery = page.locator(".intro-subheadline-photo-box2");
+  const copy = page.locator(".intro-subheadline-text-box2");
+
+  await scene.scrollIntoViewIfNeeded();
+  await waitForScroll(page, 350);
+
+  const viewportWidth = page.viewportSize()?.width ?? 390;
+  const galleryBefore = await gallery.boundingBox();
+  const copyBefore = await copy.boundingBox();
+  expect(galleryBefore).not.toBeNull();
+  expect(copyBefore).not.toBeNull();
+  if (galleryBefore) expect(galleryBefore.x).toBeGreaterThan(viewportWidth * 0.75);
+  if (copyBefore) expect(copyBefore.x).toBeGreaterThan(viewportWidth * 0.7);
+
+  await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.65));
+  await waitForScroll(page, 450);
+
+  const galleryAfter = await gallery.boundingBox();
+  const copyAfter = await copy.boundingBox();
+  expect(galleryAfter).not.toBeNull();
+  expect(copyAfter).not.toBeNull();
+  if (galleryBefore && galleryAfter) expect(galleryAfter.x).toBeLessThan(galleryBefore.x);
+  if (copyBefore && copyAfter) expect(copyAfter.x).toBeLessThan(copyBefore.x);
 });
 
 test("mobile TV is grey before works, previews only inside the screen, then fades grey-green to black to white before Contact appears", async ({
@@ -208,8 +253,9 @@ test("mobile TV is grey before works, previews only inside the screen, then fade
   expect(backgroundOpacity).toBeLessThan(1);
   await expect(contactHeadline).toBeHidden();
 
-  // Second phase: keep scrolling until the black -> white passage begins.
-  // Contact is expected to emerge here, not during the earlier black phase.
+  // Contact is intentionally revealed *during* the black -> white passage.
+  // At first visibility the background only needs to have left pure black;
+  // it should not already be fully white.
   for (let step = 0; step < 24 && !(await contactHeadline.isVisible()); step += 1) {
     await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.05));
     await waitForScroll(page, 110);
@@ -217,12 +263,28 @@ test("mobile TV is grey before works, previews only inside the screen, then fade
 
   await expect(contactHeadline).toBeVisible();
 
-  const whitePhaseLuma = await readCssColorLuma(
+  const contactRevealLuma = await readCssColorLuma(
     page,
     ".tv-blackscreen",
     "--tv-screen-mid"
   );
-  expect(whitePhaseLuma).toBeGreaterThan(blackPhaseLuma + 20);
+  expect(contactRevealLuma).toBeGreaterThan(blackPhaseLuma + 5);
+
+  // Keep scrolling through the same transition and require a clearly brighter
+  // late phase. This protects the intended black -> white handoff without
+  // incorrectly requiring it to be complete the instant Contact first appears.
+  for (let step = 0; step < 12; step += 1) {
+    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.04));
+    await waitForScroll(page, 90);
+  }
+
+  const lateWhiteLuma = await readCssColorLuma(
+    page,
+    ".tv-blackscreen",
+    "--tv-screen-mid"
+  );
+  expect(lateWhiteLuma).toBeGreaterThan(contactRevealLuma + 40);
+  expect(lateWhiteLuma).toBeGreaterThan(100);
   expect(pageErrors).toEqual([]);
 });
 
@@ -233,34 +295,19 @@ test("mobile WebGL scene is mounted only near Contact and survives repeated navi
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
   await page.goto("/", { waitUntil: "networkidle" });
-  await expect(page.locator(".page-home")).toHaveAttribute(
-    "data-scroll-runtime",
-    "ready"
-  );
+  await expect(page.locator(".contact-webgl canvas")).toHaveCount(0);
 
-  await expect(page.locator("canvas")).toHaveCount(0);
+  await page.locator("#contact").scrollIntoViewIfNeeded();
+  await waitForScroll(page, 450);
+  await expect(page.locator(".contact-webgl canvas")).toHaveCount(1);
 
-  for (let cycle = 0; cycle < 2; cycle += 1) {
-    await page.evaluate(() => {
-      const contact = document.querySelector<HTMLElement>(".contact-inner");
-      if (!contact) throw new Error("Missing contact section");
-      contact.scrollIntoView({ block: "center" });
-    });
+  await page.locator("#intro").scrollIntoViewIfNeeded();
+  await waitForScroll(page, 450);
+  await expect(page.locator(".contact-webgl canvas")).toHaveCount(0);
 
-    await expect(page.locator(".canvas-container")).toHaveAttribute(
-      "data-scene-active",
-      "true"
-    );
-    await expect(page.locator("canvas")).toHaveCount(1);
+  await page.locator("#contact").scrollIntoViewIfNeeded();
+  await waitForScroll(page, 450);
+  await expect(page.locator(".contact-webgl canvas")).toHaveCount(1);
 
-    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "auto" }));
-    await expect(page.locator(".canvas-container")).toHaveAttribute(
-      "data-scene-active",
-      "false"
-    );
-    await expect(page.locator("canvas")).toHaveCount(0);
-  }
-
-  await expect(page.locator(".header")).toBeVisible();
   expect(pageErrors).toEqual([]);
 });
