@@ -4,8 +4,10 @@
   "type": "module",
   "scripts": {
     "assets:optimize": "node scripts/optimize-assets.mjs",
-    "prebuild": "npm run assets:optimize",
-    "predev": "npm run assets:optimize",
+    "assets:validate": "node scripts/validate-content-assets.mjs",
+    "prepare:assets": "npm run assets:optimize && npm run assets:validate",
+    "prebuild": "npm run prepare:assets",
+    "predev": "npm run prepare:assets",
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "sirv build/client --single --port 3000",
