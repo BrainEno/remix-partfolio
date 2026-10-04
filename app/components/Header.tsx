@@ -2,14 +2,14 @@ import { Form, NavLink } from "react-router";
 import classNames from "classnames";
 import type { MouseEvent } from "react";
 import React from "react";
-import type { Language, SectionOptions } from "../routes";
 import { motion } from "framer-motion";
 import { isMobile } from "react-device-detect";
+import type { Language, PortfolioSection } from "~/portfolio/types";
 
 interface HeaderProps {
   lang: Language;
   setLanguage: React.Dispatch<React.SetStateAction<Language>>;
-  section: SectionOptions;
+  section: PortfolioSection;
   handleIntro: (e: MouseEvent<HTMLDivElement>) => void;
   handlePartfolio: (e: MouseEvent<HTMLDivElement>) => void;
   handleContact: (e: MouseEvent<HTMLDivElement>) => void;
@@ -117,7 +117,7 @@ const Header: React.FC<HeaderProps> = ({
           })}
           onClick={handleIntro}
         >
-          <div className="nav-entry-bg"></div>
+          <div className="nav-entry-bg" />
           <span className="nav-entry-text">{isZh ? "簡介" : "Intro"}</span>
         </div>
         <div
@@ -126,7 +126,7 @@ const Header: React.FC<HeaderProps> = ({
           })}
           onClick={handlePartfolio}
         >
-          <div className="nav-entry-bg"></div>
+          <div className="nav-entry-bg" />
           <span className="nav-entry-text">{isZh ? "作品集" : "Works"}</span>
         </div>
         <div
@@ -135,7 +135,7 @@ const Header: React.FC<HeaderProps> = ({
           })}
           onClick={handleContact}
         >
-          <div className="nav-entry-bg"></div>
+          <div className="nav-entry-bg" />
           <span className="nav-entry-text">
             {isZh ? "聯絡方式" : "Contact"}
           </span>
