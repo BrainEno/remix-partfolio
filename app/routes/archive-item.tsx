@@ -43,8 +43,10 @@ export default function ArchiveItemRoute() {
     >
       <article className="archive-detail">
         <div className="archive-detail-meta">
-          <span>{item.kind.toUpperCase()}</span>
-          {item.year ? <span>{item.year}</span> : null}
+          <Link to={`/archive/type/${item.kind}`}>{item.kind.toUpperCase()}</Link>
+          {item.year ? (
+            <Link to={`/archive/year/${encodeURIComponent(item.year)}`}>{item.year}</Link>
+          ) : null}
           {item.demo ? <span>TEMPLATE DATA</span> : null}
         </div>
 
@@ -58,10 +60,21 @@ export default function ArchiveItemRoute() {
           </figure>
         ) : null}
 
+        {item.facts && item.facts.length > 0 ? (
+          <dl className="archive-detail-facts">
+            {item.facts.map((fact) => (
+              <div key={`${fact.label.en}-${fact.value.en}`}>
+                <dt>{fact.label[language]}</dt>
+                <dd>{fact.value[language]}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
+
         {item.summary ? <p className="archive-detail-copy">{item.summary[language]}</p> : null}
         {item.note ? <p className="archive-detail-note">{item.note[language]}</p> : null}
 
-        {(item.kind === "audio" || item.kind === "video") ? (
+        {item.kind === "audio" || item.kind === "video" ? (
           <MediaPreview item={item} language={language} />
         ) : null}
 
@@ -78,7 +91,9 @@ export default function ArchiveItemRoute() {
 
         <ul className="archive-detail-tags" aria-label="Tags">
           {item.tags.map((tag) => (
-            <li key={tag}>{tag}</li>
+            <li key={tag}>
+              <Link to={`/archive/tag/${encodeURIComponent(tag)}`}>#{tag}</Link>
+            </li>
           ))}
         </ul>
 
