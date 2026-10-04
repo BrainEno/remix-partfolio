@@ -1,8 +1,11 @@
 {
-  "name": "remix-portfolio",
+  "name": "animated-portfolio-template",
   "private": true,
   "type": "module",
   "scripts": {
+    "assets:optimize": "node scripts/optimize-assets.mjs",
+    "prebuild": "npm run assets:optimize",
+    "predev": "npm run assets:optimize",
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "sirv build/client --single --port 3000",
@@ -34,6 +37,7 @@
     "@types/react-dom": "^19.2.7",
     "@types/three": "^0.186.0",
     "prettier": "^3.8.3",
+    "sharp": "^0.34.4",
     "sirv-cli": "^3.0.1",
     "typescript": "^5.9.3",
     "vite": "^8.0.3"
