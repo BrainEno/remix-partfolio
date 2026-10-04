@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-async function waitForScroll(page: Parameters<typeof test>[0]["page"]) {
+async function waitForScroll(page: Page) {
   await page.waitForTimeout(500);
 }
 
