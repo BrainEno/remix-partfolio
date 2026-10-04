@@ -1,9 +1,15 @@
 import type { Config } from "@react-router/dev/config";
+import { archiveContent } from "./app/archive/content";
+
+const archiveItemPaths = archiveContent.items.map(
+  (item) => `/archive/${item.id}`
+);
+const listPaths = archiveContent.lists.map((list) => `/lists/${list.id}`);
 
 export default {
-  // The portfolio has no runtime server data. Build-time prerendering keeps a
-  // complete first HTML response for the root route while production remains
-  // static-only with no Netlify Function/runtime server.
+  // The site has no runtime server data. Build-time prerendering keeps complete
+  // HTML responses for the animated landing page and the text-first archive
+  // while production remains static-only with no Netlify Function/runtime server.
   ssr: false,
-  prerender: ["/"],
+  prerender: ["/", "/archive", "/lists", ...archiveItemPaths, ...listPaths],
 } satisfies Config;
