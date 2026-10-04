@@ -7,8 +7,9 @@ const Telephone = () => {
   const ref = useRef<Mesh>(null!);
   const gltf = useGLTF("/gltfs/telephone.gltf");
 
-  useFrame(() => {
-    ref.current.rotation.y += 0.003;
+  useFrame((_, delta) => {
+    if (!ref.current) return;
+    ref.current.rotation.y += delta * 0.18;
   });
 
   return (

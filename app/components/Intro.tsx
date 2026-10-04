@@ -68,6 +68,7 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
                   src="/images/profilephoto.jpg"
                   alt="Sydney Zhao Portrait"
                   loading="lazy"
+                  decoding="async"
                   className="intro-subheadline-photo"
                 />
               </div>
@@ -80,6 +81,7 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
                   src="/images/profilephoto.jpg"
                   alt="Sydney Zhao Portrait"
                   loading="lazy"
+                  decoding="async"
                   className="intro-subheadline-ghost-photo"
                 />
               </div>
@@ -125,6 +127,7 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
                   src="/images/tree1.jpg"
                   alt="profile pic1"
                   loading="lazy"
+                  decoding="async"
                   className="intro-subheadline-photo2"
                 />
               </div>
@@ -133,6 +136,7 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
                   src="/images/tree3.jpg"
                   alt="profile pic2"
                   loading="lazy"
+                  decoding="async"
                   className="intro-subheadline-photo2"
                 />
               </div>
@@ -141,6 +145,7 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
                   src="/images/tree4.jpg"
                   alt="profile pic2"
                   loading="lazy"
+                  decoding="async"
                   className="intro-subheadline-photo2"
                 />
               </div>
@@ -149,6 +154,7 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
                   src="/images/tree2.jpg"
                   alt="profile pic2"
                   loading="lazy"
+                  decoding="async"
                   className="intro-subheadline-photo2"
                 />
               </div>
@@ -157,6 +163,7 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
                   src="/images/tree5.jpg"
                   alt="profile pic2"
                   loading="lazy"
+                  decoding="async"
                   className="intro-subheadline-photo2"
                 />
               </div>
@@ -166,11 +173,15 @@ const Intro = React.forwardRef<HTMLDivElement, IntroProps>(function Intro(
                 <img
                   src="/images/hairyApe.png"
                   alt="pic6"
+                  loading="lazy"
+                  decoding="async"
                   className="intro-subheadline-text2-pic1"
                 />
                 <img
                   src="/images/show.png"
                   alt="pic7"
+                  loading="lazy"
+                  decoding="async"
                   className="intro-subheadline-text2-pic2"
                 />
                 <p

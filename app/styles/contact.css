@@ -69,6 +69,7 @@
   align-items: center;
   height: 100vh;
   background-color: transparent;
+  contain: layout paint;
 }
 
 .contact-link {
@@ -136,8 +137,8 @@
   transition: ease-in 200ms all;
 }
 
-.contact-email-link{
-    font-size: 18px;
+.contact-email-link {
+  font-size: 18px;
 }
 
 .contact-email-link:hover,
@@ -151,33 +152,34 @@
   text-decoration: underline;
 }
 
-
 /** Mobile */
 @media (max-width: 480px) {
-  #contact{
+  #contact {
     width: 100vw;
     margin-top: 0;
     margin-bottom: 20px;
     overflow: hidden;
   }
 
-  .contact-headline{
+  .contact-headline {
     -webkit-text-stroke-width: 1px;
   }
 
-  .contact-text-box{
+  .contact-text-box {
     margin-bottom: 300px;
     margin-top: 300px;
   }
 
-  .contact-inner{
+  .contact-inner {
     overflow: visible;
   }
 
-  .canvas-container{
+  .canvas-container {
     position: absolute;
     top: -350px;
     left: -60px;
-    height: 50vh;
+    width: min(100vw, 480px);
+    height: 50svh;
+    contain: strict;
   }
 }
