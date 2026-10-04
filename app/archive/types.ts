@@ -1,4 +1,4 @@
-import type { Language, LocalizedText } from "../portfolio/types";
+import type { LocalizedText } from "../portfolio/types";
 
 export type ArchiveKind = "book" | "audio" | "video";
 
@@ -55,6 +55,7 @@ export type ArchiveContent = Readonly<{
     books: LocalizedText;
     audio: LocalizedText;
     video: LocalizedText;
+    search: LocalizedText;
     noMedia: LocalizedText;
     externalLink: LocalizedText;
     backToArchive: LocalizedText;
@@ -63,5 +64,3 @@ export type ArchiveContent = Readonly<{
   items: readonly ArchiveItem[];
   lists: readonly ArchiveList[];
 }>;
-
-export type ArchiveLanguage = Language;
