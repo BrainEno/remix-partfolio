@@ -8,6 +8,7 @@ import Partifolio from "../components/Partfolio";
 import { useSiteLanguage } from "../hooks/useSiteLanguage";
 import { localize, portfolioContent } from "../portfolio/content";
 import type { PortfolioSection } from "../portfolio/types";
+import { setupDesktopWorksChoreography } from "../scroll/desktop-works-choreography.client";
 import { setupMobileChoreography } from "../scroll/mobile-choreography.client";
 import {
   scrollToPortfolioSection,
@@ -56,9 +57,14 @@ export default function Index() {
         scope,
         onWorkPreview: handleWorkPreview,
       });
+      const cleanupDesktop = setupDesktopWorksChoreography({
+        scope,
+        onWorkPreview: handleWorkPreview,
+      });
       scope.dataset.scrollRuntime = "ready";
 
       return () => {
+        cleanupDesktop?.();
         cleanupMobile?.();
         cleanupBase?.();
         delete scope.dataset.scrollRuntime;
