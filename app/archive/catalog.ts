@@ -7,6 +7,8 @@ import type {
   ArchiveList,
 } from "./types";
 
+const allItems: readonly ArchiveItem[] = archiveContent.items;
+
 const creatorById = new Map<string, ArchiveCreator>();
 
 for (const creator of archiveCreators) {
@@ -18,7 +20,7 @@ for (const creator of archiveCreators) {
 
 const itemById = new Map<string, ArchiveItem>();
 
-for (const item of archiveContent.items) {
+for (const item of allItems) {
   if (itemById.has(item.id)) {
     throw new Error(`Duplicate archive item id: ${item.id}`);
   }
@@ -76,24 +78,22 @@ export function resolveArchiveList(list: ArchiveList) {
 }
 
 export function getArchiveItemsByKind(kind: ArchiveKind) {
-  return archiveContent.items.filter((item) => item.kind === kind);
+  return allItems.filter((item) => item.kind === kind);
 }
 
 export function getArchiveItemsByTag(tag: string) {
   const normalizedTag = tag.toLowerCase();
-  return archiveContent.items.filter((item) =>
+  return allItems.filter((item) =>
     item.tags.some((value) => value.toLowerCase() === normalizedTag)
   );
 }
 
 export function getArchiveItemsByYear(year: string) {
-  return archiveContent.items.filter((item) => item.year === year);
+  return allItems.filter((item) => item.year === year);
 }
 
 export function getArchiveItemsByCreator(creatorId: string) {
-  return archiveContent.items.filter((item) =>
-    item.creatorIds.includes(creatorId)
-  );
+  return allItems.filter((item) => item.creatorIds.includes(creatorId));
 }
 
 export function getArchiveKinds() {
@@ -107,7 +107,7 @@ export function getArchiveKinds() {
 export function getArchiveTags() {
   const counts = new Map<string, number>();
 
-  archiveContent.items.forEach((item) => {
+  allItems.forEach((item) => {
     item.tags.forEach((tag) => {
       counts.set(tag, (counts.get(tag) ?? 0) + 1);
     });
@@ -121,7 +121,7 @@ export function getArchiveTags() {
 export function getArchiveYears() {
   const counts = new Map<string, number>();
 
-  archiveContent.items.forEach((item) => {
+  allItems.forEach((item) => {
     if (!item.year) return;
     counts.set(item.year, (counts.get(item.year) ?? 0) + 1);
   });
