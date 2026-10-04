@@ -11,7 +11,7 @@ interface PartfolioProps {
 }
 
 type PortfolioStyle = CSSProperties & {
-  "--portfolio-work-count": number;
+  "--portfolio-work-space": string;
 };
 
 const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
@@ -22,7 +22,7 @@ const Partfolio = React.forwardRef<HTMLDivElement, PartfolioProps>(
     const partfolioRef = useForwardedRef(ref);
     const activeWork = works[activeWorkIndex] ?? works[0] ?? null;
     const portfolioStyle: PortfolioStyle = {
-      "--portfolio-work-count": Math.max(works.length, 1),
+      "--portfolio-work-space": `${Math.max(works.length, 1) * 24}svh`,
     };
 
     return (
