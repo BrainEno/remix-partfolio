@@ -1,14 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router";
+import {
+  getArchiveKinds,
+  getArchiveTags,
+  getArchiveYears,
+} from "../archive/catalog";
 import { archiveContent } from "../archive/content";
-import type { ArchiveKind } from "../archive/types";
+import type { ArchiveItem, ArchiveKind } from "../archive/types";
 import ArchiveCard from "../components/archive/ArchiveCard";
 import ArchiveShell from "../components/archive/ArchiveShell";
 import { useSiteLanguage } from "../hooks/useSiteLanguage";
 import archiveStylesUrl from "../styles/archive.css?url";
+import archiveIndexesStylesUrl from "../styles/archive-indexes.css?url";
 import archiveSearchStylesUrl from "../styles/archive-search.css?url";
 
 export const links = () => [
   { rel: "stylesheet", href: archiveStylesUrl },
+  { rel: "stylesheet", href: archiveIndexesStylesUrl },
   { rel: "stylesheet", href: archiveSearchStylesUrl },
 ];
 
@@ -32,8 +40,9 @@ export default function ArchiveIndex() {
 
   const items = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
+    const allItems: readonly ArchiveItem[] = archiveContent.items;
 
-    return archiveContent.items.filter((item) => {
+    return allItems.filter((item) => {
       if (filter !== "all" && item.kind !== filter) return false;
       if (!normalizedQuery) return true;
 
@@ -43,6 +52,16 @@ export default function ArchiveIndex() {
         ...item.creators,
         item.year ?? "",
         ...item.tags,
+        item.summary?.zh ?? "",
+        item.summary?.en ?? "",
+        item.note?.zh ?? "",
+        item.note?.en ?? "",
+        ...(item.facts?.flatMap((fact) => [
+          fact.label.zh,
+          fact.label.en,
+          fact.value.zh,
+          fact.value.en,
+        ]) ?? []),
       ]
         .join(" ")
         .toLowerCase();
@@ -57,6 +76,10 @@ export default function ArchiveIndex() {
     { value: "audio", label: archiveContent.labels.audio[language] },
     { value: "video", label: archiveContent.labels.video[language] },
   ];
+
+  const kinds = getArchiveKinds().filter(({ count }) => count > 0);
+  const years = getArchiveYears();
+  const tags = getArchiveTags();
 
   return (
     <ArchiveShell
@@ -90,6 +113,47 @@ export default function ArchiveIndex() {
             autoComplete="off"
           />
         </label>
+      </section>
+
+      <section className="archive-facets" aria-label="Browse archive indexes">
+        <div>
+          <h2>{language === "zh" ? "类型" : "Types"}</h2>
+          <ul>
+            {kinds.map(({ value, count }) => (
+              <li key={value}>
+                <Link to={`/archive/type/${encodeURIComponent(value)}`}>
+                  {value} <span>{count}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h2>{language === "zh" ? "年份" : "Years"}</h2>
+          <ul>
+            {years.map(({ value, count }) => (
+              <li key={value}>
+                <Link to={`/archive/year/${encodeURIComponent(value)}`}>
+                  {value} <span>{count}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h2>{language === "zh" ? "标签" : "Tags"}</h2>
+          <ul>
+            {tags.map(({ value, count }) => (
+              <li key={value}>
+                <Link to={`/archive/tag/${encodeURIComponent(value)}`}>
+                  #{value} <span>{count}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
       <section className="archive-grid" aria-live="polite">

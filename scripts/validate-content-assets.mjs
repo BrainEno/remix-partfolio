@@ -7,6 +7,8 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const contentPaths = [
   resolve(root, "app/portfolio/content.ts"),
   resolve(root, "app/archive/content.ts"),
+  resolve(root, "app/archive/items.ts"),
+  resolve(root, "app/archive/lists.ts"),
 ];
 
 const configuredPaths = [];

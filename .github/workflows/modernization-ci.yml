@@ -63,15 +63,17 @@ jobs:
           test -f build/client/lists/index.html
           test -f build/client/archive/sample-book/index.html
           test -f build/client/lists/sample-top-three/index.html
+          test -f build/client/archive/type/book/index.html
+          test -f build/client/archive/type/audio/index.html
+          test -f build/client/archive/type/video/index.html
+          test -f build/client/archive/tag/demo/index.html
+          test -f build/client/archive/year/2026/index.html
           grep -q 'data-portfolio-template="ready"' build/client/index.html
           grep -q 'data-archive-template="ready"' build/client/archive/index.html
           grep -q 'data-archive-template="ready"' build/client/lists/index.html
+          grep -q 'data-archive-template="ready"' build/client/archive/type/video/index.html
           grep -q 'publish = "build/client"' netlify.toml
 
-          # React Router may emit build/server as a build-time prerender helper even
-          # with ssr:false. It is not a runtime deployment artifact. The production
-          # contract is that Netlify publishes only build/client and has no server
-          # adapter or functions configuration.
           if grep -RInE 'build/server|\[functions\]|\[edge_functions\]' netlify.toml; then
             echo 'Netlify configuration references a runtime server/functions path.'
             exit 1
@@ -97,8 +99,10 @@ jobs:
               grep -q 'data-portfolio-template="ready"' /tmp/homepage.html
               curl --fail --silent --show-error http://127.0.0.1:3000/archive/ > /tmp/archive.html
               curl --fail --silent --show-error http://127.0.0.1:3000/lists/ > /tmp/lists.html
+              curl --fail --silent --show-error http://127.0.0.1:3000/archive/type/video/ > /tmp/archive-video.html
               grep -q 'data-archive-template="ready"' /tmp/archive.html
               grep -q 'data-archive-template="ready"' /tmp/lists.html
+              grep -q 'data-archive-template="ready"' /tmp/archive-video.html
               exit 0
             fi
             sleep 1
@@ -130,18 +134,25 @@ jobs:
               --write-out '%{http_code}' \
               "${PREVIEW_URL}archive/" || true)
 
-            if [ "$status" = "200" ] && [ "$archive_status" = "200" ] && \
+            facet_status=$(curl -L --silent --show-error \
+              --output /tmp/netlify-facet.html \
+              --write-out '%{http_code}' \
+              "${PREVIEW_URL}archive/type/video/" || true)
+
+            if [ "$status" = "200" ] && [ "$archive_status" = "200" ] && [ "$facet_status" = "200" ] && \
                grep -q 'data-portfolio-template="ready"' /tmp/netlify-preview.html && \
-               grep -q 'data-archive-template="ready"' /tmp/netlify-archive.html; then
-              echo "Netlify Deploy Preview is serving the static portfolio and archive successfully."
+               grep -q 'data-archive-template="ready"' /tmp/netlify-archive.html && \
+               grep -q 'data-archive-template="ready"' /tmp/netlify-facet.html; then
+              echo "Netlify Deploy Preview is serving the static portfolio, archive and facets successfully."
               exit 0
             fi
 
-            echo "Waiting for healthy Netlify Deploy Preview (attempt $attempt/60, home $status, archive $archive_status)..."
+            echo "Waiting for healthy Netlify Deploy Preview (attempt $attempt/60, home $status, archive $archive_status, facet $facet_status)..."
             sleep 2
           done
 
           echo 'Netlify Deploy Preview never became healthy.'
           cat /tmp/netlify-preview.html || true
           cat /tmp/netlify-archive.html || true
+          cat /tmp/netlify-facet.html || true
           exit 1
