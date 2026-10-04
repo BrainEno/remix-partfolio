@@ -20,9 +20,15 @@ test("archive supports filtering, deep links, facets and personal ranking lists"
   await expect(page.getByRole("heading", { name: "Sample Audio" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Sample Video" })).toBeVisible();
 
-  await expect(page.getByRole("link", { name: /audio 1/i })).toBeVisible();
-  await expect(page.getByRole("link", { name: /2026 3/i })).toBeVisible();
-  await expect(page.getByRole("link", { name: /#demo 3/i })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "audio 1", exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "2026 3", exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "#demo 3", exact: true })
+  ).toBeVisible();
 
   await page.getByPlaceholder("Search title, creator or tag").fill("Format");
   await expect(page.getByRole("heading", { name: "Sample Book" })).toBeVisible();
@@ -38,18 +44,18 @@ test("archive supports filtering, deep links, facets and personal ranking lists"
   await expect(page.getByText(/No media source yet/)).toBeVisible();
   await expect(page.locator(".archive-detail-facts")).toContainText("Format");
 
-  await page.getByRole("link", { name: "#demo" }).click();
+  await page.getByRole("link", { name: "#demo", exact: true }).click();
   await expect(page).toHaveURL(/\/archive\/tag\/demo$/);
   await expect(page.getByRole("heading", { name: "#demo" })).toBeVisible();
   await expect(page.locator(".archive-card")).toHaveCount(3);
 
-  await page.getByRole("link", { name: "Archive" }).click();
-  await page.getByRole("link", { name: /video 1/i }).click();
+  await page.getByRole("link", { name: "Archive", exact: true }).click();
+  await page.getByRole("link", { name: "video 1", exact: true }).click();
   await expect(page).toHaveURL(/\/archive\/type\/video$/);
   await expect(page.getByRole("heading", { name: "Video" })).toBeVisible();
   await expect(page.locator(".archive-card")).toHaveCount(1);
 
-  await page.getByRole("link", { name: "Lists" }).click();
+  await page.getByRole("link", { name: "Lists", exact: true }).click();
   await expect(page).toHaveURL(/\/lists$/);
   await page.getByRole("heading", { name: "Sample List: Current Three" }).click();
   await expect(page).toHaveURL(/\/lists\/sample-top-three$/);
