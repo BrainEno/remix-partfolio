@@ -99,7 +99,11 @@ export default function Index({ loaderData }: Route.ComponentProps) {
   }, []);
 
   return (
-    <div className="page-home" ref={pageRef}>
+    <div
+      className="page-home"
+      ref={pageRef}
+      data-portfolio-template="ready"
+    >
       <Header
         lang={language}
         setLanguage={setLanguage}
