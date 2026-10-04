@@ -1,15 +1,15 @@
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
+import type { Mesh } from "three";
 
-const Telephone = ()=> {
-  const ref=useRef<THREE.Mesh>(null!);
+const Telephone = () => {
+  const ref = useRef<Mesh>(null!);
   const gltf = useGLTF("/gltfs/telephone.gltf");
 
-  useFrame(()=>{
-    ref.current.rotation.y+=0.003
-  })
-
+  useFrame(() => {
+    ref.current.rotation.y += 0.003;
+  });
 
   return (
     <primitive
