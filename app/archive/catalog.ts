@@ -58,6 +58,15 @@ export function getArchiveItemsByYear(year: string) {
   return archiveContent.items.filter((item) => item.year === year);
 }
 
+export function getArchiveItemsByCreator(creator: string) {
+  const normalizedCreator = creator.toLocaleLowerCase();
+  return archiveContent.items.filter((item) =>
+    item.creators.some(
+      (value) => value.toLocaleLowerCase() === normalizedCreator
+    )
+  );
+}
+
 export function getArchiveKinds() {
   const kinds: readonly ArchiveKind[] = ["book", "audio", "video"];
   return kinds.map((kind) => ({
@@ -91,4 +100,18 @@ export function getArchiveYears() {
   return [...counts.entries()]
     .map(([value, count]) => ({ value, count }))
     .sort((a, b) => b.value.localeCompare(a.value));
+}
+
+export function getArchiveCreators() {
+  const counts = new Map<string, number>();
+
+  archiveContent.items.forEach((item) => {
+    item.creators.forEach((creator) => {
+      counts.set(creator, (counts.get(creator) ?? 0) + 1);
+    });
+  });
+
+  return [...counts.entries()]
+    .map(([value, count]) => ({ value, count }))
+    .sort((a, b) => a.value.localeCompare(b.value));
 }
