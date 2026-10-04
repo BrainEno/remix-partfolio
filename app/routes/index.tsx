@@ -1,6 +1,4 @@
-import type { MouseEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { redirect } from "react-router";
 import type { Route } from "./+types/index";
 import homeStylesUrl from "~/styles/index.css?url";
 import Contact from "../components/Contact";
@@ -8,8 +6,8 @@ import Header from "../components/Header";
 import Intro from "../components/Intro";
 import Partifolio from "../components/Partfolio";
 import { langCookie } from "../cookies";
+import { portfolioContent } from "../portfolio/content";
 import type { Language, PortfolioSection } from "../portfolio/types";
-import { portfolioWorks } from "../portfolio/works";
 import { setupMobileChoreography } from "../scroll/mobile-choreography.client";
 import {
   scrollToPortfolioSection,
@@ -24,9 +22,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   try {
     const cookie = await langCookie.parse(cookieHeader);
     const lang: Language = cookie?.lang === "en" ? "en" : "zh";
-    return { lang, works: portfolioWorks };
+    return { lang };
   } catch {
-    return { lang: "zh" as Language, works: portfolioWorks };
+    return { lang: "zh" as Language };
   }
 }
 
@@ -40,7 +38,8 @@ export async function action({ request }: Route.ActionArgs) {
     cookie.lang = requestedLang;
   }
 
-  return redirect("/", {
+  return new Response(null, {
+    status: 204,
     headers: {
       "Set-Cookie": await langCookie.serialize(cookie),
     },
@@ -48,7 +47,8 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Index({ loaderData }: Route.ComponentProps) {
-  const { lang, works } = loaderData;
+  const { lang } = loaderData;
+  const works = portfolioContent.works.items;
   const [section, setSection] = useState<PortfolioSection>("intro");
   const [language, setLanguage] = useState<Language>(lang ?? "zh");
   const [activeWorkIndex, setActiveWorkIndex] = useState(-1);
@@ -93,37 +93,10 @@ export default function Index({ loaderData }: Route.ComponentProps) {
     }
   }, [handleWorkPreview, isZh]);
 
-  const scrollToSection = useCallback((target: PortfolioSection) => {
-    if (!scrollToPortfolioSection) return;
+  const handleNavigate = useCallback((target: PortfolioSection) => {
+    setSection(target);
     scrollToPortfolioSection(target);
   }, []);
-
-  const handleIntro = useCallback(
-    (e: MouseEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      setSection("intro");
-      scrollToSection("intro");
-    },
-    [scrollToSection]
-  );
-
-  const handlePartifolio = useCallback(
-    (e: MouseEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      setSection("partfolio");
-      scrollToSection("partfolio");
-    },
-    [scrollToSection]
-  );
-
-  const handleContact = useCallback(
-    (e: MouseEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      setSection("contact");
-      scrollToSection("contact");
-    },
-    [scrollToSection]
-  );
 
   return (
     <div className="page-home" ref={pageRef}>
@@ -131,21 +104,20 @@ export default function Index({ loaderData }: Route.ComponentProps) {
         lang={language}
         setLanguage={setLanguage}
         section={section}
-        handleIntro={handleIntro}
-        handlePartfolio={handlePartifolio}
-        handleContact={handleContact}
+        content={portfolioContent}
+        onNavigate={handleNavigate}
       />
       <div id="smooth-wrapper">
         <div id="smooth-content">
           <div id="home">
-            <Intro isZh={isZh} />
+            <Intro lang={language} content={portfolioContent} />
             <Partifolio
-              isZh={isZh}
-              works={works}
+              lang={language}
+              content={portfolioContent.works}
               activeWorkIndex={activeWorkIndex}
               onWorkPreview={handleWorkPreview}
             />
-            <Contact isZh={isZh} />
+            <Contact lang={language} content={portfolioContent.contact} />
           </div>
         </div>
       </div>
