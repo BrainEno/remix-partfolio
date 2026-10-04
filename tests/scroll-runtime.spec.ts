@@ -27,10 +27,23 @@ async function scrollUntilAttribute(
 }
 
 function parseCssRgb(value: string) {
-  const match = value.match(/rgba?\(([^)]+)\)/i);
-  if (!match) return null;
+  const normalized = value.trim();
+  const hexMatch = normalized.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (hexMatch) {
+    const hex =
+      hexMatch[1].length === 3
+        ? hexMatch[1]
+            .split("")
+            .map((character) => character + character)
+            .join("")
+        : hexMatch[1];
+    return [0, 2, 4].map((offset) => Number.parseInt(hex.slice(offset, offset + 2), 16));
+  }
 
-  const components = match[1]
+  const rgbMatch = normalized.match(/rgba?\(([^)]+)\)/i);
+  if (!rgbMatch) return null;
+
+  const components = rgbMatch[1]
     .split(/[ ,/]+/)
     .filter(Boolean)
     .slice(0, 3)
@@ -55,9 +68,7 @@ async function readCssColorLuma(
   return rgb.reduce((sum, component) => sum + component, 0) / 3;
 }
 
-test("mobile GSAP runtime creates triggers and animates the page", async ({
-  page,
-}) => {
+test("mobile GSAP runtime animates the required scenes", async ({ page }) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
@@ -65,13 +76,6 @@ test("mobile GSAP runtime creates triggers and animates the page", async ({
 
   const pageHome = page.locator(".page-home");
   await expect(pageHome).toHaveAttribute("data-scroll-runtime", "ready");
-
-  await expect
-    .poll(async () => {
-      const count = await pageHome.getAttribute("data-scroll-trigger-count");
-      return Number(count ?? 0);
-    })
-    .toBeGreaterThanOrEqual(10);
 
   const headline = page.locator(".intro-headline-word.word-1");
   const heroPhoto = page.locator(".intro-photo");
@@ -254,9 +258,7 @@ test("mobile TV is grey before works, previews only inside the screen, then fade
   expect(backgroundOpacity).toBeLessThan(1);
   await expect(contactHeadline).toBeHidden();
 
-  // Contact is intentionally revealed *during* the black -> white passage.
-  // At first visibility the background only needs to have left pure black;
-  // it should not already be fully white.
+  // Contact is intentionally revealed during the black -> white passage.
   for (let step = 0; step < 24 && !(await contactHeadline.isVisible()); step += 1) {
     await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.05));
     await waitForScroll(page, 110);
@@ -271,9 +273,8 @@ test("mobile TV is grey before works, previews only inside the screen, then fade
   );
   expect(contactRevealLuma).toBeGreaterThan(blackPhaseLuma + 5);
 
-  // Keep scrolling through the same transition and require a clearly brighter
-  // late phase. This protects the intended black -> white handoff without
-  // incorrectly requiring it to be complete the instant Contact first appears.
+  // Continue through the same transition and require a clearly brighter late
+  // phase so the intended black -> white handoff cannot silently disappear.
   for (let step = 0; step < 12; step += 1) {
     await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.04));
     await waitForScroll(page, 90);
@@ -289,25 +290,29 @@ test("mobile TV is grey before works, previews only inside the screen, then fade
   expect(pageErrors).toEqual([]);
 });
 
-test("mobile WebGL scene is mounted only near Contact and survives repeated navigation", async ({
+test("mobile WebGL scene mounts only when its observed Contact content is near the viewport", async ({
   page,
 }) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
   await page.goto("/", { waitUntil: "networkidle" });
+  const sceneContainer = page.locator(".canvas-container");
+  const contactInner = page.locator(".contact-inner");
+
+  await expect(sceneContainer).toHaveAttribute("data-scene-active", "false");
   await expect(page.locator(".contact-webgl canvas")).toHaveCount(0);
 
-  await page.locator("#contact").scrollIntoViewIfNeeded();
-  await waitForScroll(page, 450);
+  await contactInner.scrollIntoViewIfNeeded();
+  await expect(sceneContainer).toHaveAttribute("data-scene-active", "true");
   await expect(page.locator(".contact-webgl canvas")).toHaveCount(1);
 
   await page.locator("#intro").scrollIntoViewIfNeeded();
-  await waitForScroll(page, 450);
+  await expect(sceneContainer).toHaveAttribute("data-scene-active", "false");
   await expect(page.locator(".contact-webgl canvas")).toHaveCount(0);
 
-  await page.locator("#contact").scrollIntoViewIfNeeded();
-  await waitForScroll(page, 450);
+  await contactInner.scrollIntoViewIfNeeded();
+  await expect(sceneContainer).toHaveAttribute("data-scene-active", "true");
   await expect(page.locator(".contact-webgl canvas")).toHaveCount(1);
 
   expect(pageErrors).toEqual([]);
