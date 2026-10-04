@@ -1,0 +1,39 @@
+import { expect, test } from "@playwright/test";
+
+test("archive supports filtering, deep links and personal ranking lists", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  await page.goto("/archive", { waitUntil: "networkidle" });
+  await expect(page.locator(".archive-page")).toHaveAttribute(
+    "data-archive-template",
+    "ready"
+  );
+
+  await page.locator('button[data-language="en"]').click();
+  await expect(page.locator(".archive-title-block h1")).toHaveText(
+    "Media Archive"
+  );
+  await expect(page.getByRole("heading", { name: "Sample Book" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sample Audio" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sample Video" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Audio" }).click();
+  await expect(page.getByRole("heading", { name: "Sample Audio" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sample Book" })).toHaveCount(0);
+
+  await page.getByRole("heading", { name: "Sample Audio" }).click();
+  await expect(page).toHaveURL(/\/archive\/sample-audio$/);
+  await expect(page.getByText(/No media source yet/)).toBeVisible();
+
+  await page.getByRole("link", { name: "Lists" }).click();
+  await expect(page).toHaveURL(/\/lists$/);
+  await page.getByRole("heading", { name: "Sample List: Current Three" }).click();
+  await expect(page).toHaveURL(/\/lists\/sample-top-three$/);
+  await expect(page.locator(".archive-card-index").first()).toHaveText("01");
+  await expect(page.getByRole("heading", { name: "Sample Book" })).toBeVisible();
+
+  expect(pageErrors).toEqual([]);
+});
