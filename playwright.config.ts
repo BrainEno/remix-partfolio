@@ -24,5 +24,12 @@ export default defineConfig({
         browserName: "webkit",
       },
     },
+    {
+      name: "webkit-desktop",
+      use: {
+        browserName: "webkit",
+        viewport: { width: 1440, height: 900 },
+      },
+    },
   ],
 });

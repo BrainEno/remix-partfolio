@@ -19,6 +19,19 @@
     left: 100vw;
   }
 
+  /* tv-all-vids is now anchored to this explicit artwork box on every
+     breakpoint, so adding the desktop intrinsic-ratio fix does not change the
+     existing mobile CRT coordinates. */
+  .tv-artwork {
+    position: relative;
+    width: 100vw;
+    height: 100svh;
+  }
+
+  .tv-contact-number {
+    display: none;
+  }
+
   /* Idle CRT palette. The exit timeline animates these variables through the
      intended grey-green -> black -> white sequence. */
   .tv-blackscreen {

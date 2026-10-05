@@ -1,0 +1,221 @@
+@media (min-width: 481px) {
+  /* First intro story: the portrait/title are a single visual group once the
+     copy reaches them. GSAP controls the timing; these rules only establish a
+     stable geometry for the collision/push choreography. */
+  .intro-subheadline-wrapper {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .intro-subheadline-visual-group {
+    position: absolute;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    will-change: transform;
+  }
+
+  .intro-subheadline-slider {
+    width: 100vw;
+    height: 100vh;
+    overflow: visible;
+  }
+
+  .intro-subheadline-text-box1 {
+    left: 100vw;
+    will-change: transform;
+  }
+
+  /* The outer pinner is the viewport stage. The actual artwork is NOT forced
+     into that aspect ratio: tv-artwork keeps the source image's intrinsic
+     ratio, and the CRT overlay is positioned relative to exactly that box. */
+  .tv-box-pinner {
+    width: 100vw;
+    height: 100vh;
+    height: 100svh;
+    background: #000;
+  }
+
+  .tv-box-mask {
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100svh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+  }
+
+  .tv-box {
+    position: relative;
+    width: 100vw;
+    height: auto;
+    flex: 0 0 auto;
+    align-items: center;
+    transform-origin: 50% 64%;
+  }
+
+  .tv-artwork {
+    position: relative;
+    width: 100vw;
+    height: auto;
+    flex: 0 0 auto;
+  }
+
+  .tv-bg-box {
+    position: relative;
+    width: 100%;
+    height: auto;
+  }
+
+  .tv-bg {
+    position: relative;
+    z-index: 2;
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    object-position: 50% 50%;
+  }
+
+  /* These coordinates are the original source-artwork coordinates. Because
+     the overlay now lives inside tv-artwork, resizing can no longer stretch
+     the project image away from the physical CRT opening. */
+  .tv-all-vids {
+    z-index: 1;
+    width: 16%;
+    height: 16%;
+    left: 41.3%;
+    bottom: 27%;
+    margin-left: -0.1%;
+    overflow: hidden;
+    border-radius: 2.5% / 4%;
+    clip-path: inset(1px round 4px);
+    contain: paint;
+  }
+
+  .tv-blackscreen {
+    --tv-screen-top: #777a76;
+    --tv-screen-mid: #626560;
+    --tv-screen-bottom: #545651;
+    --tv-screen-glow: rgba(255, 255, 255, 0.08);
+    background:
+      radial-gradient(
+        circle at 48% 42%,
+        var(--tv-screen-glow),
+        transparent 46%
+      ),
+      linear-gradient(
+        180deg,
+        var(--tv-screen-top) 0%,
+        var(--tv-screen-mid) 54%,
+        var(--tv-screen-bottom) 100%
+      );
+  }
+
+  .tv-showreel {
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 180ms ease-out;
+  }
+
+  .tv-all-vids.has-preview .tv-showreel {
+    opacity: 1;
+  }
+
+  .tv-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 50%;
+  }
+
+  .tv-contact-number {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    opacity: 0;
+    color: rgba(236, 240, 228, 0.94);
+    font-size: clamp(13px, 1.05vw, 21px);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    text-shadow: 0 0 14px rgba(238, 246, 224, 0.24);
+    will-change: transform, opacity;
+  }
+
+  .work-items-box {
+    margin-top: 0;
+    min-height: 100vh;
+    /* `--portfolio-work-space` is derived from the number of configured work
+       items. Four or forty works therefore extend the browsing stage instead
+       of moving the phone/exit choreography to a hard-coded four-item point. */
+    min-height: max(100svh, calc(var(--portfolio-work-space) + 28svh));
+    padding-top: 14vh;
+    padding-top: 14svh;
+    padding-bottom: 14vh;
+    padding-bottom: 14svh;
+    box-sizing: border-box;
+    background: transparent;
+  }
+
+  .work-item.is-active .work-item-topline,
+  .work-item.is-active .work-item-botline {
+    opacity: 1;
+  }
+
+  .work-item.is-active .work-name,
+  .work-item.is-active .work-name-hover {
+    transform: translateY(-100%);
+  }
+
+  .work-item.is-active .work-teaser-date,
+  .work-item.is-active .work-teaser-seperator,
+  .work-item.is-active .work-teaser-group {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* A dedicated phone plateau means the timing is independent of work count.
+     Four works or ten works simply push this spacer farther down the document. */
+  .tv-phone-spacer {
+    height: 112vh;
+    height: 112svh;
+    pointer-events: none;
+    background: #000;
+  }
+
+  .tv-exit-spacer {
+    height: 190vh;
+    height: 190svh;
+    pointer-events: none;
+    background: #000;
+  }
+
+  /* The TV itself now owns the transitional phone number on desktop. */
+  #contact .contact-text-box {
+    display: none;
+  }
+
+  #contact {
+    background: #fff;
+  }
+
+  /* The booth starts off-screen to the right. The desktop transition timeline
+     carries it left across the black-to-white cut and leaves it in Contact. */
+  #contact .canvas-container {
+    top: 8vh;
+    top: 8svh;
+    left: 100vw;
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+}

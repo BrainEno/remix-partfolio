@@ -41,11 +41,16 @@ export default function Contact({ lang, content }: Props) {
       return;
     }
 
+    // The booth is part of the Works -> Contact transition, not merely the
+    // final Contact view. Preload several viewports early so it is already
+    // mounted by the phone-hold phase and can enter from the right without a
+    // late chunk-load flash.
+    const preloadDistance = Math.max(1800, Math.round(window.innerHeight * 4));
     const observer = new IntersectionObserver(
       ([entry]) => setSceneActive(entry.isIntersecting),
       {
         root: null,
-        rootMargin: "240px 0px",
+        rootMargin: `${preloadDistance}px 0px`,
         threshold: 0,
       }
     );
