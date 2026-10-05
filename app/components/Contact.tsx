@@ -41,11 +41,15 @@ export default function Contact({ lang, content }: Props) {
       return;
     }
 
+    // The booth now participates in the TV -> Contact transition, so begin
+    // loading well before Contact itself is visible instead of waiting until
+    // the model is almost on screen.
+    const preloadDistance = Math.max(900, Math.round(window.innerHeight * 1.8));
     const observer = new IntersectionObserver(
       ([entry]) => setSceneActive(entry.isIntersecting),
       {
         root: null,
-        rootMargin: "240px 0px",
+        rootMargin: `${preloadDistance}px 0px`,
         threshold: 0,
       }
     );
