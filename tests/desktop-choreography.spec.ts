@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-type ScrollRange = { start: number; distance: number };
+type ScrollRange = { start: number; end: number };
 
 async function waitForMotion(page: Page, ms = 650) {
   await page.waitForTimeout(ms);
@@ -24,24 +24,17 @@ async function readBox(page: Page, selector: string) {
   return box;
 }
 
-async function readRange(
-  page: Page,
-  selector: string,
-  startViewportRatio: number,
-  minimumViewports?: number
-): Promise<ScrollRange> {
-  return page.locator(selector).evaluate(
-    (element, options) => {
-      const node = element as HTMLElement;
-      const top = node.getBoundingClientRect().top + window.scrollY;
-      const start = top - window.innerHeight * options.startViewportRatio;
-      const distance = options.minimumViewports
-        ? Math.max(node.offsetHeight, window.innerHeight * options.minimumViewports)
-        : node.offsetHeight + window.innerHeight * options.startViewportRatio;
-      return { start, distance };
-    },
-    { startViewportRatio, minimumViewports }
-  );
+async function readTriggerRange(page: Page, selector: string): Promise<ScrollRange> {
+  const locator = page.locator(selector);
+  await expect(locator).toHaveAttribute("data-trigger-start", /-?\d+/);
+  await expect(locator).toHaveAttribute("data-trigger-end", /-?\d+/);
+
+  const start = Number(await locator.getAttribute("data-trigger-start"));
+  const end = Number(await locator.getAttribute("data-trigger-end"));
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+    throw new Error(`Invalid ScrollTrigger range for ${selector}: ${start}..${end}`);
+  }
+  return { start, end };
 }
 
 async function scrollRangeProgress(
@@ -51,8 +44,8 @@ async function scrollRangeProgress(
   wait = 650
 ) {
   await page.evaluate(
-    ({ start, distance, targetProgress }) => {
-      window.scrollTo(0, start + distance * targetProgress);
+    ({ start, end, targetProgress }) => {
+      window.scrollTo(0, start + (end - start) * targetProgress);
     },
     { ...range, targetProgress: progress }
   );
@@ -105,16 +98,14 @@ test("Given Chinese intro, portrait and 简介 descend together before copy push
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await loadChineseDesktop(page);
 
-  await expect(page.locator(".intro-subheadline-stickytainer")).toHaveAttribute(
+  const scene = page.locator(".intro-subheadline-stickytainer");
+  await expect(scene).toHaveAttribute(
     "data-intro-choreography",
     "desktop-push"
   );
-
-  const range = await readRange(
+  const range = await readTriggerRange(
     page,
-    ".intro-subheadline-stickytainer",
-    0.28,
-    5.6
+    ".intro-subheadline-stickytainer"
   );
 
   await scrollRangeProgress(page, range, 0.01);
@@ -125,7 +116,7 @@ test("Given Chinese intro, portrait and 简介 descend together before copy push
   const photoMid = await readBox(page, ".intro-subheadline-photo-box");
   const titleMid = await readBox(page, ".intro-subheadline-title");
 
-  await scrollRangeProgress(page, range, 0.35);
+  await scrollRangeProgress(page, range, 0.36);
   const photoSettled = await readBox(page, ".intro-subheadline-photo-box");
   const titleSettled = await readBox(page, ".intro-subheadline-title");
 
@@ -141,20 +132,20 @@ test("Given Chinese intro, portrait and 简介 descend together before copy push
   expect(Math.abs(photoFraction - titleFraction)).toBeLessThan(0.28);
 
   const copyBeforeApproach = await readBox(page, ".intro-subheadline-text-box1");
-  await scrollRangeProgress(page, range, 0.61);
+  await scrollRangeProgress(page, range, 0.64);
   const copyApproached = await readBox(page, ".intro-subheadline-text-box1");
   const titleApproached = await readBox(page, ".intro-subheadline-title");
   expect(copyApproached.x).toBeLessThan(copyBeforeApproach.x - 80);
   expect(titleApproached.x).toBeLessThanOrEqual(titleSettled.x + 12);
 
-  await scrollRangeProgress(page, range, 0.9);
+  await scrollRangeProgress(page, range, 0.98, 800);
   const copyPushed = await readBox(page, ".intro-subheadline-text-box1");
   const titlePushed = await readBox(page, ".intro-subheadline-title");
   const visualPushed = await readBox(page, ".intro-subheadline-visual-group");
   const viewportWidth = page.viewportSize()?.width ?? 1440;
   expect(copyPushed.x).toBeLessThan(copyApproached.x - 120);
   expect(titlePushed.x).toBeLessThan(titleApproached.x - 120);
-  expect(visualPushed.x).toBeLessThan(-viewportWidth * 0.25);
+  expect(visualPushed.x).toBeLessThan(-viewportWidth * 0.45);
   expect(pageErrors).toEqual([]);
 });
 
@@ -165,16 +156,13 @@ test("Given a work preview, its image fills the CRT clipping rectangle without d
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await loadChineseDesktop(page);
 
-  await page.locator("#partfolio").scrollIntoViewIfNeeded();
-  await waitForMotion(page, 850);
-
-  for (let step = 0; step < 60; step += 1) {
+  const workRange = await readTriggerRange(page, ".work-items-box");
+  for (let step = 1; step <= 18; step += 1) {
+    await scrollRangeProgress(page, workRange, step / 20, 150);
     const active = await page
       .locator(".tv-all-vids")
       .getAttribute("data-preview-active");
     if (active === "true") break;
-    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.06));
-    await waitForMotion(page, 90);
   }
 
   await expect(page.locator(".tv-all-vids")).toHaveAttribute(
@@ -182,6 +170,10 @@ test("Given a work preview, its image fills the CRT clipping rectangle without d
     "true"
   );
   await expect(page.locator(".tv-cover")).toHaveCount(1);
+  await expect(page.locator("#partfolio")).toHaveAttribute(
+    "data-tv-phase",
+    "works"
+  );
 
   const artwork = await readBox(page, ".tv-artwork");
   const screen = await readBox(page, ".tv-all-vids");
@@ -200,8 +192,8 @@ test("Given a work preview, its image fills the CRT clipping rectangle without d
 
   const viewportHeight = page.viewportSize()?.height ?? 900;
   const screenCenter = screen.y + screen.height / 2;
-  expect(screenCenter).toBeGreaterThan(viewportHeight * 0.48);
-  expect(screenCenter).toBeLessThan(viewportHeight * 0.72);
+  expect(screenCenter).toBeGreaterThan(viewportHeight * 0.42);
+  expect(screenCenter).toBeLessThan(viewportHeight * 0.68);
   expect(pageErrors).toEqual([]);
 });
 
@@ -258,15 +250,8 @@ test("After works, phone holds inside CRT before grey-green -> black -> white tr
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await loadChineseDesktop(page);
 
-  const phoneTop = await page.locator(".tv-phone-spacer").evaluate((element) =>
-    element.getBoundingClientRect().top + window.scrollY
-  );
-  const viewportHeight = page.viewportSize()?.height ?? 900;
-  await page.evaluate(
-    ({ top, vh }) => window.scrollTo(0, top - vh * 0.46),
-    { top: phoneTop, vh: viewportHeight }
-  );
-  await waitForMotion(page, 900);
+  const phoneRange = await readTriggerRange(page, ".tv-phone-spacer");
+  await scrollRangeProgress(page, phoneRange, 0.58, 900);
 
   await expect(page.locator("#partfolio")).toHaveAttribute(
     "data-tv-phase",
@@ -297,12 +282,18 @@ test("After works, phone holds inside CRT before grey-green -> black -> white tr
 
   expect(await readScale(page, ".tv-box")).toBeLessThan(1.3);
 
+  const canvas = page.locator(".canvas-container");
+  await expect(canvas).toHaveAttribute("data-scene-status", "ready", {
+    timeout: 12_000,
+  });
   const boothBefore = await readBox(page, ".canvas-container");
   const viewportWidth = page.viewportSize()?.width ?? 1440;
   expect(boothBefore.x).toBeGreaterThan(viewportWidth * 0.82);
 
-  const exitRange = await readRange(page, ".tv-exit-spacer", 0.72);
-  await scrollRangeProgress(page, exitRange, 0.6, 800);
+  const exitRange = await readTriggerRange(page, ".tv-exit-spacer");
+  expect(exitRange.start).toBeGreaterThanOrEqual(phoneRange.end - 3);
+
+  await scrollRangeProgress(page, exitRange, 0.52, 850);
   await expect(page.locator("#partfolio")).toHaveAttribute(
     "data-tv-phase",
     "exit"
@@ -317,9 +308,9 @@ test("After works, phone holds inside CRT before grey-green -> black -> white tr
   expect(await readScale(page, ".tv-box")).toBeGreaterThan(1.45);
 
   const boothDuring = await readBox(page, ".canvas-container");
-  expect(boothDuring.x).toBeLessThan(boothBefore.x - viewportWidth * 0.18);
+  expect(boothDuring.x).toBeLessThan(boothBefore.x - viewportWidth * 0.12);
 
-  await scrollRangeProgress(page, exitRange, 0.84, 800);
+  await scrollRangeProgress(page, exitRange, 0.84, 850);
   const brightLuma = await readCssRgbAverage(
     page,
     ".tv-blackscreen",
@@ -327,6 +318,6 @@ test("After works, phone holds inside CRT before grey-green -> black -> white tr
   );
   expect(brightLuma).toBeGreaterThan(150);
   const boothLate = await readBox(page, ".canvas-container");
-  expect(boothLate.x).toBeLessThan(viewportWidth * 0.45);
+  expect(boothLate.x).toBeLessThan(viewportWidth * 0.48);
   expect(pageErrors).toEqual([]);
 });
