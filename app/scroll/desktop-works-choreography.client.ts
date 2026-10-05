@@ -38,6 +38,11 @@ function setTvPhase(scope: HTMLElement, phase: TvPhase) {
   if (section) section.dataset.tvPhase = phase;
 }
 
+function recordTriggerRange(element: HTMLElement, trigger: ScrollTrigger) {
+  element.dataset.triggerStart = String(Math.round(trigger.start));
+  element.dataset.triggerEnd = String(Math.round(trigger.end));
+}
+
 function setupDesktopIntroStory(scope: HTMLElement) {
   const scene = scope.querySelector<HTMLElement>(
     ".intro-subheadline-stickytainer"
@@ -64,32 +69,34 @@ function setupDesktopIntroStory(scope: HTMLElement) {
     scrollTrigger: {
       id: "desktop-intro-story-1",
       trigger: scene,
-      // Start while the scene is still entering, so the portrait/title begin
-      // descending earlier instead of snapping into motion after reaching top.
-      start: "top 28%",
-      end: () => `+=${Math.max(scene.offsetHeight, window.innerHeight * 5.6)}`,
-      scrub: prefersReducedMotion() ? false : 0.58,
+      // Begin while the scene is still entering. This gives both portrait and
+      // 简介 time to descend rather than starting after the composition has
+      // already reached the top of the viewport.
+      start: "top 30%",
+      end: () => `+=${Math.max(scene.offsetHeight, window.innerHeight * 6.2)}`,
+      scrub: prefersReducedMotion() ? false : 0.68,
       pin: true,
       anticipatePin: 1,
       invalidateOnRefresh: true,
+      onRefresh: (self) => recordTriggerRange(scene, self),
     },
     defaults: { ease: "none" },
   });
 
-  /* Phase A: the portrait and title settle together. The portrait rotation,
-     portrait vertical travel, and title travel all start at 0 and have the
-     same duration, so one cannot visually outrun the other. */
+  /* Phase A — settle. The portrait rotation, portrait descent and title
+     descent share the same start and duration. Their pixel distances differ,
+     but their normalized progress is intentionally identical. */
   timeline
     .to(
       photoBox,
       {
         x: "10vw",
-        y: "4vw",
+        y: "5.5vw",
         rotation: -18.75,
         scale: 1.16,
         autoAlpha: 0.84,
         filter: "grayscale(10%)",
-        duration: 0.34,
+        duration: 0.36,
       },
       0
     )
@@ -97,8 +104,8 @@ function setupDesktopIntroStory(scope: HTMLElement) {
       title,
       {
         left: "12vw",
-        top: "32vw",
-        duration: 0.34,
+        top: "33vw",
+        duration: 0.36,
       },
       0
     )
@@ -109,7 +116,7 @@ function setupDesktopIntroStory(scope: HTMLElement) {
         rotation: 18.15,
         duration: 0.18,
       },
-      0.08
+      0.09
     )
     .to(
       ".intro-subheadline-pic-info",
@@ -118,7 +125,7 @@ function setupDesktopIntroStory(scope: HTMLElement) {
         scale: 1,
         duration: 0.16,
       },
-      0.18
+      0.2
     )
     .to(
       photoMask,
@@ -126,40 +133,41 @@ function setupDesktopIntroStory(scope: HTMLElement) {
         width: "+=20vw",
         borderTopLeftRadius: "14vw",
         filter: "grayscale(0%)",
-        duration: 0.2,
+        duration: 0.18,
       },
-      0.28
+      0.3
     );
 
-  /* Phase B: copy approaches from the right and stops near the portrait. The
-     title no longer has the old +=20vw movement that made it travel right. */
+  /* Phase B — approach. The copy crosses the right half of the viewport while
+     the portrait/title stay parked. There is deliberately no title movement
+     to the right in this phase. */
   timeline.to(
     copy,
     {
-      x: "-48vw",
-      duration: 0.26,
+      x: "-50vw",
+      duration: 0.25,
     },
-    0.43
+    0.45
   );
 
-  /* Phase C: once the copy reaches the portrait edge, it visually pushes the
-     portrait + title left. Both pieces now share exactly the same push window. */
+  /* Phase C — push. Once the copy reaches the portrait edge, the visual group
+     and copy leave to the left during the same scroll interval. */
   timeline
     .to(
       visualGroup,
       {
-        x: "-82vw",
-        duration: 0.31,
+        x: "-100vw",
+        duration: 0.3,
       },
-      0.69
+      0.7
     )
     .to(
       copy,
       {
-        x: "-130vw",
-        duration: 0.31,
+        x: "-148vw",
+        duration: 0.3,
       },
-      0.69
+      0.7
     );
 
   return timeline;
@@ -178,20 +186,30 @@ function setupWorkPreview(
       scope.querySelectorAll<HTMLElement>(".work-item")
     );
     const screenRect = screen.getBoundingClientRect();
+    const screenCenter = screenRect.top + screenRect.height / 2;
+    const activationRadius = Math.max(
+      screenRect.height * 1.15,
+      window.innerHeight * 0.16
+    );
+
     let activeIndex = -1;
-    let greatestOverlap = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
 
     rows.forEach((row, index) => {
       const entry = row.querySelector<HTMLElement>(".work-item-entry") ?? row;
       const rowRect = entry.getBoundingClientRect();
-      const overlap = Math.max(
-        0,
-        Math.min(rowRect.bottom, screenRect.bottom) -
-          Math.max(rowRect.top, screenRect.top)
-      );
+      const rowCenter = rowRect.top + rowRect.height / 2;
+      const distance = Math.abs(rowCenter - screenCenter);
+      const isNearViewport =
+        rowRect.bottom > -activationRadius &&
+        rowRect.top < window.innerHeight + activationRadius;
 
-      if (overlap > greatestOverlap) {
-        greatestOverlap = overlap;
+      if (
+        isNearViewport &&
+        distance <= activationRadius &&
+        distance < closestDistance
+      ) {
+        closestDistance = distance;
         activeIndex = index;
       }
     });
@@ -208,6 +226,10 @@ function setupWorkPreview(
     onEnter: syncPreviewToScreen,
     onEnterBack: syncPreviewToScreen,
     onUpdate: syncPreviewToScreen,
+    onRefresh: (self) => {
+      recordTriggerRange(workItems, self);
+      syncPreviewToScreen();
+    },
     onLeave: () => onWorkPreview(-1),
     onLeaveBack: () => {
       onWorkPreview(-1);
@@ -231,9 +253,12 @@ function setupTelevisionTransition(
   const triggers: ScrollTrigger[] = [];
   const timelines: gsap.core.Timeline[] = [];
 
+  // Scale and translate the whole TV unit, never the CRT overlay separately.
+  // This makes the physical set slightly larger and raises the television in
+  // the composition while preserving the screen/bezel registration.
   gsap.set(".tv-box", {
-    scale: 1.08,
-    y: "-4svh",
+    scale: 1.12,
+    y: "-8svh",
     rotation: 0,
     autoAlpha: 1,
   });
@@ -276,6 +301,7 @@ function setupTelevisionTransition(
       pinSpacing: false,
       anticipatePin: 1,
       invalidateOnRefresh: true,
+      onRefresh: (self) => recordTriggerRange(pinner, self),
     })
   );
 
@@ -285,7 +311,7 @@ function setupTelevisionTransition(
       trigger: phoneSpacer,
       start: "top 72%",
       end: "bottom 28%",
-      scrub: prefersReducedMotion() ? false : 0.38,
+      scrub: prefersReducedMotion() ? false : 0.42,
       onEnter: () => {
         onWorkPreview(-1);
         setTvPhase(scope, "phone");
@@ -294,30 +320,44 @@ function setupTelevisionTransition(
         onWorkPreview(-1);
         setTvPhase(scope, "phone");
       },
+      onUpdate: (self) => {
+        if (self.isActive) {
+          onWorkPreview(-1);
+          setTvPhase(scope, "phone");
+        }
+      },
       onLeaveBack: () => setTvPhase(scope, "works"),
+      onRefresh: (self) => recordTriggerRange(phoneSpacer, self),
       invalidateOnRefresh: true,
     },
     defaults: { ease: "none" },
   });
   phoneTimeline
-    .to(phone, { autoAlpha: 1, y: 0, duration: 0.22 }, 0)
-    .to(phone, { autoAlpha: 1, y: 0, duration: 0.78 }, 0.22);
+    .to(phone, { autoAlpha: 1, y: 0, duration: 0.2 }, 0)
+    .to(phone, { autoAlpha: 1, y: 0, duration: 0.8 }, 0.2);
   timelines.push(phoneTimeline);
 
   const exitTimeline = gsap.timeline({
     scrollTrigger: {
       id: "desktop-tv-exit",
       trigger: exitSpacer,
-      start: "top 72%",
+      // The phone timeline ends when the bottom of its spacer reaches 28%.
+      // Because this spacer immediately follows it, matching that 28% point
+      // guarantees that the large TV transition cannot begin during the hold.
+      start: "top 28%",
       end: "bottom top",
-      scrub: prefersReducedMotion() ? false : 0.5,
+      scrub: prefersReducedMotion() ? false : 0.54,
       onEnter: () => {
         onWorkPreview(-1);
         setTvPhase(scope, "exit");
       },
       onEnterBack: () => setTvPhase(scope, "exit"),
+      onUpdate: (self) => {
+        if (self.isActive) setTvPhase(scope, "exit");
+      },
       onLeave: () => setTvPhase(scope, "contact"),
       onLeaveBack: () => setTvPhase(scope, "phone"),
+      onRefresh: (self) => recordTriggerRange(exitSpacer, self),
       invalidateOnRefresh: true,
     },
     defaults: { ease: "none" },
@@ -331,7 +371,7 @@ function setupTelevisionTransition(
     .to(
       ".tv-box",
       {
-        scale: 1.42,
+        scale: 1.48,
         rotation: -5,
         duration: 0.2,
       },
@@ -392,7 +432,13 @@ function setupTelevisionTransition(
       0.68
     )
     .to(
-      ["#partfolio", ".tv-box-stickytainer", ".tv-box-pinner", ".tv-box-mask", "#contact"],
+      [
+        "#partfolio",
+        ".tv-box-stickytainer",
+        ".tv-box-pinner",
+        ".tv-box-mask",
+        "#contact",
+      ],
       {
         backgroundColor: "#ffffff",
         duration: 0.25,
