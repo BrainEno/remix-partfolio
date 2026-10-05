@@ -6,6 +6,7 @@ import type { Language, PortfolioContent } from "~/portfolio/types";
 interface PartfolioProps {
   lang: Language;
   content: PortfolioContent["works"];
+  contactPhone: string;
   activeWorkIndex: number;
   onWorkPreview: (index: number) => void;
 }
@@ -17,6 +18,7 @@ type PortfolioStyle = CSSProperties & {
 export default function Partfolio({
   lang,
   content,
+  contactPhone,
   activeWorkIndex,
   onWorkPreview,
 }: PartfolioProps) {
@@ -58,39 +60,45 @@ export default function Partfolio({
         <div className="tv-box-pinner">
           <div className="tv-box-mask">
             <div className="tv-box">
-              <div
-                className={classNames("tv-all-vids", {
-                  "has-preview": Boolean(activeWork?.image.src),
-                })}
-                data-preview-active={activeWork?.image.src ? "true" : "false"}
-                aria-live="polite"
-              >
-                <div className="tv-blackscreen" />
-                <div className="tv-showreel">
-                  {activeWork?.image.src ? (
-                    <img
-                      key={activeWork.id}
-                      loading="eager"
-                      decoding="async"
-                      draggable={false}
-                      className="tv-cover"
-                      src={activeWork.image.src}
-                      alt={localize(activeWork.image.alt, lang)}
-                    />
-                  ) : null}
+              <div className="tv-artwork">
+                <div
+                  className={classNames("tv-all-vids", {
+                    "has-preview": Boolean(activeWork?.image.src),
+                  })}
+                  data-preview-active={activeWork?.image.src ? "true" : "false"}
+                  aria-live="polite"
+                >
+                  <div className="tv-blackscreen" />
+                  <div className="tv-showreel">
+                    {activeWork?.image.src ? (
+                      <img
+                        key={activeWork.id}
+                        loading="eager"
+                        decoding="async"
+                        draggable={false}
+                        className="tv-cover"
+                        src={activeWork.image.src}
+                        alt={localize(activeWork.image.alt, lang)}
+                      />
+                    ) : null}
+                  </div>
+                  <div className="tv-contact-number" aria-hidden="true">
+                    <span>{contactPhone}</span>
+                  </div>
                 </div>
-              </div>
-              <div className="tv-bg-box">
-                <img
-                  className="tv-bg"
-                  src={content.tvFrame.src}
-                  alt=""
-                  aria-hidden="true"
-                  draggable={false}
-                  loading="lazy"
-                  decoding="async"
-                  fetchPriority="low"
-                />
+
+                <div className="tv-bg-box">
+                  <img
+                    className="tv-bg"
+                    src={content.tvFrame.src}
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                    loading="lazy"
+                    decoding="async"
+                    fetchPriority="low"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -151,6 +159,7 @@ export default function Partfolio({
           })}
         </div>
 
+        <div className="tv-phone-spacer" aria-hidden="true" />
         <div className="tv-exit-spacer" aria-hidden="true" />
       </div>
     </section>
