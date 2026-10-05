@@ -196,8 +196,8 @@ function setupWorkPreview(
     let closestDistance = Number.POSITIVE_INFINITY;
 
     /* While the list is in its browsing interval, always let the row nearest
-       the physical CRT center own the preview. This is geometry-driven and
-       therefore still works with 4, 10, or any later number of rows. */
+       the physical CRT center own the preview. This remains independent of the
+       number of configured works. */
     rows.forEach((row, index) => {
       const entry = row.querySelector<HTMLElement>(".work-item-entry") ?? row;
       const rowRect = entry.getBoundingClientRect();
@@ -211,23 +211,18 @@ function setupWorkPreview(
     });
 
     onWorkPreview(activeIndex);
-    if (activeIndex >= 0) setTvPhase(scope, "works");
   };
 
+  /* This trigger is deliberately geometry-only. It records the work browsing
+     interval but never mutates preview/phase by itself. The master TV phase
+     controller below is the single owner of both, preventing a late work
+     onUpdate from overwriting the phone hold with `works`. */
   const trigger = ScrollTrigger.create({
     id: "desktop-work-preview",
     trigger: workItems,
     start: "top bottom",
     end: "bottom top",
-    onEnter: sync,
-    onEnterBack: sync,
-    onUpdate: sync,
-    onRefresh: (self) => {
-      recordTriggerRange(workItems, self);
-      if (self.isActive) sync();
-    },
-    onLeave: () => onWorkPreview(-1),
-    onLeaveBack: () => onWorkPreview(-1),
+    onRefresh: (self) => recordTriggerRange(workItems, self),
     invalidateOnRefresh: true,
   });
 
@@ -305,19 +300,10 @@ function setupTelevisionTransition(
       start: "top 72%",
       end: "bottom 28%",
       scrub: prefersReducedMotion() ? false : 0.42,
-      onEnter: () => {
-        onWorkPreview(-1);
-        setTvPhase(scope, "phone");
-      },
-      onEnterBack: () => {
-        onWorkPreview(-1);
-        setTvPhase(scope, "phone");
-      },
+      onEnter: () => onWorkPreview(-1),
+      onEnterBack: () => onWorkPreview(-1),
       onUpdate: (self) => {
-        if (self.isActive) {
-          onWorkPreview(-1);
-          setTvPhase(scope, "phone");
-        }
+        if (self.isActive) onWorkPreview(-1);
       },
       onRefresh: (self) => recordTriggerRange(phoneSpacer, self),
       invalidateOnRefresh: true,
@@ -338,21 +324,11 @@ function setupTelevisionTransition(
       start: "top 28%",
       end: "bottom top",
       scrub: prefersReducedMotion() ? false : 0.54,
-      onEnter: () => {
-        onWorkPreview(-1);
-        setTvPhase(scope, "exit");
-      },
-      onEnterBack: () => {
-        onWorkPreview(-1);
-        setTvPhase(scope, "exit");
-      },
+      onEnter: () => onWorkPreview(-1),
+      onEnterBack: () => onWorkPreview(-1),
       onUpdate: (self) => {
-        if (self.isActive) {
-          onWorkPreview(-1);
-          setTvPhase(scope, "exit");
-        }
+        if (self.isActive) onWorkPreview(-1);
       },
-      onLeave: () => setTvPhase(scope, "contact"),
       onRefresh: (self) => recordTriggerRange(exitSpacer, self),
       invalidateOnRefresh: true,
     },
@@ -460,11 +436,12 @@ function setupTelevisionTransition(
     );
   timelines.push(exitTimeline);
 
-  /* One long-lived phase controller prevents a fast programmatic scroll (or
-     ScrollSmoother catch-up frame) from leaving the scene in a stale callback
-     state. It derives phase from absolute trigger ranges on every update. */
+  /* One master controller owns phase + work preview. Using native scrollY is
+     intentional: ScrollSmoother still advances the native document scroll,
+     and this avoids reading a pin-specific scroll function while that pin is
+     being transformed. */
   const syncPhase = () => {
-    const scroll = pinTrigger.scroll();
+    const scroll = window.scrollY;
     const phoneTrigger = phoneTimeline.scrollTrigger;
     const exitTrigger = exitTimeline.scrollTrigger;
 
