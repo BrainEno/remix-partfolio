@@ -59,37 +59,43 @@ export default function Intro({ lang, content }: IntroProps) {
       <section>
         <div className="intro-subheadline-stickytainer">
           <div className="intro-subheadline-wrapper">
-            <div className="intro-subheadline-photo-box">
-              <div className="intro-subheadline-photo-mask">
-                <img
-                  src={intro.portrait.src}
-                  alt={localize(intro.portrait.alt, lang)}
-                  loading="lazy"
-                  decoding="async"
-                  className="intro-subheadline-photo"
-                />
+            <div className="intro-subheadline-visual-group">
+              <div className="intro-subheadline-photo-box">
+                <div className="intro-subheadline-photo-mask">
+                  <img
+                    src={intro.portrait.src}
+                    alt={localize(intro.portrait.alt, lang)}
+                    loading="lazy"
+                    decoding="async"
+                    className="intro-subheadline-photo"
+                  />
+                </div>
+                <div className="intro-subheadline-pic-info">
+                  <div className="right">
+                    {localize(intro.portraitCredit, lang)}
+                  </div>
+                  <div className="subheadline-ball" />
+                </div>
+                <div className="intro-subheadline-photo-ghost-mask">
+                  <img
+                    src={intro.portrait.src}
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                    decoding="async"
+                    className="intro-subheadline-ghost-photo"
+                  />
+                </div>
               </div>
-              <div className="intro-subheadline-pic-info">
-                <div className="right">{localize(intro.portraitCredit, lang)}</div>
-                <div className="subheadline-ball" />
-              </div>
-              <div className="intro-subheadline-photo-ghost-mask">
-                <img
-                  src={intro.portrait.src}
-                  alt=""
-                  aria-hidden="true"
-                  loading="lazy"
-                  decoding="async"
-                  className="intro-subheadline-ghost-photo"
-                />
-              </div>
-            </div>
-            <div className="intro-subheadline-slider">
+
               <div
                 className={classNames("intro-subheadline-title", { zh: isZh })}
               >
                 <h1>{localize(intro.heading, lang)}</h1>
               </div>
+            </div>
+
+            <div className="intro-subheadline-slider">
               <div className="intro-subheadline-text-box1">
                 <p
                   className={classNames(
