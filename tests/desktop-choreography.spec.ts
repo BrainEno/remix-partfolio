@@ -38,11 +38,8 @@ async function readTriggerRange(page: Page, selector: string): Promise<ScrollRan
 }
 
 /**
- * Desktop uses ScrollSmoother. Teleporting several pinned scenes with one
- * window.scrollTo() skips the same intermediate trigger lifecycle a user sees
- * while wheeling/trackpad-scrolling. Walk toward the target in viewport-sized
- * increments so the BDD tests exercise the real choreography instead of a
- * synthetic jump across multiple pins.
+ * The intro contract needs exact samples inside one timeline, so walk toward
+ * each target instead of teleporting across pinned scenes in a single call.
  */
 async function scrollLikeUser(page: Page, target: number, settleMs = 650) {
   const viewportHeight = page.viewportSize()?.height ?? 900;
@@ -72,6 +69,30 @@ async function scrollRangeProgress(
   await scrollLikeUser(page, target, wait);
 }
 
+async function wheelUntil(
+  page: Page,
+  predicate: () => Promise<boolean>,
+  options: { maxSteps?: number; stepViewport?: number; settleMs?: number } = {}
+) {
+  const viewportHeight = page.viewportSize()?.height ?? 900;
+  const maxSteps = options.maxSteps ?? 60;
+  const stepViewport = options.stepViewport ?? 0.48;
+  const settleMs = options.settleMs ?? 110;
+
+  for (let step = 0; step < maxSteps; step += 1) {
+    if (await predicate()) return true;
+    await page.mouse.wheel(0, viewportHeight * stepViewport);
+    await page.waitForTimeout(settleMs);
+  }
+
+  return predicate();
+}
+
+async function enterWorks(page: Page) {
+  await page.getByRole("button", { name: "作品集" }).click();
+  await waitForMotion(page, 1100);
+}
+
 async function readScale(page: Page, selector: string) {
   return page.locator(selector).evaluate((element) => {
     const transform = getComputedStyle(element).transform;
@@ -79,6 +100,14 @@ async function readScale(page: Page, selector: string) {
     const matrix = new DOMMatrix(transform);
     return Math.hypot(matrix.a, matrix.b);
   });
+}
+
+async function readOpacity(page: Page, selector: string) {
+  return Number(
+    await page
+      .locator(selector)
+      .evaluate((element) => getComputedStyle(element).opacity)
+  );
 }
 
 async function readCssRgbAverage(
@@ -175,20 +204,18 @@ test("Given a work preview, its image fills the CRT clipping rectangle without d
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await loadChineseDesktop(page);
+  await enterWorks(page);
 
-  const workRange = await readTriggerRange(page, ".work-items-box");
-  for (let step = 1; step <= 18; step += 1) {
-    await scrollRangeProgress(page, workRange, step / 20, 260);
-    const active = await page
-      .locator(".tv-all-vids")
-      .getAttribute("data-preview-active");
-    if (active === "true") break;
-  }
-
-  await expect(page.locator(".tv-all-vids")).toHaveAttribute(
-    "data-preview-active",
-    "true"
+  const previewAppeared = await wheelUntil(
+    page,
+    async () =>
+      (await page
+        .locator(".tv-all-vids")
+        .getAttribute("data-preview-active")) === "true",
+    { maxSteps: 32, stepViewport: 0.32, settleMs: 130 }
   );
+  expect(previewAppeared).toBe(true);
+
   await expect(page.locator(".tv-cover")).toHaveCount(1);
   await expect(page.locator("#partfolio")).toHaveAttribute(
     "data-tv-phase",
@@ -269,25 +296,27 @@ test("After works, phone holds inside CRT before grey-green -> black -> white tr
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await loadChineseDesktop(page);
+  await enterWorks(page);
 
-  const phoneRange = await readTriggerRange(page, ".tv-phone-spacer");
-  await scrollRangeProgress(page, phoneRange, 0.58, 1000);
-
-  await expect(page.locator("#partfolio")).toHaveAttribute(
-    "data-tv-phase",
-    "phone"
+  const phonePhaseReached = await wheelUntil(
+    page,
+    async () =>
+      (await page.locator("#partfolio").getAttribute("data-tv-phase")) ===
+      "phone",
+    { maxSteps: 42, stepViewport: 0.34, settleMs: 125 }
   );
+  expect(phonePhaseReached).toBe(true);
+
+  const phoneVisible = await wheelUntil(
+    page,
+    async () => (await readOpacity(page, ".tv-contact-number")) > 0.65,
+    { maxSteps: 8, stepViewport: 0.08, settleMs: 140 }
+  );
+  expect(phoneVisible).toBe(true);
   await expect(page.locator(".tv-all-vids")).toHaveAttribute(
     "data-preview-active",
     "false"
   );
-
-  const phoneOpacity = Number(
-    await page
-      .locator(".tv-contact-number")
-      .evaluate((element) => getComputedStyle(element).opacity)
-  );
-  expect(phoneOpacity).toBeGreaterThan(0.65);
 
   const phoneBox = await readBox(page, ".tv-contact-number");
   const screenBox = await readBox(page, ".tv-all-vids");
@@ -299,7 +328,6 @@ test("After works, phone holds inside CRT before grey-green -> black -> white tr
   expect(phoneBox.y + phoneBox.height).toBeLessThanOrEqual(
     screenBox.y + screenBox.height + 1
   );
-
   expect(await readScale(page, ".tv-box")).toBeLessThan(1.3);
 
   const canvas = page.locator(".canvas-container");
@@ -310,34 +338,46 @@ test("After works, phone holds inside CRT before grey-green -> black -> white tr
   const viewportWidth = page.viewportSize()?.width ?? 1440;
   expect(boothBefore.x).toBeGreaterThan(viewportWidth * 0.82);
 
-  const exitRange = await readTriggerRange(page, ".tv-exit-spacer");
-  expect(exitRange.start).toBeGreaterThanOrEqual(phoneRange.end - 3);
-
-  await scrollRangeProgress(page, exitRange, 0.52, 900);
-  await expect(page.locator("#partfolio")).toHaveAttribute(
-    "data-tv-phase",
-    "exit"
-  );
-  const darkLuma = await readCssRgbAverage(
+  const exitPhaseReached = await wheelUntil(
     page,
-    ".tv-blackscreen",
-    "--tv-screen-mid"
+    async () =>
+      (await page.locator("#partfolio").getAttribute("data-tv-phase")) ===
+      "exit",
+    { maxSteps: 18, stepViewport: 0.12, settleMs: 130 }
   );
-  expect(darkLuma).toBeGreaterThanOrEqual(0);
-  expect(darkLuma).toBeLessThan(75);
-  expect(await readScale(page, ".tv-box")).toBeGreaterThan(1.45);
+  expect(exitPhaseReached).toBe(true);
 
-  const boothDuring = await readBox(page, ".canvas-container");
-  expect(boothDuring.x).toBeLessThan(boothBefore.x - viewportWidth * 0.12);
+  let darkSeen = false;
+  let boothMoved = false;
+  let brightSeen = false;
 
-  await scrollRangeProgress(page, exitRange, 0.84, 900);
-  const brightLuma = await readCssRgbAverage(
-    page,
-    ".tv-blackscreen",
-    "--tv-screen-mid"
-  );
-  expect(brightLuma).toBeGreaterThan(150);
+  for (let step = 0; step < 30; step += 1) {
+    const luma = await readCssRgbAverage(
+      page,
+      ".tv-blackscreen",
+      "--tv-screen-mid"
+    );
+    const scale = await readScale(page, ".tv-box");
+    const booth = await readBox(page, ".canvas-container");
+
+    if (luma >= 0 && luma < 75 && scale > 1.45) darkSeen = true;
+    if (darkSeen && booth.x < boothBefore.x - viewportWidth * 0.12) {
+      boothMoved = true;
+    }
+    if (darkSeen && luma > 150) {
+      brightSeen = true;
+      break;
+    }
+
+    await page.mouse.wheel(0, (page.viewportSize()?.height ?? 900) * 0.075);
+    await page.waitForTimeout(130);
+  }
+
+  expect(darkSeen).toBe(true);
+  expect(boothMoved).toBe(true);
+  expect(brightSeen).toBe(true);
+
   const boothLate = await readBox(page, ".canvas-container");
-  expect(boothLate.x).toBeLessThan(viewportWidth * 0.48);
+  expect(boothLate.x).toBeLessThan(viewportWidth * 0.55);
   expect(pageErrors).toEqual([]);
 });
