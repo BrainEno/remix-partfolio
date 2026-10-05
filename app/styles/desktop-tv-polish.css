@@ -155,7 +155,10 @@
   .work-items-box {
     margin-top: 0;
     min-height: 100vh;
-    min-height: 100svh;
+    /* `--portfolio-work-space` is derived from the number of configured work
+       items. Four or forty works therefore extend the browsing stage instead
+       of moving the phone/exit choreography to a hard-coded four-item point. */
+    min-height: max(100svh, calc(var(--portfolio-work-space) + 28svh));
     padding-top: 14vh;
     padding-top: 14svh;
     padding-bottom: 14vh;
