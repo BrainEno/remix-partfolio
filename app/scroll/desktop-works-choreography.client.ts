@@ -9,6 +9,11 @@ type SetupOptions = {
 
 type TvPhase = "idle" | "works" | "phone" | "exit" | "contact";
 
+type WorkPreviewController = {
+  trigger: ScrollTrigger;
+  sync: () => void;
+};
+
 function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
@@ -69,9 +74,6 @@ function setupDesktopIntroStory(scope: HTMLElement) {
     scrollTrigger: {
       id: "desktop-intro-story-1",
       trigger: scene,
-      // Begin while the scene is still entering. This gives both portrait and
-      // 简介 time to descend rather than starting after the composition has
-      // already reached the top of the viewport.
       start: "top 30%",
       end: () => `+=${Math.max(scene.offsetHeight, window.innerHeight * 6.2)}`,
       scrub: prefersReducedMotion() ? false : 0.68,
@@ -83,9 +85,8 @@ function setupDesktopIntroStory(scope: HTMLElement) {
     defaults: { ease: "none" },
   });
 
-  /* Phase A — settle. The portrait rotation, portrait descent and title
-     descent share the same start and duration. Their pixel distances differ,
-     but their normalized progress is intentionally identical. */
+  /* Phase A — settle. Portrait rotation, portrait descent, and 简介 descent
+     begin at exactly the same point and share the same normalized duration. */
   timeline
     .to(
       photoBox,
@@ -138,9 +139,8 @@ function setupDesktopIntroStory(scope: HTMLElement) {
       0.3
     );
 
-  /* Phase B — approach. The copy crosses the right half of the viewport while
-     the portrait/title stay parked. There is deliberately no title movement
-     to the right in this phase. */
+  /* Phase B — approach. Copy comes from the right while portrait/title stay
+     parked. The old title +=20vw movement is intentionally absent. */
   timeline.to(
     copy,
     {
@@ -150,8 +150,8 @@ function setupDesktopIntroStory(scope: HTMLElement) {
     0.45
   );
 
-  /* Phase C — push. Once the copy reaches the portrait edge, the visual group
-     and copy leave to the left during the same scroll interval. */
+  /* Phase C — push. Once copy reaches the photo edge, copy + portrait + 简介
+     travel left during exactly the same scroll interval. */
   timeline
     .to(
       visualGroup,
@@ -176,39 +176,35 @@ function setupDesktopIntroStory(scope: HTMLElement) {
 function setupWorkPreview(
   scope: HTMLElement,
   onWorkPreview: (index: number) => void
-) {
+): WorkPreviewController | null {
   const screen = scope.querySelector<HTMLElement>(".tv-all-vids");
   const workItems = scope.querySelector<HTMLElement>(".work-items-box");
   if (!screen || !workItems) return null;
 
-  const syncPreviewToScreen = () => {
+  const sync = () => {
     const rows = Array.from(
       scope.querySelectorAll<HTMLElement>(".work-item")
     );
+    if (rows.length === 0) {
+      onWorkPreview(-1);
+      return;
+    }
+
     const screenRect = screen.getBoundingClientRect();
     const screenCenter = screenRect.top + screenRect.height / 2;
-    const activationRadius = Math.max(
-      screenRect.height * 1.15,
-      window.innerHeight * 0.16
-    );
-
     let activeIndex = -1;
     let closestDistance = Number.POSITIVE_INFINITY;
 
+    /* While the list is in its browsing interval, always let the row nearest
+       the physical CRT center own the preview. This is geometry-driven and
+       therefore still works with 4, 10, or any later number of rows. */
     rows.forEach((row, index) => {
       const entry = row.querySelector<HTMLElement>(".work-item-entry") ?? row;
       const rowRect = entry.getBoundingClientRect();
       const rowCenter = rowRect.top + rowRect.height / 2;
       const distance = Math.abs(rowCenter - screenCenter);
-      const isNearViewport =
-        rowRect.bottom > -activationRadius &&
-        rowRect.top < window.innerHeight + activationRadius;
 
-      if (
-        isNearViewport &&
-        distance <= activationRadius &&
-        distance < closestDistance
-      ) {
+      if (distance < closestDistance) {
         closestDistance = distance;
         activeIndex = index;
       }
@@ -218,25 +214,24 @@ function setupWorkPreview(
     if (activeIndex >= 0) setTvPhase(scope, "works");
   };
 
-  return ScrollTrigger.create({
+  const trigger = ScrollTrigger.create({
     id: "desktop-work-preview",
     trigger: workItems,
     start: "top bottom",
     end: "bottom top",
-    onEnter: syncPreviewToScreen,
-    onEnterBack: syncPreviewToScreen,
-    onUpdate: syncPreviewToScreen,
+    onEnter: sync,
+    onEnterBack: sync,
+    onUpdate: sync,
     onRefresh: (self) => {
       recordTriggerRange(workItems, self);
-      syncPreviewToScreen();
+      if (self.isActive) sync();
     },
     onLeave: () => onWorkPreview(-1),
-    onLeaveBack: () => {
-      onWorkPreview(-1);
-      setTvPhase(scope, "idle");
-    },
+    onLeaveBack: () => onWorkPreview(-1),
     invalidateOnRefresh: true,
   });
+
+  return { trigger, sync };
 }
 
 function setupTelevisionTransition(
@@ -253,9 +248,8 @@ function setupTelevisionTransition(
   const triggers: ScrollTrigger[] = [];
   const timelines: gsap.core.Timeline[] = [];
 
-  // Scale and translate the whole TV unit, never the CRT overlay separately.
-  // This makes the physical set slightly larger and raises the television in
-  // the composition while preserving the screen/bezel registration.
+  /* Scale/translate the complete TV unit, never the CRT overlay separately.
+     The bezel, background, preview image, and phone stay registered together. */
   gsap.set(".tv-box", {
     scale: 1.12,
     y: "-8svh",
@@ -288,22 +282,21 @@ function setupTelevisionTransition(
   onWorkPreview(-1);
 
   const workPreview = setupWorkPreview(scope, onWorkPreview);
-  if (workPreview) triggers.push(workPreview);
+  if (workPreview) triggers.push(workPreview.trigger);
 
-  triggers.push(
-    ScrollTrigger.create({
-      id: "desktop-tv-pin",
-      trigger: pinner,
-      start: "top top",
-      endTrigger: exitSpacer,
-      end: "bottom top",
-      pin: pinner,
-      pinSpacing: false,
-      anticipatePin: 1,
-      invalidateOnRefresh: true,
-      onRefresh: (self) => recordTriggerRange(pinner, self),
-    })
-  );
+  const pinTrigger = ScrollTrigger.create({
+    id: "desktop-tv-pin",
+    trigger: pinner,
+    start: "top top",
+    endTrigger: exitSpacer,
+    end: "bottom top",
+    pin: pinner,
+    pinSpacing: false,
+    anticipatePin: 1,
+    invalidateOnRefresh: true,
+    onRefresh: (self) => recordTriggerRange(pinner, self),
+  });
+  triggers.push(pinTrigger);
 
   const phoneTimeline = gsap.timeline({
     scrollTrigger: {
@@ -326,7 +319,6 @@ function setupTelevisionTransition(
           setTvPhase(scope, "phone");
         }
       },
-      onLeaveBack: () => setTvPhase(scope, "works"),
       onRefresh: (self) => recordTriggerRange(phoneSpacer, self),
       invalidateOnRefresh: true,
     },
@@ -341,9 +333,8 @@ function setupTelevisionTransition(
     scrollTrigger: {
       id: "desktop-tv-exit",
       trigger: exitSpacer,
-      // The phone timeline ends when the bottom of its spacer reaches 28%.
-      // Because this spacer immediately follows it, matching that 28% point
-      // guarantees that the large TV transition cannot begin during the hold.
+      /* The phone hold ends at bottom 28%; the immediately following exit
+         spacer starts at top 28%, so the phases cannot overlap. */
       start: "top 28%",
       end: "bottom top",
       scrub: prefersReducedMotion() ? false : 0.54,
@@ -351,21 +342,25 @@ function setupTelevisionTransition(
         onWorkPreview(-1);
         setTvPhase(scope, "exit");
       },
-      onEnterBack: () => setTvPhase(scope, "exit"),
+      onEnterBack: () => {
+        onWorkPreview(-1);
+        setTvPhase(scope, "exit");
+      },
       onUpdate: (self) => {
-        if (self.isActive) setTvPhase(scope, "exit");
+        if (self.isActive) {
+          onWorkPreview(-1);
+          setTvPhase(scope, "exit");
+        }
       },
       onLeave: () => setTvPhase(scope, "contact"),
-      onLeaveBack: () => setTvPhase(scope, "phone"),
       onRefresh: (self) => recordTriggerRange(exitSpacer, self),
       invalidateOnRefresh: true,
     },
     defaults: { ease: "none" },
   });
 
-  /* Phone first, then grey-green -> black while the TV grows/rotates. The
-     white Contact field and telephone booth do not enter until the black-field
-     portion is already established. */
+  /* Phone first, then grey-green -> black as the TV grows/rotates. White and
+     the telephone booth enter only after the black field is established. */
   exitTimeline
     .to(phone, { autoAlpha: 0, y: "-24%", duration: 0.1 }, 0)
     .to(
@@ -465,14 +460,71 @@ function setupTelevisionTransition(
     );
   timelines.push(exitTimeline);
 
+  /* One long-lived phase controller prevents a fast programmatic scroll (or
+     ScrollSmoother catch-up frame) from leaving the scene in a stale callback
+     state. It derives phase from absolute trigger ranges on every update. */
+  const syncPhase = () => {
+    const scroll = pinTrigger.scroll();
+    const phoneTrigger = phoneTimeline.scrollTrigger;
+    const exitTrigger = exitTimeline.scrollTrigger;
+
+    if (exitTrigger && scroll >= exitTrigger.end) {
+      onWorkPreview(-1);
+      setTvPhase(scope, "contact");
+      return;
+    }
+
+    if (exitTrigger && scroll >= exitTrigger.start) {
+      onWorkPreview(-1);
+      setTvPhase(scope, "exit");
+      return;
+    }
+
+    if (
+      phoneTrigger &&
+      scroll >= phoneTrigger.start &&
+      scroll <= phoneTrigger.end
+    ) {
+      onWorkPreview(-1);
+      setTvPhase(scope, "phone");
+      return;
+    }
+
+    if (
+      workPreview &&
+      scroll >= workPreview.trigger.start &&
+      scroll <= workPreview.trigger.end
+    ) {
+      workPreview.sync();
+      setTvPhase(scope, "works");
+      return;
+    }
+
+    onWorkPreview(-1);
+    setTvPhase(scope, "idle");
+  };
+
+  const phaseTrigger = ScrollTrigger.create({
+    id: "desktop-tv-phase",
+    trigger: pinner,
+    start: "top top",
+    endTrigger: exitSpacer,
+    end: "bottom top",
+    onEnter: syncPhase,
+    onEnterBack: syncPhase,
+    onUpdate: syncPhase,
+    onRefresh: syncPhase,
+    invalidateOnRefresh: true,
+  });
+  triggers.push(phaseTrigger);
+
   return [...triggers, ...timelines];
 }
 
 /**
  * Desktop behavior contract lives in docs/animation-behavior.md. This module
- * intentionally owns the first intro story and the complete Works -> phone ->
- * Contact transition so those phases cannot be split across competing desktop
- * ScrollTriggers again.
+ * owns the first intro story and the complete Works -> phone -> Contact flow so
+ * those phases cannot drift apart across competing desktop ScrollTriggers.
  */
 export function setupDesktopWorksChoreography({
   scope,
