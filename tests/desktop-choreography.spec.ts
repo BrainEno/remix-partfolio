@@ -37,19 +37,39 @@ async function readTriggerRange(page: Page, selector: string): Promise<ScrollRan
   return { start, end };
 }
 
+/**
+ * Desktop uses ScrollSmoother. Teleporting several pinned scenes with one
+ * window.scrollTo() skips the same intermediate trigger lifecycle a user sees
+ * while wheeling/trackpad-scrolling. Walk toward the target in viewport-sized
+ * increments so the BDD tests exercise the real choreography instead of a
+ * synthetic jump across multiple pins.
+ */
+async function scrollLikeUser(page: Page, target: number, settleMs = 650) {
+  const viewportHeight = page.viewportSize()?.height ?? 900;
+  const maxStep = viewportHeight * 0.42;
+
+  for (let stepIndex = 0; stepIndex < 180; stepIndex += 1) {
+    const current = await page.evaluate(() => window.scrollY);
+    const delta = target - current;
+    if (Math.abs(delta) < 3) break;
+
+    const step = Math.sign(delta) * Math.min(Math.abs(delta), maxStep);
+    await page.evaluate((distance) => window.scrollBy(0, distance), step);
+    await page.waitForTimeout(22);
+  }
+
+  await page.evaluate((position) => window.scrollTo(0, position), target);
+  await waitForMotion(page, settleMs);
+}
+
 async function scrollRangeProgress(
   page: Page,
   range: ScrollRange,
   progress: number,
   wait = 650
 ) {
-  await page.evaluate(
-    ({ start, end, targetProgress }) => {
-      window.scrollTo(0, start + (end - start) * targetProgress);
-    },
-    { ...range, targetProgress: progress }
-  );
-  await waitForMotion(page, wait);
+  const target = range.start + (range.end - range.start) * progress;
+  await scrollLikeUser(page, target, wait);
 }
 
 async function readScale(page: Page, selector: string) {
@@ -158,7 +178,7 @@ test("Given a work preview, its image fills the CRT clipping rectangle without d
 
   const workRange = await readTriggerRange(page, ".work-items-box");
   for (let step = 1; step <= 18; step += 1) {
-    await scrollRangeProgress(page, workRange, step / 20, 150);
+    await scrollRangeProgress(page, workRange, step / 20, 260);
     const active = await page
       .locator(".tv-all-vids")
       .getAttribute("data-preview-active");
@@ -251,7 +271,7 @@ test("After works, phone holds inside CRT before grey-green -> black -> white tr
   await loadChineseDesktop(page);
 
   const phoneRange = await readTriggerRange(page, ".tv-phone-spacer");
-  await scrollRangeProgress(page, phoneRange, 0.58, 900);
+  await scrollRangeProgress(page, phoneRange, 0.58, 1000);
 
   await expect(page.locator("#partfolio")).toHaveAttribute(
     "data-tv-phase",
@@ -293,7 +313,7 @@ test("After works, phone holds inside CRT before grey-green -> black -> white tr
   const exitRange = await readTriggerRange(page, ".tv-exit-spacer");
   expect(exitRange.start).toBeGreaterThanOrEqual(phoneRange.end - 3);
 
-  await scrollRangeProgress(page, exitRange, 0.52, 850);
+  await scrollRangeProgress(page, exitRange, 0.52, 900);
   await expect(page.locator("#partfolio")).toHaveAttribute(
     "data-tv-phase",
     "exit"
@@ -310,7 +330,7 @@ test("After works, phone holds inside CRT before grey-green -> black -> white tr
   const boothDuring = await readBox(page, ".canvas-container");
   expect(boothDuring.x).toBeLessThan(boothBefore.x - viewportWidth * 0.12);
 
-  await scrollRangeProgress(page, exitRange, 0.84, 850);
+  await scrollRangeProgress(page, exitRange, 0.84, 900);
   const brightLuma = await readCssRgbAverage(
     page,
     ".tv-blackscreen",
