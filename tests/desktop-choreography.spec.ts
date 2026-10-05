@@ -65,25 +65,6 @@ async function scrollRangeProgress(
   await scrollLikeUser(page, target, wait);
 }
 
-async function wheelUntil(
-  page: Page,
-  predicate: () => Promise<boolean>,
-  options: { maxSteps?: number; stepViewport?: number; settleMs?: number } = {}
-) {
-  const viewportHeight = page.viewportSize()?.height ?? 900;
-  const maxSteps = options.maxSteps ?? 60;
-  const stepViewport = options.stepViewport ?? 0.48;
-  const settleMs = options.settleMs ?? 110;
-
-  for (let step = 0; step < maxSteps; step += 1) {
-    if (await predicate()) return true;
-    await page.mouse.wheel(0, viewportHeight * stepViewport);
-    await page.waitForTimeout(settleMs);
-  }
-
-  return predicate();
-}
-
 async function enterWorks(page: Page) {
   await page.getByRole("button", { name: "作品集" }).click();
   await waitForMotion(page, 1100);
@@ -202,14 +183,19 @@ test("Given a work preview, its image fills the CRT clipping rectangle without d
   await loadChineseDesktop(page);
   await enterWorks(page);
 
-  const previewAppeared = await wheelUntil(
-    page,
-    async () =>
+  const workRange = await readTriggerRange(page, ".work-items-box");
+  let previewAppeared = false;
+  for (let sample = 0; sample <= 20; sample += 1) {
+    await scrollRangeProgress(page, workRange, sample / 20, 180);
+    if (
       (await page
         .locator(".tv-all-vids")
-        .getAttribute("data-preview-active")) === "true",
-    { maxSteps: 32, stepViewport: 0.32, settleMs: 130 }
-  );
+        .getAttribute("data-preview-active")) === "true"
+    ) {
+      previewAppeared = true;
+      break;
+    }
+  }
   expect(previewAppeared).toBe(true);
 
   await expect(page.locator(".tv-cover")).toHaveCount(1);
@@ -294,21 +280,13 @@ test("After works, phone holds inside CRT before grey-green -> black -> white tr
   await loadChineseDesktop(page);
   await enterWorks(page);
 
-  const phonePhaseReached = await wheelUntil(
-    page,
-    async () =>
-      (await page.locator("#partfolio").getAttribute("data-tv-phase")) ===
-      "phone",
-    { maxSteps: 42, stepViewport: 0.34, settleMs: 125 }
+  const phoneRange = await readTriggerRange(page, ".tv-phone-spacer");
+  await scrollRangeProgress(page, phoneRange, 0.28, 900);
+  await expect(page.locator("#partfolio")).toHaveAttribute(
+    "data-tv-phase",
+    "phone"
   );
-  expect(phonePhaseReached).toBe(true);
-
-  const phoneVisible = await wheelUntil(
-    page,
-    async () => (await readOpacity(page, ".tv-contact-number")) > 0.65,
-    { maxSteps: 8, stepViewport: 0.08, settleMs: 140 }
-  );
-  expect(phoneVisible).toBe(true);
+  expect(await readOpacity(page, ".tv-contact-number")).toBeGreaterThan(0.65);
   await expect(page.locator(".tv-all-vids")).toHaveAttribute(
     "data-preview-active",
     "false"
@@ -334,20 +312,13 @@ test("After works, phone holds inside CRT before grey-green -> black -> white tr
   const viewportWidth = page.viewportSize()?.width ?? 1440;
   expect(boothBefore.x).toBeGreaterThan(viewportWidth * 0.82);
 
-  const exitPhaseReached = await wheelUntil(
-    page,
-    async () =>
-      (await page.locator("#partfolio").getAttribute("data-tv-phase")) ===
-      "exit",
-    { maxSteps: 18, stepViewport: 0.12, settleMs: 130 }
-  );
-  expect(exitPhaseReached).toBe(true);
-
+  const exitRange = await readTriggerRange(page, ".tv-exit-spacer");
   let darkSeen = false;
   let boothMoved = false;
   let brightSeen = false;
 
-  for (let step = 0; step < 30; step += 1) {
+  for (let sample = 1; sample <= 20; sample += 1) {
+    await scrollRangeProgress(page, exitRange, sample / 20, 170);
     const luma = await readCssRgbAverage(
       page,
       ".tv-blackscreen",
@@ -364,9 +335,6 @@ test("After works, phone holds inside CRT before grey-green -> black -> white tr
       brightSeen = true;
       break;
     }
-
-    await page.mouse.wheel(0, (page.viewportSize()?.height ?? 900) * 0.075);
-    await page.waitForTimeout(130);
   }
 
   expect(darkSeen).toBe(true);
