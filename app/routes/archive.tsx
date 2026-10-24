@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
+  getArchiveCreators,
   getArchiveKinds,
   getArchiveTags,
   getArchiveYears,
+  resolveArchiveCreators,
 } from "../archive/catalog";
 import { archiveContent } from "../archive/content";
 import type { ArchiveItem, ArchiveKind } from "../archive/types";
@@ -46,10 +48,11 @@ export default function ArchiveIndex() {
       if (filter !== "all" && item.kind !== filter) return false;
       if (!normalizedQuery) return true;
 
+      const creators = resolveArchiveCreators(item);
       const searchable = [
         item.title.zh,
         item.title.en,
-        ...item.creators,
+        ...creators.flatMap((creator) => [creator.name.zh, creator.name.en]),
         item.year ?? "",
         ...item.tags,
         item.summary?.zh ?? "",
@@ -80,6 +83,7 @@ export default function ArchiveIndex() {
   const kinds = getArchiveKinds().filter(({ count }) => count > 0);
   const years = getArchiveYears();
   const tags = getArchiveTags();
+  const creators = getArchiveCreators();
 
   return (
     <ArchiveShell
@@ -123,6 +127,19 @@ export default function ArchiveIndex() {
               <li key={value}>
                 <Link to={`/archive/type/${encodeURIComponent(value)}`}>
                   {value} <span>{count}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h2>{language === "zh" ? "创作者" : "Creators"}</h2>
+          <ul>
+            {creators.map(({ creator, count }) => (
+              <li key={creator.id}>
+                <Link to={`/archive/creator/${creator.id}`}>
+                  {creator.name[language]} <span>{count}</span>
                 </Link>
               </li>
             ))}

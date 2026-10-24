@@ -18,11 +18,18 @@ export type ArchiveFact = Readonly<{
   value: LocalizedText;
 }>;
 
+export type ArchiveCreator = Readonly<{
+  id: string;
+  name: LocalizedText;
+  bio?: LocalizedText;
+  externalUrl?: string;
+}>;
+
 export type ArchiveItem = Readonly<{
   id: string;
   kind: ArchiveKind;
   title: LocalizedText;
-  creators: readonly string[];
+  creatorIds: readonly string[];
   year?: string;
   image?: ArchiveImage;
   summary?: LocalizedText;
