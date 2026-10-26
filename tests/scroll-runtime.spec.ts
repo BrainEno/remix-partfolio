@@ -70,6 +70,45 @@ async function readCssColorLuma(
   return rgb.reduce((sum, component) => sum + component, 0) / 3;
 }
 
+test("desktop section tracking follows the complete smooth-scroll range", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator(".page-home")).toHaveAttribute(
+    "data-scroll-runtime",
+    "ready"
+  );
+  await page.locator('[data-language="en"]').click();
+
+  await page.getByRole("button", { name: "Works", exact: true }).click();
+  await expect
+    .poll(() =>
+      page.locator("#partfolio").evaluate((element) => {
+        return Math.abs(element.getBoundingClientRect().top);
+      })
+    )
+    .toBeLessThan(2);
+  await expect(page.locator(".nav-entry.nav-active .nav-entry-text")).toHaveText(
+    "Works"
+  );
+
+  await page.getByRole("button", { name: "Contact", exact: true }).click();
+  await expect(page.locator(".nav-entry.nav-active .nav-entry-text")).toHaveText(
+    "Contact"
+  );
+  await expect
+    .poll(() =>
+      page.locator("#contact .contact-text-box").evaluate((element) => {
+        return element.getBoundingClientRect().top;
+      })
+    )
+    .toBeLessThan(900 * 0.65);
+  expect(pageErrors).toEqual([]);
+});
+
 test("mobile GSAP runtime animates the required scenes", async ({ page }) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));

@@ -7,14 +7,6 @@ type SetupMobileChoreographyOptions = {
   onWorkPreview: (index: number) => void;
 };
 
-function prefersReducedMotion() {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
-function mobileScrub(value = 0.28) {
-  return prefersReducedMotion() ? false : value;
-}
-
 function killTrigger(id: string) {
   const trigger = ScrollTrigger.getById(id);
   trigger?.animation?.kill();
@@ -22,9 +14,13 @@ function killTrigger(id: string) {
 }
 
 function replaceBaseMobileTriggers() {
-  ["intro-headline", "intro-photo", "intro-story-2", "tv-pin", "tv-exit"].forEach(
-    killTrigger
-  );
+  [
+    "intro-headline",
+    "intro-photo",
+    "intro-story-2",
+    "tv-pin",
+    "tv-exit",
+  ].forEach(killTrigger);
 
   ScrollTrigger.getAll()
     .filter((trigger) => trigger.vars.id?.toString().startsWith("work-"))
@@ -41,7 +37,7 @@ function setupHero() {
       trigger: ".intro-headline-box",
       start: "top top",
       end: "bottom 42%",
-      scrub: mobileScrub(0.24),
+      scrub: true,
       invalidateOnRefresh: true,
     },
     defaults: { ease: "none" },
@@ -56,7 +52,7 @@ function setupHero() {
         x: word.classList.contains("zh") ? 16 : -10,
         duration: 1,
       },
-      index * 0.08
+      index * 0.08,
     );
   });
 
@@ -68,7 +64,7 @@ function setupHero() {
         x: "-1.5vw",
         duration: 1,
       },
-      0
+      0,
     )
     .to(
       ".intro-photo",
@@ -79,13 +75,13 @@ function setupHero() {
         transformOrigin: "50% 55%",
         duration: 1,
       },
-      0
+      0,
     );
 }
 
 function setupSecondIntroStory() {
   const scene = document.querySelector<HTMLElement>(
-    ".intro-subheadline-stickytainer2"
+    ".intro-subheadline-stickytainer2",
   );
   if (!scene) return;
 
@@ -95,7 +91,7 @@ function setupSecondIntroStory() {
       trigger: scene,
       start: "top top",
       end: () => `+=${Math.max(scene.offsetHeight, window.innerHeight * 1.35)}`,
-      scrub: mobileScrub(0.3),
+      scrub: true,
       pin: true,
       anticipatePin: 1,
       invalidateOnRefresh: true,
@@ -112,7 +108,7 @@ function setupSecondIntroStory() {
         rotation: -1.25,
         duration: 0.92,
       },
-      0
+      0,
     )
     .to(
       ".intro-subheadline-text-box2",
@@ -120,7 +116,7 @@ function setupSecondIntroStory() {
         x: "-100vw",
         duration: 1,
       },
-      0
+      0,
     );
 }
 
@@ -141,7 +137,7 @@ function setupWorkPreview(onWorkPreview: (index: number) => void) {
       const overlap = Math.max(
         0,
         Math.min(rowRect.bottom, screenRect.bottom) -
-          Math.max(rowRect.top, screenRect.top)
+          Math.max(rowRect.top, screenRect.top),
       );
 
       if (overlap > greatestOverlap) {
@@ -161,6 +157,7 @@ function setupWorkPreview(onWorkPreview: (index: number) => void) {
     onEnter: syncPreviewToScreen,
     onEnterBack: syncPreviewToScreen,
     onUpdate: syncPreviewToScreen,
+    onRefresh: syncPreviewToScreen,
     onLeave: () => onWorkPreview(-1),
     onLeaveBack: () => onWorkPreview(-1),
     invalidateOnRefresh: true,
@@ -180,8 +177,9 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
     pinSpacing: false,
     anticipatePin: 1,
     invalidateOnRefresh: true,
-    onEnter: () => onWorkPreview(-1),
-    onEnterBack: () => onWorkPreview(-1),
+    // Preview ownership stays with the row/screen overlap trigger above.
+    // Resetting here used to run after that trigger and could blank a valid
+    // image until the visitor produced another scroll event.
   });
 
   const exitTimeline = gsap.timeline({
@@ -190,7 +188,7 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
       trigger: ".tv-exit-spacer",
       start: "top 56%",
       end: "bottom bottom",
-      scrub: mobileScrub(0.34),
+      scrub: true,
       invalidateOnRefresh: true,
       onEnter: () => onWorkPreview(-1),
       onEnterBack: () => onWorkPreview(-1),
@@ -206,7 +204,7 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
         scale: 1.16,
         duration: 0.18,
       },
-      0
+      0,
     )
     .to(
       ".tv-blackscreen",
@@ -217,7 +215,7 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
         "--tv-screen-glow": "rgba(255,255,255,0.04)",
         duration: 0.18,
       },
-      0
+      0,
     )
     .to(
       ".tv-box",
@@ -226,7 +224,7 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
         scale: 10,
         duration: 0.64,
       },
-      0.18
+      0.18,
     )
     .to(
       ".tv-bg",
@@ -234,7 +232,7 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
         autoAlpha: 0,
         duration: 0.42,
       },
-      0.28
+      0.28,
     )
     .to(
       ".tv-blackscreen",
@@ -245,7 +243,7 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
         "--tv-screen-glow": "rgba(255,255,255,0)",
         duration: 0.4,
       },
-      0.28
+      0.28,
     )
     .to(
       ".tv-blackscreen",
@@ -255,7 +253,7 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
         "--tv-screen-bottom": "#ffffff",
         duration: 0.42,
       },
-      0.72
+      0.72,
     )
     .to(
       ["#partfolio", ".tv-box-stickytainer", ".tv-box-pinner", ".tv-box-mask"],
@@ -263,10 +261,14 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
         backgroundColor: "#ffffff",
         duration: 0.42,
       },
-      0.72
+      0.72,
     )
     .fromTo(
-      ["#contact .contact-text-box", "#contact .contact-headline", ".canvas-container"],
+      [
+        "#contact .contact-text-box",
+        "#contact .contact-headline",
+        ".canvas-container",
+      ],
       {
         autoAlpha: 0,
         y: "9svh",
@@ -276,7 +278,7 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
         y: 0,
         duration: 0.34,
       },
-      0.78
+      0.78,
     )
     .to(
       ".tv-box",
@@ -284,7 +286,7 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
         autoAlpha: 0,
         duration: 0.08,
       },
-      1.1
+      1.1,
     );
 }
 
@@ -309,7 +311,9 @@ export function setupMobileChoreography({
     setupTelevision(onWorkPreview);
   }, scope);
 
-  const refreshFrame = window.requestAnimationFrame(() => ScrollTrigger.refresh());
+  const refreshFrame = window.requestAnimationFrame(() =>
+    ScrollTrigger.refresh(),
+  );
 
   return () => {
     window.cancelAnimationFrame(refreshFrame);

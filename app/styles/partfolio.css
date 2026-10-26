@@ -23,52 +23,44 @@
 
 .tv-box-mask {
   position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
   overflow: hidden;
   width: 100vw;
   top: -14vw;
 }
 
+/* The photograph and its screen are one 2560 × 1707 scene. Keeping the
+   scene at the artwork's natural desktop size preserves the 2022-2023
+   composition; centering the scene rather than anchoring its screen to the
+   viewport keeps both layers registered at every width. */
 .tv-box {
   position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
+  flex: 0 0 auto;
+  width: 2560px;
+  aspect-ratio: 2560 / 1707;
   transform-origin: 50% 64%;
-  width: 100%;
   isolation: isolate;
   will-change: transform, opacity;
 }
 
-/* Desktop screen rectangle: restored from the best-working 2022-2023
-   calibration (18vw at 40.5vw). The source artwork is pixel-identical since
-   2023 and the glowing tube sits at roughly x 44-53%, y 58-72% of the photo,
-   so this rectangle covers the tube at large desktop widths while the
-   darken/screen blend composite masks the overflow. Widths below ~1700px
-   use the fixed centered rectangle further down. */
+/* Measured from the editable source artwork: the glass bounds are
+   x 1110–1438 and y 980–1248. Percentages belong to .tv-box, not the
+   viewport, so object-fit/crop changes cannot move the mask off the tube. */
 .tv-all-vids {
   position: absolute;
   z-index: 1;
-  width: 18vw;
-  height: 16%;
-  bottom: 27%;
-  left: 40.5vw;
+  top: 57.4107%;
+  left: 43.3594%;
+  width: 12.8125%;
+  height: 15.7006%;
   overflow: hidden;
   opacity: 1;
+  border-radius: 9% 7% 8% 10% / 9% 8% 9% 10%;
   background: #020202;
-}
-
-/* Small-desktop correction: the photo is centered at its natural 2560px
-   width, so the tube sits at a fixed offset from the viewport center while
-   the vw-anchored rectangle above drifts right as viewports narrow (leaving
-   a dark seam on the tube's left edge below ~1600px). This fixed rectangle
-   stays centered on the tube (photo x ~1090-1390 of 2560, tube center ~48.4%)
-   with symmetric margins the blend composite keeps invisible. */
-@media (min-width: 481px) and (max-width: 1700px) {
-  .tv-all-vids {
-    left: 50%;
-    width: 300px;
-    margin-left: -190px;
-  }
+  contain: paint;
+  transform: translateZ(0);
 }
 
 .tv-blackscreen,
@@ -85,11 +77,59 @@
 
 .tv-showreel {
   overflow: hidden;
+  border-radius: inherit;
+}
+
+/* The source photograph still supplies the bezel and its original shadows.
+   These two lightweight layers put the project still *behind* curved glass
+   instead of making it look like a rectangular image pasted onto the TV. */
+.tv-showreel::before,
+.tv-showreel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.tv-showreel::before {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.12) 0,
+    rgba(0, 0, 0, 0.12) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  opacity: 0.42;
+}
+
+.tv-showreel::after {
+  z-index: 2;
+  background:
+    radial-gradient(
+      ellipse at 16% 9%,
+      rgba(255, 244, 218, 0.15),
+      transparent 30%
+    ),
+    linear-gradient(
+      103deg,
+      transparent 63%,
+      rgba(202, 255, 229, 0.09) 79%,
+      transparent 88%
+    ),
+    radial-gradient(
+      ellipse at 50% 46%,
+      transparent 48%,
+      rgba(0, 0, 0, 0.12) 72%,
+      rgba(0, 0, 0, 0.5) 112%
+    );
 }
 
 .tv-cover {
   display: block;
-  animation: tv-cover-reveal 260ms ease-out;
+  animation: tv-cover-reveal 320ms ease-out;
+  transform: scale(1.04);
   transform-origin: center;
 }
 
@@ -98,11 +138,12 @@
   height: 100%;
   object-fit: cover;
   mix-blend-mode: screen;
+  filter: saturate(0.88) contrast(1.05) brightness(0.92);
 }
 
 .tv-bg-box {
-  flex-shrink: 0;
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 2;
   mix-blend-mode: darken;
   pointer-events: none;
@@ -110,6 +151,8 @@
 
 .tv-bg {
   display: block;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
   object-fit: cover;
   object-position: 50% 50%;
@@ -245,7 +288,9 @@
 .work-teaser-group {
   display: block;
   opacity: 0;
-  transition: opacity 200ms ease-in, transform 200ms ease-in;
+  transition:
+    opacity 200ms ease-in,
+    transform 200ms ease-in;
 }
 
 .work-teaser-date {
@@ -275,12 +320,12 @@
 @keyframes tv-cover-reveal {
   from {
     opacity: 0.35;
-    transform: scale(1.018);
+    transform: scale(1.065);
   }
 
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1.04);
   }
 }
 
@@ -303,48 +348,19 @@
   .tv-box-mask {
     position: relative;
     top: 0;
+    align-items: center;
     width: 100vw;
     height: 100svh;
     overflow: hidden;
     background: #000;
   }
 
+  /* Cover the viewport with the complete scene, exactly as object-fit: cover
+     did, but keep the photograph and screen in the same measurable box. */
   .tv-box {
-    width: 100vw;
-    height: 100svh;
+    width: max(100vw, 149.9707svh);
+    height: auto;
     transform-origin: 50% 72%;
-  }
-
-  .tv-bg-box {
-    position: absolute;
-    inset: 0;
-    width: 100vw;
-    height: 100svh;
-  }
-
-  .tv-bg {
-    width: 100vw;
-    height: 100svh;
-    object-fit: cover;
-    object-position: 50% 50%;
-  }
-
-  /* The glowing TV tube in tv-bg.png sits inside this rectangle (measured at
-     roughly x 30.5-59.7% of the cover-cropped photo on a 390x844 viewport).
-     Note the artwork is fully opaque: there is no alpha hole. The project
-     image is masked by the darken/screen blend composite with the photo, so
-     this rectangle must fully COVER the tube - any gap reads as a dark seam
-     on the bright screen while the whole TV scene transforms as one unit. */
-  .tv-all-vids {
-    width: 35.8%;
-    height: 16.2%;
-    left: 30.1%;
-    bottom: 26.7%;
-    margin-left: 0;
-    overflow: hidden;
-    border-radius: 4.5% / 7%;
-    clip-path: inset(1px round 6px);
-    contain: paint;
   }
 
   .work-items-box {
