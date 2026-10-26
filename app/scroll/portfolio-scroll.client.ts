@@ -310,6 +310,17 @@ function setupFirstIntroStory(isMobile: boolean) {
       ">+=0.3",
     )
     .to(
+      ".intro-subheadline-photo",
+      {
+        // As the portrait mask becomes landscape, centre-cropping would cut
+        // through the subject's head. Reframe with the same scrub instead of
+        // letting the expanded mask hide the upper half of the photograph.
+        objectPosition: "50% 0%",
+        duration: 4,
+      },
+      "<",
+    )
+    .to(
       ".intro-subheadline-text-box1",
       {
         left: 0,
@@ -468,8 +479,22 @@ function setupTelevisionSequence(
   onWorkPreview: (index: number) => void,
   isMobile: boolean,
 ) {
-  setupWorkPreview(onWorkPreview);
   const lastWorkIndex = document.querySelectorAll(".work-item").length - 1;
+  const portfolio = document.querySelector("#partfolio");
+  portfolio?.classList.remove("is-tv-exiting");
+  let exitOwnsPreview = false;
+  const setExitPreviewOwnership = (ownsPreview: boolean) => {
+    exitOwnsPreview = ownsPreview;
+    portfolio?.classList.toggle("is-tv-exiting", ownsPreview);
+  };
+  const showWork = (index: number) => {
+    // Row triggers can refresh or fire while the pinned television is already
+    // leaving. They must not relight a project after the exit has deliberately
+    // cleared it; only scrolling back above the exit returns preview ownership.
+    if (!exitOwnsPreview) onWorkPreview(index);
+  };
+
+  setupWorkPreview(showWork);
 
   ScrollTrigger.create({
     id: "tv-pin",
@@ -481,10 +506,10 @@ function setupTelevisionSequence(
     pinSpacing: false,
     anticipatePin: 1,
     invalidateOnRefresh: true,
-    onEnter: () => onWorkPreview(0),
+    onEnter: () => showWork(0),
     onEnterBack: () => {
       const rows = gsap.utils.toArray<HTMLElement>(".work-item");
-      if (rows.length > 0) onWorkPreview(rows.length - 1);
+      if (rows.length > 0) showWork(rows.length - 1);
     },
   });
 
@@ -497,9 +522,16 @@ function setupTelevisionSequence(
   const exitCallbacks = isMobile
     ? {}
     : {
-        onEnter: () => onWorkPreview(-1),
-        onEnterBack: () => onWorkPreview(-1),
+        onEnter: () => {
+          setExitPreviewOwnership(true);
+          onWorkPreview(-1);
+        },
+        onEnterBack: () => {
+          setExitPreviewOwnership(true);
+          onWorkPreview(-1);
+        },
         onLeaveBack: () => {
+          setExitPreviewOwnership(false);
           if (lastWorkIndex >= 0) onWorkPreview(lastWorkIndex);
         },
       };

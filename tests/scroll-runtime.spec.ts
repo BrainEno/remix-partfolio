@@ -109,6 +109,121 @@ test("desktop section tracking follows the complete smooth-scroll range", async 
   expect(pageErrors).toEqual([]);
 });
 
+test("desktop intro portrait keeps its top visible as the mask expands", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.setViewportSize({ width: 1568, height: 724 });
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator(".page-home")).toHaveAttribute(
+    "data-scroll-runtime",
+    "ready",
+  );
+
+  const photo = page.locator(".intro-subheadline-photo");
+  await expect
+    .poll(() => photo.evaluate((image: HTMLImageElement) => image.naturalWidth))
+    .toBeGreaterThan(0);
+  const widthBefore = await photo.evaluate((image) => image.clientWidth);
+
+  await page.evaluate(() => {
+    const scene = document.querySelector<HTMLElement>(
+      ".intro-subheadline-stickytainer",
+    );
+    if (!scene) throw new Error("Missing first intro story");
+    const top = scene.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo(0, top - 100 + window.innerHeight * 4 * 0.65);
+  });
+
+  await expect
+    .poll(() =>
+      photo.evaluate((image) => getComputedStyle(image).objectPosition),
+    )
+    .toBe("50% 0%");
+
+  const framing = await photo.evaluate((image: HTMLImageElement) => {
+    const scale = Math.max(
+      image.clientWidth / image.naturalWidth,
+      image.clientHeight / image.naturalHeight,
+    );
+    const renderedHeight = image.naturalHeight * scale;
+    const objectPositionY = Number.parseFloat(
+      getComputedStyle(image).objectPosition.split(" ")[1],
+    );
+    return {
+      width: image.clientWidth,
+      croppedFromTop:
+        Math.max(0, renderedHeight - image.clientHeight) *
+        (objectPositionY / 100),
+    };
+  });
+
+  expect(framing.width).toBeGreaterThan(widthBefore * 1.8);
+  expect(framing.croppedFromTop).toBeLessThanOrEqual(1);
+  expect(pageErrors).toEqual([]);
+});
+
+test("desktop TV stays blank while its zoom overlaps the phone number", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.setViewportSize({ width: 1568, height: 779 });
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator(".page-home")).toHaveAttribute(
+    "data-scroll-runtime",
+    "ready",
+  );
+
+  await page.evaluate(() => {
+    const exit = document.querySelector<HTMLElement>(".tv-exit-spacer");
+    if (!exit) throw new Error("Missing television exit");
+    const top = exit.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo(0, top - window.innerHeight * 2);
+  });
+  await waitForScroll(page, 500);
+
+  let overlappingSamples = 0;
+  for (let step = 0; step < 48 && overlappingSamples < 3; step += 1) {
+    const state = await page.evaluate(() => {
+      const television = document.querySelector<HTMLElement>(".tv-box");
+      const screen = document.querySelector<HTMLElement>(".tv-all-vids");
+      const phone = document.querySelector<HTMLElement>(".contact-number");
+      if (!television || !screen || !phone)
+        throw new Error("Missing television exit geometry");
+
+      const transform = getComputedStyle(television).transform;
+      const matrix = new DOMMatrixReadOnly(transform);
+      const phoneRect = phone.getBoundingClientRect();
+      return {
+        scale: Math.hypot(matrix.a, matrix.b),
+        opacity: Number(getComputedStyle(television).opacity),
+        preview: screen.getAttribute("data-preview-active"),
+        covers: document.querySelectorAll(".tv-cover").length,
+        exitClass: document
+          .getElementById("partfolio")
+          ?.classList.contains("is-tv-exiting"),
+        phoneVisible:
+          phoneRect.top < innerHeight * 0.85 && phoneRect.bottom > 0,
+      };
+    });
+
+    if (state.phoneVisible && state.scale > 1.2 && state.opacity > 0.1) {
+      overlappingSamples += 1;
+      expect(state.preview).toBe("false");
+      expect(state.covers).toBe(0);
+      expect(state.exitClass).toBe(true);
+    }
+
+    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.1));
+    await waitForScroll(page, 180);
+  }
+
+  expect(overlappingSamples).toBe(3);
+  expect(pageErrors).toEqual([]);
+});
+
 test("mobile GSAP runtime animates the required scenes", async ({ page }) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));

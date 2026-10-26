@@ -161,6 +161,12 @@
   user-select: none;
 }
 
+/* Once the exit owns the screen, a stationary pointer crossing a scrolling
+   work row must not light a project inside the zooming television again. */
+#partfolio.is-tv-exiting .work-items-box {
+  pointer-events: none;
+}
+
 .work-items-box {
   position: relative;
   z-index: 4;
