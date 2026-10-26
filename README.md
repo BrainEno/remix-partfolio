@@ -147,14 +147,15 @@ The editable TV source remains:
 public/images/tv-bg.png
 ```
 
-`npm run dev` / `npm run build` automatically generate the optimized WebP used at runtime (same pixels, no resize). The current source is reduced from roughly 6 MB to roughly 0.6 MB. Note the artwork is fully opaque: the TV "screen" effect is a darken/screen blend composite, not an alpha hole, so the `.tv-all-vids` rectangle must fully cover the glowing tube (about x 44-53%, y 58-72% of the photo).
+`npm run dev` / `npm run build` automatically generate the optimized WebP used at runtime (same pixels, no resize). The current source is reduced from roughly 6 MB to roughly 0.6 MB. The artwork is fully opaque: the TV "screen" effect is a darken/screen blend composite, not an alpha hole. The photograph and screen mask share one 2560×1707 scene; the measured glass bounds are x 1110–1438 and y 980–1248. See [the scroll animation review](docs/scroll-animation-review.md) for the legacy/current comparison and calibration details.
 
 ## Performance architecture
 
 - Archive routes never initialize GSAP or Three.js.
 - Mobile landing-page scrolling uses native Safari scrolling plus ScrollTrigger.
 - Desktop may use ScrollSmoother, tuned to the retired Locomotive feel (`lerp: 0.08`, `multiplier: 0.9`).
-- Desktop TV exit restores the 2022-2023 beat: the screen blanks first, then the pinned television zooms and dissolves into white while Contact rises. Mobile keeps its grey-green → black → white exit.
+- Scroll-linked scenes use direct scrub; desktop inertia lives only in ScrollSmoother and mobile uses native scrolling, avoiding double-smoothed pin lag.
+- Desktop TV exit restores the 2022-2023 beat: the screen blanks first, then a held/anticipation beat leads into the pinned television's zoom and white dissolve. Mobile keeps its grey-green → black → white exit.
 - Works media preloads only near the TV section.
 - The 3D phone scene dynamically imports near Contact and unmounts when inactive.
 - Framer Motion, Locomotive Scroll and Supabase are not part of the current runtime.

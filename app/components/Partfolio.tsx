@@ -24,7 +24,7 @@ export default function Partfolio({
   const isZh = lang === "zh";
   const works = content.items;
   const activeWork =
-    activeWorkIndex >= 0 ? works[activeWorkIndex] ?? null : null;
+    activeWorkIndex >= 0 ? (works[activeWorkIndex] ?? null) : null;
   const portfolioStyle: PortfolioStyle = {
     "--portfolio-work-space": `${Math.max(works.length, 1) * 14}svh`,
   };
@@ -37,7 +37,10 @@ export default function Partfolio({
       ([entry]) => {
         if (!entry.isIntersecting) return;
 
-        const urls = [content.tvFrame.src, ...works.map((work) => work.image.src)];
+        const urls = [
+          content.tvFrame.src,
+          ...works.map((work) => work.image.src),
+        ];
         urls.forEach((src) => {
           const image = new Image();
           image.decoding = "async";
@@ -45,7 +48,7 @@ export default function Partfolio({
         });
         observer.disconnect();
       },
-      { rootMargin: "100% 0px", threshold: 0 }
+      { rootMargin: "100% 0px", threshold: 0 },
     );
 
     observer.observe(section);
@@ -87,9 +90,11 @@ export default function Partfolio({
                   alt=""
                   aria-hidden="true"
                   draggable={false}
-                  loading="lazy"
+                  loading="eager"
                   decoding="async"
                   fetchPriority="low"
+                  width={2560}
+                  height={1707}
                 />
               </div>
             </div>

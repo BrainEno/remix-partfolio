@@ -1,10 +1,7 @@
 import { gsap } from "gsap";
 import { ScrollSmoother } from "gsap/ScrollSmoother";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import {
-  DESKTOP_MEDIA_QUERY,
-  MOBILE_MEDIA_QUERY,
-} from "~/portfolio/media";
+import { DESKTOP_MEDIA_QUERY, MOBILE_MEDIA_QUERY } from "~/portfolio/media";
 import type { PortfolioSection } from "~/portfolio/types";
 
 type SetupOptions = {
@@ -44,12 +41,8 @@ function getPinDistance(selector: string, minimumViewports = 1) {
   const element = document.querySelector<HTMLElement>(selector);
   return Math.max(
     element?.offsetHeight ?? 0,
-    window.innerHeight * minimumViewports
+    window.innerHeight * minimumViewports,
   );
-}
-
-function mobileScrub(value = 0.35) {
-  return prefersReducedMotion() ? false : value;
 }
 
 function disablePortfolioSmoother() {
@@ -116,27 +109,43 @@ export function scrollToPortfolioSection(section: PortfolioSection) {
 }
 
 function setupSectionTracking(
-  onSectionChange: (section: PortfolioSection) => void
+  onSectionChange: (section: PortfolioSection) => void,
 ) {
-  onSectionChange("intro");
+  const syncSection = () => {
+    const portfolioTop = document
+      .getElementById("partfolio")
+      ?.getBoundingClientRect().top;
+    const contactCopyTop = document
+      .querySelector("#contact .contact-text-box")
+      ?.getBoundingClientRect().top;
+
+    if (portfolioTop === undefined) return;
+
+    // #contact deliberately overlaps the television exit. Its section box is
+    // therefore visible long before any contact copy is; using that box made
+    // the navigation jump to Contact while the works list was still onscreen.
+    const nextSection =
+      contactCopyTop !== undefined &&
+      contactCopyTop <= window.innerHeight * 0.65
+        ? "contact"
+        : portfolioTop <= window.innerHeight * 0.55
+          ? "partfolio"
+          : "intro";
+    onSectionChange(nextSection);
+  };
 
   ScrollTrigger.create({
-    id: "section-partfolio",
-    trigger: "#partfolio",
-    start: "top 55%",
-    onEnter: () => onSectionChange("partfolio"),
-    onLeaveBack: () => onSectionChange("intro"),
+    id: "section-tracking",
+    trigger: "#home",
+    start: "top top",
+    end: "max",
+    onUpdate: syncSection,
+    onRefresh: syncSection,
+    onLeave: syncSection,
+    onEnterBack: syncSection,
     invalidateOnRefresh: true,
   });
-
-  ScrollTrigger.create({
-    id: "section-contact",
-    trigger: "#contact",
-    start: "top 55%",
-    onEnter: () => onSectionChange("contact"),
-    onLeaveBack: () => onSectionChange("partfolio"),
-    invalidateOnRefresh: true,
-  });
+  syncSection();
 }
 
 function setupIntroHeadlineChoreography(isZh: boolean, isMobile: boolean) {
@@ -146,7 +155,7 @@ function setupIntroHeadlineChoreography(isZh: boolean, isMobile: boolean) {
       trigger: ".intro-headline-box",
       start: isMobile ? "top top" : "top 8%",
       end: isMobile ? "bottom 42%" : "bottom 28%",
-      scrub: isMobile ? mobileScrub(0.28) : prefersReducedMotion() ? false : 0.35,
+      scrub: true,
       invalidateOnRefresh: true,
     },
   });
@@ -175,7 +184,7 @@ function setupIntroHeadlineChoreography(isZh: boolean, isMobile: boolean) {
         x: isMobile ? -12 : -16.905,
         ease: "none",
       },
-      "<-=0.1"
+      "<-=0.1",
     )
     .to(
       ".intro-headline-word.word-3",
@@ -184,7 +193,7 @@ function setupIntroHeadlineChoreography(isZh: boolean, isMobile: boolean) {
         x: isMobile ? -12 : -16.905,
         ease: "none",
       },
-      "<-=0.2"
+      "<-=0.2",
     );
 }
 
@@ -204,7 +213,7 @@ function setupIntroParallax(isMobile: boolean) {
           scrub: true,
           invalidateOnRefresh: true,
         },
-      }
+      },
     );
   }
 
@@ -222,10 +231,10 @@ function setupIntroParallax(isMobile: boolean) {
         trigger: ".intro-headline-box",
         start: "top top",
         end: "bottom top",
-        scrub: isMobile ? mobileScrub(0.28) : true,
+        scrub: true,
         invalidateOnRefresh: true,
       },
-    }
+    },
   );
 }
 
@@ -235,11 +244,12 @@ function setupFirstIntroStory(isMobile: boolean) {
       id: "intro-story-1",
       trigger: ".intro-subheadline-stickytainer",
       start: isMobile ? "top 12%" : "top-=100 top",
-      end: () => `+=${getPinDistance(
-        ".intro-subheadline-stickytainer",
-        isMobile ? 1.3 : 4
-      )}`,
-      scrub: isMobile ? mobileScrub(0.32) : prefersReducedMotion() ? false : true,
+      end: () =>
+        `+=${getPinDistance(
+          ".intro-subheadline-stickytainer",
+          isMobile ? 1.3 : 4,
+        )}`,
+      scrub: true,
       pin: true,
       anticipatePin: 1,
       invalidateOnRefresh: true,
@@ -266,7 +276,7 @@ function setupFirstIntroStory(isMobile: boolean) {
           top: "32vw",
           ease: "sine.out",
         },
-        "<1"
+        "<1",
       )
       .to(
         ".intro-subheadline-photo-ghost-mask",
@@ -274,7 +284,7 @@ function setupFirstIntroStory(isMobile: boolean) {
           autoAlpha: 0,
           rotation: 18.15,
         },
-        "<"
+        "<",
       )
       .to(
         ".intro-subheadline-pic-info",
@@ -283,7 +293,7 @@ function setupFirstIntroStory(isMobile: boolean) {
           scale: 1,
           ease: "power1.out",
         },
-        ">+=1"
+        ">+=1",
       );
   }
 
@@ -297,7 +307,18 @@ function setupFirstIntroStory(isMobile: boolean) {
         filter: "grayscale(0%)",
         duration: 4,
       },
-      ">+=0.3"
+      ">+=0.3",
+    )
+    .to(
+      ".intro-subheadline-photo",
+      {
+        // As the portrait mask becomes landscape, centre-cropping would cut
+        // through the subject's head. Reframe with the same scrub instead of
+        // letting the expanded mask hide the upper half of the photograph.
+        objectPosition: "50% 0%",
+        duration: 4,
+      },
+      "<",
     )
     .to(
       ".intro-subheadline-text-box1",
@@ -305,7 +326,7 @@ function setupFirstIntroStory(isMobile: boolean) {
         left: 0,
         duration: 4,
       },
-      ">+=0.25"
+      ">+=0.25",
     );
 
   if (!isMobile) {
@@ -316,7 +337,7 @@ function setupFirstIntroStory(isMobile: boolean) {
           left: "+=20vw",
           duration: 3,
         },
-        "<"
+        "<",
       )
       .to(
         ".intro-subheadline-photo-box",
@@ -324,7 +345,7 @@ function setupFirstIntroStory(isMobile: boolean) {
           left: "-100%",
           duration: 6,
         },
-        ">+=1"
+        ">+=1",
       )
       .to(
         ".intro-subheadline-title",
@@ -332,7 +353,7 @@ function setupFirstIntroStory(isMobile: boolean) {
           left: "-66vw",
           duration: 6,
         },
-        "<"
+        "<",
       );
   }
 }
@@ -343,11 +364,12 @@ function setupSecondIntroStory(isMobile: boolean) {
       id: "intro-story-2",
       trigger: ".intro-subheadline-stickytainer2",
       start: "top top",
-      end: () => `+=${getPinDistance(
-        ".intro-subheadline-stickytainer2",
-        isMobile ? 1.15 : 4
-      )}`,
-      scrub: isMobile ? mobileScrub(0.32) : prefersReducedMotion() ? false : true,
+      end: () =>
+        `+=${getPinDistance(
+          ".intro-subheadline-stickytainer2",
+          isMobile ? 1.15 : 4,
+        )}`,
+      scrub: true,
       pin: true,
       anticipatePin: 1,
       invalidateOnRefresh: true,
@@ -367,7 +389,7 @@ function setupSecondIntroStory(isMobile: boolean) {
           autoAlpha: 0.35,
           duration: 1,
         },
-        0
+        0,
       )
       .to(
         ".intro-subheadline-text-box2",
@@ -375,7 +397,7 @@ function setupSecondIntroStory(isMobile: boolean) {
           x: "-100vw",
           duration: 1,
         },
-        0
+        0,
       );
     return;
   }
@@ -391,7 +413,7 @@ function setupSecondIntroStory(isMobile: boolean) {
         marginRight: "5.5vw",
         duration: 20,
       },
-      "<"
+      "<",
     )
     .to(".intro-subheadline-slider2", {
       x: "-100vw",
@@ -403,7 +425,7 @@ function setupSecondIntroStory(isMobile: boolean) {
         x: "-=100vw",
         duration: 20,
       },
-      "<"
+      "<",
     )
     .to(".intro-subheadline-text2", {
       marginBottom: "8vw",
@@ -415,7 +437,7 @@ function setupSecondIntroStory(isMobile: boolean) {
         top: "5vw",
         duration: 15,
       },
-      "<+=2"
+      "<+=2",
     )
     .to(
       ".intro-subheadline-text2-pic1",
@@ -423,7 +445,7 @@ function setupSecondIntroStory(isMobile: boolean) {
         top: "-6vw",
         duration: 20,
       },
-      "<+=2"
+      "<+=2",
     )
     .to(
       "#intro",
@@ -431,7 +453,7 @@ function setupSecondIntroStory(isMobile: boolean) {
         backgroundColor: "#013171",
         duration: 20,
       },
-      ">-=2"
+      ">-=2",
     );
 }
 
@@ -455,10 +477,24 @@ function setupWorkPreview(onWorkPreview: (index: number) => void) {
 
 function setupTelevisionSequence(
   onWorkPreview: (index: number) => void,
-  isMobile: boolean
+  isMobile: boolean,
 ) {
-  setupWorkPreview(onWorkPreview);
   const lastWorkIndex = document.querySelectorAll(".work-item").length - 1;
+  const portfolio = document.querySelector("#partfolio");
+  portfolio?.classList.remove("is-tv-exiting");
+  let exitOwnsPreview = false;
+  const setExitPreviewOwnership = (ownsPreview: boolean) => {
+    exitOwnsPreview = ownsPreview;
+    portfolio?.classList.toggle("is-tv-exiting", ownsPreview);
+  };
+  const showWork = (index: number) => {
+    // Row triggers can refresh or fire while the pinned television is already
+    // leaving. They must not relight a project after the exit has deliberately
+    // cleared it; only scrolling back above the exit returns preview ownership.
+    if (!exitOwnsPreview) onWorkPreview(index);
+  };
+
+  setupWorkPreview(showWork);
 
   ScrollTrigger.create({
     id: "tv-pin",
@@ -470,10 +506,10 @@ function setupTelevisionSequence(
     pinSpacing: false,
     anticipatePin: 1,
     invalidateOnRefresh: true,
-    onEnter: () => onWorkPreview(0),
+    onEnter: () => showWork(0),
     onEnterBack: () => {
       const rows = gsap.utils.toArray<HTMLElement>(".work-item");
-      if (rows.length > 0) onWorkPreview(rows.length - 1);
+      if (rows.length > 0) showWork(rows.length - 1);
     },
   });
 
@@ -486,9 +522,16 @@ function setupTelevisionSequence(
   const exitCallbacks = isMobile
     ? {}
     : {
-        onEnter: () => onWorkPreview(-1),
-        onEnterBack: () => onWorkPreview(-1),
+        onEnter: () => {
+          setExitPreviewOwnership(true);
+          onWorkPreview(-1);
+        },
+        onEnterBack: () => {
+          setExitPreviewOwnership(true);
+          onWorkPreview(-1);
+        },
         onLeaveBack: () => {
+          setExitPreviewOwnership(false);
           if (lastWorkIndex >= 0) onWorkPreview(lastWorkIndex);
         },
       };
@@ -499,27 +542,39 @@ function setupTelevisionSequence(
       trigger: ".tv-exit-spacer",
       start: "top bottom",
       end: "bottom bottom",
-      scrub: isMobile ? mobileScrub(0.4) : prefersReducedMotion() ? false : true,
+      scrub: true,
       invalidateOnRefresh: true,
       ...exitCallbacks,
     },
     defaults: { ease: "none" },
   });
 
-  // Never fade the project image separately from the television. The screen
-  // image, bezel and photographic background are one composited visual unit.
+  // Preserve the old two-beat exit instead of zooming as soon as the spacer
+  // arrives: a short held screen, a restrained anticipation, then an
+  // accelerating rotation/zoom. The photograph, glass and bezel always move
+  // as one composited unit.
   exitTimeline
-    .to(".tv-box", {
-      rotation: isMobile ? -4 : -5,
-      scale: isMobile ? 1.18 : 1.3,
-      duration: 0.22,
-    })
-    .to(".tv-box", {
-      rotation: isMobile ? -12 : -14,
-      scale: isMobile ? 2.8 : 4,
-      autoAlpha: 0,
-      duration: 0.78,
-    });
+    .to(
+      ".tv-box",
+      {
+        rotation: isMobile ? -4 : -3,
+        scale: isMobile ? 1.18 : 1.08,
+        duration: 0.18,
+        ease: "sine.inOut",
+      },
+      0.14,
+    )
+    .to(
+      ".tv-box",
+      {
+        rotation: isMobile ? -12 : -11,
+        scale: isMobile ? 2.8 : 4,
+        autoAlpha: 0,
+        duration: 0.68,
+        ease: "power1.in",
+      },
+      0.32,
+    );
 
   if (!isMobile) {
     // The 2022-2023 partfolio section was transparent, so the television
@@ -531,7 +586,7 @@ function setupTelevisionSequence(
     exitTimeline.to(
       ["#partfolio", ".tv-box-stickytainer", ".tv-box-pinner", ".tv-box-mask"],
       { backgroundColor: "#ffffff", duration: 0.55 },
-      0.3
+      0.3,
     );
   }
 }
@@ -546,7 +601,7 @@ function setupContactCanvas(isMobile: boolean) {
         trigger: ".contact-inner",
         start: "top center",
         end: "bottom bottom",
-        scrub: prefersReducedMotion() ? false : true,
+        scrub: true,
         invalidateOnRefresh: true,
       },
       defaults: { duration: 30, ease: "none" },
@@ -558,10 +613,14 @@ function setupContactCanvas(isMobile: boolean) {
     });
 }
 
+// Locomotive's best-working scenes used scrub: true. Keep that direct
+// correspondence here: ScrollSmoother already supplies desktop inertia and
+// native scrolling supplies mobile inertia, so numeric scrub would smooth the
+// same movement twice and let pinned artwork trail behind its trigger.
 function setupResponsiveAnimations(
   isZh: boolean,
   isMobile: boolean,
-  onWorkPreview: (index: number) => void
+  onWorkPreview: (index: number) => void,
 ) {
   setupIntroHeadlineChoreography(isZh, isMobile);
   setupIntroParallax(isMobile);
@@ -602,7 +661,7 @@ export function setupPortfolioScroll({
       setupSectionTracking(onSectionChange);
       setupResponsiveAnimations(isZh, isMobile, onWorkPreview);
     },
-    scope
+    scope,
   );
 
   const refresh = () => {
@@ -620,19 +679,13 @@ export function setupPortfolioScroll({
     if (!disposed) refresh();
   });
 
-  // The 2022-2023 runtime created every ScrollTrigger inside a 1000ms
-  // setTimeout, so the TV artwork, fonts and layout had settled before any
-  // pin distance was measured. The current runtime initializes immediately
-  // while the TV frame still loads lazily, so re-measure once the page (and
-  // its images) finish loading, plus one delayed settle pass as a fallback.
+  // The old runtime hid measurement races behind a fixed 1000ms timeout.
+  // Explicit scene dimensions now reserve the TV geometry up front; event-
+  // driven refreshes handle the remaining font/image changes without a
+  // delayed layout jump.
   const handleWindowLoad = () => refresh();
   window.addEventListener("load", handleWindowLoad);
-  const settleTimer = window.setTimeout(refresh, 1200);
 
-  // The desktop television frame renders at its natural 2560x1707 size and
-  // loads lazily, so the pin geometry shifts when it decodes - typically
-  // after the initial refresh. Re-measure once the frame itself lands. A
-  // cached frame reports complete immediately and needs no extra pass.
   const tvFrame = scope.querySelector(".tv-bg");
   const handleTvFrameLoad = () => refresh();
   if (tvFrame) tvFrame.addEventListener("load", handleTvFrameLoad);
@@ -643,7 +696,6 @@ export function setupPortfolioScroll({
     if (settleFrame) window.cancelAnimationFrame(settleFrame);
     window.removeEventListener("load", handleWindowLoad);
     tvFrame?.removeEventListener("load", handleTvFrameLoad);
-    window.clearTimeout(settleTimer);
     media.revert();
     ScrollSmoother.get()?.kill();
     gsap.set("#smooth-content", { clearProps: "transform" });
