@@ -76,7 +76,11 @@ export function ensurePortfolioSmoother() {
   return ScrollSmoother.create({
     wrapper: "#smooth-wrapper",
     content: "#smooth-content",
-    smooth: prefersReducedMotion() ? 0 : 0.8,
+    // Parity with the best-working 2022-2023 Locomotive setup
+    // ({ smooth: true, lerp: 0.08, multiplier: 0.9 }): lerp 0.08 settles to
+    // ~95% in about 0.6s, which maps to a ScrollSmoother catch-up of ~0.65s.
+    // Larger values make the scrubbed pin scenes feel detached and floaty.
+    smooth: prefersReducedMotion() ? 0 : 0.65,
     speed: 0.9,
     effects: false,
   });
@@ -454,6 +458,7 @@ function setupTelevisionSequence(
   isMobile: boolean
 ) {
   setupWorkPreview(onWorkPreview);
+  const lastWorkIndex = document.querySelectorAll(".work-item").length - 1;
 
   ScrollTrigger.create({
     id: "tv-pin",
@@ -472,6 +477,22 @@ function setupTelevisionSequence(
     },
   });
 
+  // Desktop restores the 2022-2023 exit beat: the project image vanishes the
+  // moment the exit begins (the old timeline hid the screen cover first),
+  // then the whole television zooms and dissolves. Scrolling back out of the
+  // exit relights the last work; scrolling back INTO the exit from Contact
+  // keeps the screen dark, mirroring the forward beat in reverse. Mobile
+  // kills this trigger and runs its own grey-green -> black -> white exit.
+  const exitCallbacks = isMobile
+    ? {}
+    : {
+        onEnter: () => onWorkPreview(-1),
+        onEnterBack: () => onWorkPreview(-1),
+        onLeaveBack: () => {
+          if (lastWorkIndex >= 0) onWorkPreview(lastWorkIndex);
+        },
+      };
+
   const exitTimeline = gsap.timeline({
     scrollTrigger: {
       id: "tv-exit",
@@ -480,6 +501,7 @@ function setupTelevisionSequence(
       end: "bottom bottom",
       scrub: isMobile ? mobileScrub(0.4) : prefersReducedMotion() ? false : true,
       invalidateOnRefresh: true,
+      ...exitCallbacks,
     },
     defaults: { ease: "none" },
   });
@@ -498,6 +520,20 @@ function setupTelevisionSequence(
       autoAlpha: 0,
       duration: 0.78,
     });
+
+  if (!isMobile) {
+    // The 2022-2023 partfolio section was transparent, so the television
+    // dissolved into the white page behind it while the black Contact type
+    // stayed readable. The current section is black (load-bearing for the
+    // mobile black-plateau exit), so scrub the exit zone to white underneath
+    // the zooming television instead. Ends at 0.85 so the whiteout completes
+    // just before the television finishes fading at 1.0.
+    exitTimeline.to(
+      ["#partfolio", ".tv-box-stickytainer", ".tv-box-pinner", ".tv-box-mask"],
+      { backgroundColor: "#ffffff", duration: 0.55 },
+      0.3
+    );
+  }
 }
 
 function setupContactCanvas(isMobile: boolean) {
@@ -584,10 +620,30 @@ export function setupPortfolioScroll({
     if (!disposed) refresh();
   });
 
+  // The 2022-2023 runtime created every ScrollTrigger inside a 1000ms
+  // setTimeout, so the TV artwork, fonts and layout had settled before any
+  // pin distance was measured. The current runtime initializes immediately
+  // while the TV frame still loads lazily, so re-measure once the page (and
+  // its images) finish loading, plus one delayed settle pass as a fallback.
+  const handleWindowLoad = () => refresh();
+  window.addEventListener("load", handleWindowLoad);
+  const settleTimer = window.setTimeout(refresh, 1200);
+
+  // The desktop television frame renders at its natural 2560x1707 size and
+  // loads lazily, so the pin geometry shifts when it decodes - typically
+  // after the initial refresh. Re-measure once the frame itself lands. A
+  // cached frame reports complete immediately and needs no extra pass.
+  const tvFrame = scope.querySelector(".tv-bg");
+  const handleTvFrameLoad = () => refresh();
+  if (tvFrame) tvFrame.addEventListener("load", handleTvFrameLoad);
+
   return () => {
     disposed = true;
     window.cancelAnimationFrame(firstFrame);
     if (settleFrame) window.cancelAnimationFrame(settleFrame);
+    window.removeEventListener("load", handleWindowLoad);
+    tvFrame?.removeEventListener("load", handleTvFrameLoad);
+    window.clearTimeout(settleTimer);
     media.revert();
     ScrollSmoother.get()?.kill();
     gsap.set("#smooth-content", { clearProps: "transform" });
