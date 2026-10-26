@@ -113,8 +113,13 @@ export default function Partfolio({
                   "is-active": isActive,
                 })}
                 data-work-index={index}
+                // Sticky preview, matching the 2022-2023 behavior: hovering a
+                // row lights the TV screen and the image persists. Resetting
+                // to -1 on mouse-leave would black out the screen whenever
+                // the cursor drifts off a row while scroll-driven rows no
+                // longer re-fire; scroll choreography owns the idle/exit
+                // states instead.
                 onMouseEnter={() => onWorkPreview(index)}
-                onMouseLeave={() => onWorkPreview(-1)}
               >
                 <div className="work-item-entry">
                   <div className="work-item-topline" />

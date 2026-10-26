@@ -39,17 +39,36 @@
   will-change: transform, opacity;
 }
 
+/* Desktop screen rectangle: restored from the best-working 2022-2023
+   calibration (18vw at 40.5vw). The source artwork is pixel-identical since
+   2023 and the glowing tube sits at roughly x 44-53%, y 58-72% of the photo,
+   so this rectangle covers the tube at large desktop widths while the
+   darken/screen blend composite masks the overflow. Widths below ~1700px
+   use the fixed centered rectangle further down. */
 .tv-all-vids {
   position: absolute;
   z-index: 1;
-  width: 16vw;
+  width: 18vw;
   height: 16%;
   bottom: 27%;
-  left: 41.3vw;
-  margin-left: -0.1vw;
+  left: 40.5vw;
   overflow: hidden;
   opacity: 1;
   background: #020202;
+}
+
+/* Small-desktop correction: the photo is centered at its natural 2560px
+   width, so the tube sits at a fixed offset from the viewport center while
+   the vw-anchored rectangle above drifts right as viewports narrow (leaving
+   a dark seam on the tube's left edge below ~1600px). This fixed rectangle
+   stays centered on the tube (photo x ~1090-1390 of 2560, tube center ~48.4%)
+   with symmetric margins the blend composite keeps invisible. */
+@media (min-width: 481px) and (max-width: 1700px) {
+  .tv-all-vids {
+    left: 50%;
+    width: 300px;
+    margin-left: -190px;
+  }
 }
 
 .tv-blackscreen,
@@ -310,9 +329,12 @@
     object-position: 50% 50%;
   }
 
-  /* The transparent TV screen in tv-bg.png occupies this rectangle. Keeping
-     the project image strictly inside it prevents any pixels leaking around
-     the bezel while the whole TV scene is transformed as one unit. */
+  /* The glowing TV tube in tv-bg.png sits inside this rectangle (measured at
+     roughly x 30.5-59.7% of the cover-cropped photo on a 390x844 viewport).
+     Note the artwork is fully opaque: there is no alpha hole. The project
+     image is masked by the darken/screen blend composite with the photo, so
+     this rectangle must fully COVER the tube - any gap reads as a dark seam
+     on the bright screen while the whole TV scene transforms as one unit. */
   .tv-all-vids {
     width: 35.8%;
     height: 16.2%;

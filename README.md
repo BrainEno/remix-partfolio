@@ -147,13 +147,14 @@ The editable TV source remains:
 public/images/tv-bg.png
 ```
 
-`npm run dev` / `npm run build` automatically generate the optimized alpha WebP used at runtime. The current source is reduced from roughly 6 MB to roughly 0.6 MB.
+`npm run dev` / `npm run build` automatically generate the optimized WebP used at runtime (same pixels, no resize). The current source is reduced from roughly 6 MB to roughly 0.6 MB. Note the artwork is fully opaque: the TV "screen" effect is a darken/screen blend composite, not an alpha hole, so the `.tv-all-vids` rectangle must fully cover the glowing tube (about x 44-53%, y 58-72% of the photo).
 
 ## Performance architecture
 
 - Archive routes never initialize GSAP or Three.js.
 - Mobile landing-page scrolling uses native Safari scrolling plus ScrollTrigger.
-- Desktop may use ScrollSmoother.
+- Desktop may use ScrollSmoother, tuned to the retired Locomotive feel (`lerp: 0.08`, `multiplier: 0.9`).
+- Desktop TV exit restores the 2022-2023 beat: the screen blanks first, then the pinned television zooms and dissolves into white while Contact rises. Mobile keeps its grey-green → black → white exit.
 - Works media preloads only near the TV section.
 - The 3D phone scene dynamically imports near Contact and unmounts when inactive.
 - Framer Motion, Locomotive Scroll and Supabase are not part of the current runtime.
