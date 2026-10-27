@@ -141,3 +141,39 @@ height: auto; /* aspect-ratio: 2560 / 1707 */
 | 13734 – 14634 | `#contact`：标题锁扣（63–390）+ 电话亭（72–522）+ 跑马灯 + 联系方式，亭子在 12906–13356 之间升起并落定 |
 
 移动端同步收益：390×844 下文档高度 7228 → 5540（同样消除两个故事之间的死滚动），联系屏内容 132–824 完整落在视口内。
+
+## 第五轮：四个上报缺陷的复核（hover 独占电视、照片层级、字号行长、电话亭出场）
+
+本轮把线上反馈的四件事逐条回到老版 `3b26627` 对照。结论：其中三件是后续重构引入的回归，一件（电话亭）是老版与当前版共有、但当前版以新形式复发的问题。
+
+### 定位结论
+
+| # | 缺陷 | 老版 `3b26627` 的做法 | 当前版的问题（根因） |
+| - | ---- | -------------------- | -------------------- |
+| 1 | 未 hover 电视就出现第一个项目图 | `Partfolio.tsx` 里 `useState(works[0])` 之外，画面只由 `onMouseEnter={handleHover(work.imageUri)}` 改变；滚动从不点亮屏幕（注：老版默认首图常驻，本轮按上报的预期行为改为「未 hover = 关机」，见下） | 桌面端有三路自动点亮：`tv-pin` 的 `onEnter -> showWork(0)`、每行作品一个 `top 60% / bottom 40%` 的 ScrollTrigger、以及电话阶段 `onLeaveBack` 无条件恢复最后一项。鼠标还没碰到列表，第一项就已经在屏上 |
+| 2 | 人物照片被 header 文字遮挡 | hero 照片盒无 `z-index`，标题字 `z-index: 2`——老版即如此，靠 `mix-blend-mode: difference` 让字与图互相穿透，是当年刻意的混合效果 | 重构后照片仍被标题字压住且保留 difference 混合，加上照片内层 `top: -100px` 在自身遮罩里上移：顶部被裁、底部留黑带。按本轮上报的预期（照片浮在最上层、文字环绕），混合穿透不再成立，必须明确分层 |
+| 3 | 字号意外变小、分行过长 | 正文 `2.5vw`（1440 下 36px），作品标题与正文同级排版 | 全局 `h1..h6 { font-size: 100% }` 重置让 `.work-items-headline` 落回 16px 文档默认，而其下作品名约 54px；第二段正文宽 `70vw`（1440 下约 1000px）行长失控；英文简介（约 950 字符）在 46vw 栏 + 中文字号下行数超过 100vh 舞台，被 `overflow: hidden` 上下对称裁掉 |
+| 4 | 3D 电话亭出场时机与运动不对 | 老版画布 `position: fixed; top: 80vh`，用 GSAP 补间 `top/left` 到 `78vw/75vw`——本身就是错位写法 | 当前版改为 transform 入场后仍有两个问题：① 场景只在距视口 240px 时才挂载并开始下载 1.7MB 模型，入场滚动开始时模型常未就绪，亭子在入场结束后才「弹」出来；② 入场触发 `top 92% -> 42%`，大半行程花在联系屏尚未露面时，等真正看到时动画已经播完或只剩尾巴 |
+
+### 本轮方案
+
+| 项目 | 方案 |
+| ---- | ---- |
+| 电视所有权 | 桌面端删除每行 ScrollTrigger 与 pin 的自动点亮，预览只由行 `onMouseEnter / onFocus / onClick` 触发并粘性保留（与老版 hover 语义一致，且补上键盘/触屏等价手势）；行处理函数把选择写入 `#partfolio[data-last-hovered-work]`，电话阶段回滚时只恢复「真正 hover 过」的那一项，没 hover 过就继续关机；`is-tv-phone` 阶段与 `is-tv-exiting` 一样禁用列表指针事件；退场时间线开头显式关掉 showreel。移动端无 hover，保留原有的行/屏重叠面积预览 |
+| 关机状态 | 未 hover 时 `.tv-all-vids` 无 `.has-preview`，showreel 透明度 0，屏面只剩磷光灰绿玻璃（`--tv-screen-*` 空闲色板）与原照片的边框反光——即「关机但仍是块玻璃」，不是黑洞也不是节目画面 |
+| 照片层级 | hero `.intro-photo-box` 提升到 `z-index: 4`（标题字 2、图条在其下），照片去掉 `mix-blend-mode: difference` 以原色浮在最上层，标题字在四周环绕；照片内层 `top: -100px -> 0` + `object-position: 50% 12%` 消除裁顶与底部黑带。简介肖像同理：photo-box `z-index: 3`、大标题 `z-index: 1`，照片永远在文字之上 |
+| 字号与行长 | `.work-items-headline` 改为 `clamp(22px, 2.3vw, 38px)`（移动端 15px，与 mobile-polish 对齐）；作品 teaser 明确设为 13px + `0.06em` 字距的说明文字级；正文栏宽 `min(46vw, 34em)`、第二段 `min(52vw, 38em)`（原 70vw），行长以 em 封顶不随视口无限拉长；拉丁文本 `:not(.zh)` 用 `clamp(20px, 1.8vw, 29px) / 1.5` 行高，使英文简介完整落在 100vh 舞台内，中文保持 `clamp(21px, 2.35vw, 36px)` 的设计字号；联系屏邮箱升到 `clamp(19px, 1.5vw, 24px)`，版权/署名 15/14px |
+| 电话亭出场 | 挂载观察提前到 `rootMargin: 120% 0px`（约一屏之前开始下载解码，电视退场期间完成）；入场触发改为 `.contact-inner top 80% -> top 18%`，只在联系屏真正接管画面后开始、落定后不久结束；运动为两拍：`power2.out` 的上升减速（`y: 11svh, scale: .92, fade`）+ 一小段过冲回稳（`-0.7svh -> 0`），模拟重物落位，仍只写 transform、槽位不动；模型自转保留老版速度（`0.18 rad/s` 等价于老版 `0.003/帧`） |
+| 顺滑度（参考 danielspatzek.com 的编排习惯） | 该站的顺滑来自三件事：钉住舞台 + 明确的「到达—停留—离开」拍、运动末端减速、以及重资源在入场前就绪。本轮据此把简介文案的到达/推出由线性 `ease: none` 改为 `power1.inOut`（滚动驱动下表现为两端减速，不再像传送带急停），电话亭与电视均改为「入场前预载」。ScrollSmoother `0.65 / 0.9` 与全站 `scrub: true` 的直接对应保持不变——惯性只由一层负责 |
+
+### 新增/更新的回归契约
+
+- `desktop television stays off until a work row is hovered`：到达电视与滚动列表经过时 `data-preview-active=false` 且无 `.tv-cover`；hover 第二行后点亮《鼠疫》画面且粘性保留；进入电话阶段再次熄屏。
+- `the hero artwork floats above the headline words that surround it`：照片盒 z-index 高于标题字、照片混合模式为 `normal`、照片中心命中测试落在照片盒内。
+- `works headline and second-paragraph measure are set at reading scale`：1440 下作品标题 > 20px、第二段行宽 ≤ 55vw 且 > 320px。
+- 电话亭既有契约（槽位恒定、transform 入场、最终落位）在新的 `80% -> 18%` 触发与两拍运动下继续成立：中间采样缩放介于起止之间、最终 `scale 1 / y 0 / opacity 1`。
+
+### 本轮验证
+
+- `npm run typecheck`、`npm run build` 通过；开发服务器实际提供页面（HTTP 200，关键 DOM 契约存在）。
+- 本沙箱无法下载 Playwright 浏览器内核（CDN 不在白名单），新增 Playwright 用例已通过 `--list` 收集校验，完整 WebKit 回归需在 CI/本机执行 `npm run test:scroll`。

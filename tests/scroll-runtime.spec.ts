@@ -1031,3 +1031,143 @@ test("the contact headline lockup is never clipped", async ({ page }) => {
 
   expect(pageErrors).toEqual([]);
 });
+
+test("desktop television stays off until a work row is hovered", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator(".page-home")).toHaveAttribute(
+    "data-scroll-runtime",
+    "ready",
+  );
+
+  const screen = page.locator(".tv-all-vids");
+  const partfolioTop = await page.evaluate(() => {
+    const section = document.getElementById("partfolio");
+    if (!section) throw new Error("Missing portfolio section");
+    return section.getBoundingClientRect().top + window.scrollY;
+  });
+
+  // Arriving at the television, and even scrolling the works list past it,
+  // must not light the screen: with no hover yet the tube is powered off.
+  // (A pin onEnter and per-row scroll triggers used to show the first
+  // project here before the visitor pointed at anything.) The pointer is
+  // parked in the upper stage area, which the rows never sweep during this
+  // scroll segment, so a passively crossed row cannot fake a hover.
+  await page.mouse.move(720, 200);
+  await scrollToContentY(page, partfolioTop + 100, 0);
+  await expect(screen).toHaveAttribute("data-preview-active", "false");
+  await expect(page.locator(".tv-cover")).toHaveCount(0);
+
+  await scrollToContentY(page, partfolioTop + 1.4 * 900, 0);
+  await expect(screen).toHaveAttribute("data-preview-active", "false");
+  await expect(page.locator(".tv-cover")).toHaveCount(0);
+
+  // Hovering a row is what turns the television on...
+  const secondRow = page.locator(".work-item").nth(1);
+  await secondRow.evaluate((element) =>
+    element.dispatchEvent(new MouseEvent("mouseover", { bubbles: true })),
+  );
+  await expect(screen).toHaveAttribute("data-preview-active", "true");
+  await expect(page.locator(".tv-cover")).toHaveCount(1);
+  await expect(page.locator(".tv-cover")).toHaveAttribute(
+    "src",
+    /plague\.jpg/,
+  );
+  await expect(secondRow).toHaveClass(/is-active/);
+
+  // ...and the picture is sticky: leaving the row does not black out the
+  // screen (the phone/exit beats own the blank states).
+  await page.mouse.move(8, 8);
+  await expect(screen).toHaveAttribute("data-preview-active", "true");
+
+  // Scrolling on into the phone-number beat blanks the tube again.
+  const phoneTop = await page.evaluate(() => {
+    const spacer = document.querySelector<HTMLElement>(".tv-phone-spacer");
+    if (!spacer) throw new Error("Missing phone spacer");
+    return spacer.getBoundingClientRect().top + window.scrollY;
+  });
+  await scrollToContentY(page, phoneTop + 400, 0);
+  await expect(screen).toHaveAttribute("data-preview-active", "false");
+  await expect(page.locator(".tv-cover")).toHaveCount(0);
+
+  expect(pageErrors).toEqual([]);
+});
+
+test("the hero artwork floats above the headline words that surround it", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator(".page-home")).toHaveAttribute(
+    "data-scroll-runtime",
+    "ready",
+  );
+
+  const layers = await page.evaluate(() => {
+    const photoBox = document.querySelector<HTMLElement>(".intro-photo-box");
+    const photo = document.querySelector<HTMLElement>(".intro-photo");
+    const word = document.querySelector<HTMLElement>(".intro-headline-word");
+    if (!photoBox || !photo || !word) throw new Error("Missing hero layers");
+    const rect = photoBox.getBoundingClientRect();
+    const hit = document.elementFromPoint(
+      rect.left + rect.width / 2,
+      rect.top + Math.min(rect.height / 2, window.innerHeight / 2),
+    );
+    return {
+      photoZ: Number.parseInt(getComputedStyle(photoBox).zIndex, 10),
+      wordZ: Number.parseInt(getComputedStyle(word).zIndex, 10),
+      photoBlend: getComputedStyle(photo).mixBlendMode,
+      hitInsidePhoto: Boolean(hit?.closest(".intro-photo-box")),
+    };
+  });
+
+  // The portrait is the top layer; the headline type arranges around it and
+  // no difference blend inverts the artwork against that type.
+  expect(layers.photoZ).toBeGreaterThan(layers.wordZ);
+  expect(layers.photoBlend).toBe("normal");
+  expect(layers.hitInsidePhoto).toBe(true);
+  expect(pageErrors).toEqual([]);
+});
+
+test("works headline and second-paragraph measure are set at reading scale", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator(".page-home")).toHaveAttribute(
+    "data-scroll-runtime",
+    "ready",
+  );
+
+  const type = await page.evaluate(() => {
+    const headline = document.querySelector<HTMLElement>(
+      ".work-items-headline",
+    );
+    const second = document.querySelector<HTMLElement>(
+      ".intro-subheadline-text2",
+    );
+    if (!headline || !second) throw new Error("Missing type");
+    return {
+      headlineSize: Number.parseFloat(getComputedStyle(headline).fontSize),
+      secondWidth: second.getBoundingClientRect().width,
+      viewportWidth: window.innerWidth,
+    };
+  });
+
+  // The works headline was reset to the 16px document default by the global
+  // heading reset; it now scales with the list it titles.
+  expect(type.headlineSize).toBeGreaterThan(20);
+  // The second biography paragraph was a 70vw full-bleed line; it now shares
+  // the first paragraph's reading measure.
+  expect(type.secondWidth).toBeLessThanOrEqual(type.viewportWidth * 0.55);
+  expect(type.secondWidth).toBeGreaterThan(320);
+  expect(pageErrors).toEqual([]);
+});

@@ -118,6 +118,13 @@
   width: 45vw;
   height: 60vw;
   padding: 0;
+  /* The artwork is the top layer of the opening composition: the rotated
+     headline words (z-index 2) and the two image bars arrange themselves
+     *around* it. The box used to carry no z-index at all, so the words -
+     sharpened by their difference blend - cut straight across the figure
+     and the portrait read as occluded by the headline instead of floating
+     in front of it. */
+  z-index: 4;
 }
 
 .intro-photo-box .intro-photo-wrapper {
@@ -131,9 +138,15 @@
   position: absolute;
   width: 100%;
   height: 100%;
-  top: -100px;
+  /* Anchored to the wrapper's top edge. The old -100px offset shifted the
+     frame up inside its own mask, cropping the top of the figure and
+     leaving a black band at the bottom of the window. */
+  top: 0;
   object-fit: cover;
-  mix-blend-mode: difference;
+  object-position: 50% 12%;
+  /* No difference blend on the top layer: against the white headline type
+     behind it, blending inverted patches of the artwork. The bars below
+     keep the blend; the portrait itself is shown true. */
   will-change: transform;
 }
 
@@ -195,6 +208,9 @@
   height: 100vh;
   left: 0;
   top: 0;
+  /* Same rule as the hero: the portrait floats above the "Intro" title type
+     that settles behind/below it, never underneath it. */
+  z-index: 3;
   /* Mirrors the first keyframe of setupFirstIntroStory: the portrait starts a
      full stage above the frame so it *descends into* the viewport instead of
      being born already clipped by the top edge. */
@@ -281,6 +297,9 @@
   font-size: 8vw;
   line-height: 0;
   color: var(--white);
+  /* Behind the portrait (photo box z-index 3): the title is scenery the
+     photograph travels in front of. */
+  z-index: 1;
 }
 
 .intro-subheadline-title.zh {
@@ -296,8 +315,10 @@
 .intro-subheadline-text-box1 {
   position: absolute;
   /* Column width leaves the portrait (8vw–46vw after its mask widens) and a
-     comfortable gutter untouched. */
-  width: 46vw;
+     comfortable gutter untouched. The em cap keeps the measure from
+     stretching with the viewport: on a 2560px stage an uncapped 46vw column
+     is ~1180px wide, which is a newspaper line, not a reading line. */
+  width: min(46vw, 34em);
   height: 100vh;
   top: 0;
   left: 100vw;
@@ -315,10 +336,20 @@
 .intro-subheadline-text {
   font-size: clamp(21px, 2.35vw, 36px);
   color: var(--white);
-  line-height: 1.4em;
+  line-height: 1.45em;
   text-indent: 0;
   margin: 0;
   padding: 0;
+}
+
+/* Latin copy runs at a slightly smaller size than CJK in the same column:
+   at the CJK size the ~950-character English biography needs more lines
+   than the 100vh stage has room for and was clipped symmetrically by the
+   stage's overflow. This keeps every line of both languages on stage while
+   the Chinese text keeps its full designed size. */
+.intro-subheadline-text:not(.zh) {
+  font-size: clamp(20px, 1.8vw, 29px);
+  line-height: 1.5em;
 }
 
 .intro-subheadline-text1 {
@@ -392,7 +423,11 @@
 }
 
 .intro-subheadline-text2 {
-  width: 70vw;
+  /* Was 70vw (~1000px at 1440): a full-bleed line the eye has to travel
+     back across, which read as the paragraph being "set wrong" next to the
+     gallery rail. The second paragraph now shares the first one's measure
+     discipline - wide enough to sit with the rail, narrow enough to read. */
+  width: min(52vw, 38em);
   margin-bottom: 0;
 }
 

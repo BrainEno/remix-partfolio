@@ -192,7 +192,9 @@
 }
 
 .contact-email-link {
-  font-size: 18px;
+  /* The only actionable line on the last screen; 18px read as a footnote
+     under the display lockup. */
+  font-size: clamp(19px, 1.5vw, 24px);
   margin-top: 2.2vw;
 }
 
@@ -208,13 +210,13 @@
 }
 
 .contact-inner h3 {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 400;
   margin-top: 1.4vw;
 }
 
 .contact-inner > p {
-  font-size: 13px;
+  font-size: 14px;
   margin-top: 0.5vw;
 }
 
