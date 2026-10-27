@@ -19,6 +19,7 @@ function replaceBaseMobileTriggers() {
     "intro-photo",
     "intro-story-2",
     "tv-pin",
+    "tv-phone",
     "tv-exit",
   ].forEach(killTrigger);
 

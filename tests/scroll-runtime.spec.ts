@@ -26,6 +26,67 @@ async function scrollUntilAttribute(
   await expect(page.locator(selector)).toHaveAttribute(attribute, expectedValue);
 }
 
+/**
+ * Scroll so that a document (content) position sits at `viewportFraction` of
+ * the viewport height.
+ *
+ * Desktop runs ScrollSmoother, whose `speed` multiplier makes scroll distance
+ * and content distance differ (Locomotive's old 0.9 feel). ScrollSmoother
+ * writes the proxy body height, so the ratio is derived from the DOM instead
+ * of being hard-coded, and these tests keep working if the feel is retuned.
+ */
+async function scrollToContentY(
+  page: Page,
+  contentY: number,
+  viewportFraction = 0,
+) {
+  const target = await page.evaluate(
+    ({
+      contentY,
+      viewportFraction,
+    }: {
+      contentY: number;
+      viewportFraction: number;
+    }) => {
+      const viewportHeight = window.innerHeight;
+      const maxScroll =
+        document.documentElement.scrollHeight - viewportHeight;
+      const content = document.querySelector("#smooth-content");
+      const contentHeight = content?.getBoundingClientRect().height ?? 0;
+      const bodyHeight =
+        Number.parseFloat(getComputedStyle(document.body).height) ||
+        document.documentElement.scrollHeight;
+      const factor =
+        content && bodyHeight > viewportHeight && contentHeight > viewportHeight
+          ? (contentHeight - viewportHeight) / (bodyHeight - viewportHeight)
+          : 1;
+      const desired = (contentY - viewportHeight * viewportFraction) / factor;
+      return Math.max(0, Math.min(desired, maxScroll));
+    },
+    { contentY, viewportFraction },
+  );
+
+  // ScrollSmoother eases towards the target over several frames, and this
+  // headless WebKit/Chromium is slow, so wait for the content to settle rather
+  // than assuming a fixed delay.
+  await page.evaluate(async (next: number) => {
+    window.scrollTo(0, next);
+    const content = document.querySelector("#smooth-content");
+    if (!content) return;
+    const offset = () => -content.getBoundingClientRect().top;
+    let previous = offset();
+    let stable = 0;
+    const started = performance.now();
+    while (performance.now() - started < 8_000 && stable < 3) {
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+      const current = offset();
+      if (Math.abs(current - previous) < 0.5) stable += 1;
+      else stable = 0;
+      previous = current;
+    }
+  }, target);
+}
+
 function parseCssRgb(value: string) {
   const normalized = value.trim();
   const hexMatch = normalized.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
@@ -127,19 +188,18 @@ test("desktop intro portrait keeps its top visible as the mask expands", async (
     .toBeGreaterThan(0);
   const widthBefore = await photo.evaluate((image) => image.clientWidth);
 
-  await page.evaluate(() => {
+  // Mid-way through the pinned scene: past the mask expansion, before the push.
+  const sceneTop = await page.evaluate(() => {
     const scene = document.querySelector<HTMLElement>(
       ".intro-subheadline-stickytainer",
     );
     if (!scene) throw new Error("Missing first intro story");
-    const top = scene.getBoundingClientRect().top + window.scrollY;
-    window.scrollTo(0, top - 100 + window.innerHeight * 4 * 0.65);
+    return scene.getBoundingClientRect().top + window.scrollY - window.scrollY;
   });
+  await scrollToContentY(page, sceneTop + 4.2 * 724, 0);
 
   await expect
-    .poll(() =>
-      photo.evaluate((image) => getComputedStyle(image).objectPosition),
-    )
+    .poll(() => photo.evaluate((image) => getComputedStyle(image).objectPosition))
     .toBe("50% 0%");
 
   const framing = await photo.evaluate((image: HTMLImageElement) => {
@@ -164,63 +224,249 @@ test("desktop intro portrait keeps its top visible as the mask expands", async (
   expect(pageErrors).toEqual([]);
 });
 
-test("desktop TV stays blank while its zoom overlaps the phone number", async ({
+test("desktop telephone number holds on the tube before the exit zoom", async ({
   page,
 }) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
-  await page.setViewportSize({ width: 1568, height: 779 });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/", { waitUntil: "networkidle" });
   await expect(page.locator(".page-home")).toHaveAttribute(
     "data-scroll-runtime",
     "ready",
   );
 
-  await page.evaluate(() => {
-    const exit = document.querySelector<HTMLElement>(".tv-exit-spacer");
-    if (!exit) throw new Error("Missing television exit");
-    const top = exit.getBoundingClientRect().top + window.scrollY;
-    window.scrollTo(0, top - window.innerHeight * 2);
-  });
-  await waitForScroll(page, 500);
+  // 1. The idle tube is a live grey-green CRT, never a black hole.
+  const idleLuma = await readCssColorLuma(
+    page,
+    ".tv-blackscreen",
+    "--tv-screen-mid",
+  );
+  expect(idleLuma).toBeGreaterThan(60);
 
-  let overlappingSamples = 0;
-  for (let step = 0; step < 48 && overlappingSamples < 3; step += 1) {
-    const state = await page.evaluate(() => {
+  const readTube = () =>
+    page.evaluate(() => {
+      const number = document.querySelector<HTMLElement>(".tv-contact-number");
       const television = document.querySelector<HTMLElement>(".tv-box");
       const screen = document.querySelector<HTMLElement>(".tv-all-vids");
-      const phone = document.querySelector<HTMLElement>(".contact-number");
-      if (!television || !screen || !phone)
-        throw new Error("Missing television exit geometry");
-
-      const transform = getComputedStyle(television).transform;
-      const matrix = new DOMMatrixReadOnly(transform);
-      const phoneRect = phone.getBoundingClientRect();
+      const partfolio = document.getElementById("partfolio");
+      if (!number || !television || !screen) throw new Error("Missing tube");
+      const numberStyle = getComputedStyle(number);
+      const matrix = new DOMMatrixReadOnly(
+        getComputedStyle(television).transform,
+      );
       return {
+        opacity: Number(numberStyle.opacity),
+        visibility: numberStyle.visibility,
+        fontSize: Number.parseFloat(numberStyle.fontSize),
+        numberWidth:
+          number.querySelector("span")?.getBoundingClientRect().width ?? 0,
+        screenWidth: screen.getBoundingClientRect().width,
+        numberTop: number.getBoundingClientRect().top,
         scale: Math.hypot(matrix.a, matrix.b),
-        opacity: Number(getComputedStyle(television).opacity),
-        preview: screen.getAttribute("data-preview-active"),
+        televisionOpacity: Number(getComputedStyle(television).opacity),
+        preview: screen.dataset.previewActive,
         covers: document.querySelectorAll(".tv-cover").length,
-        exitClass: document
-          .getElementById("partfolio")
-          ?.classList.contains("is-tv-exiting"),
-        phoneVisible:
-          phoneRect.top < innerHeight * 0.85 && phoneRect.bottom > 0,
+        phaseClass: partfolio?.className ?? "",
       };
     });
 
-    if (state.phoneVisible && state.scale > 1.2 && state.opacity > 0.1) {
-      overlappingSamples += 1;
-      expect(state.preview).toBe("false");
-      expect(state.covers).toBe(0);
-      expect(state.exitClass).toBe(true);
-    }
+  const positions = await page.evaluate(() => {
+    const top = (selector: string) => {
+      const element = document.querySelector<HTMLElement>(selector);
+      if (!element) throw new Error(`Missing ${selector}`);
+      return element.getBoundingClientRect().top;
+    };
+    return {
+      phone: top(".tv-phone-spacer"),
+      exit: top(".tv-exit-spacer"),
+    };
+  });
 
-    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.1));
-    await waitForScroll(page, 180);
+  // 2. The number has been written onto the tube.
+  await scrollToContentY(page, positions.phone + 250, 0);
+  const written = await readTube();
+  expect(written.opacity).toBeGreaterThan(0.9);
+  expect(written.visibility).toBe("visible");
+  // Screen ownership: the works preview is off, no project image on the tube.
+  expect(written.preview).toBe("false");
+  expect(written.covers).toBe(0);
+  expect(written.phaseClass).toContain("is-tv-phone");
+  // Sized against the glass: legible, comfortable, and not overflowing.
+  expect(written.fontSize).toBeGreaterThan(11);
+  expect(written.numberWidth).toBeLessThan(written.screenWidth * 0.8);
+  // The set is still parked, so the number is not lost inside a zoom.
+  expect(written.scale).toBeLessThan(1.2);
+
+  // 3. It holds: still fully on a good while later in the plateau.
+  await scrollToContentY(page, positions.phone + 700, 0);
+  const holding = await readTube();
+  expect(holding.opacity).toBeGreaterThan(0.9);
+  expect(holding.scale).toBeLessThan(1.7);
+  expect(holding.numberTop).toBeGreaterThan(0);
+
+  // 4. Only after that plateau does the set zoom out and take it along.
+  await scrollToContentY(page, positions.exit + 1250, 0);
+  const gone = await readTube();
+  expect(gone.scale).toBeGreaterThan(3);
+  expect(gone.televisionOpacity).toBeLessThan(0.2);
+  expect(gone.opacity).toBeLessThan(0.1);
+  expect(pageErrors).toEqual([]);
+});
+
+test("desktop intro paragraph pushes the portrait instead of covering it", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator(".page-home")).toHaveAttribute(
+    "data-scroll-runtime",
+    "ready",
+  );
+
+  const readScene = () =>
+    page.evaluate(() => {
+      const box = (selector: string) => {
+        const element = document.querySelector<HTMLElement>(selector);
+        if (!element) throw new Error(`Missing ${selector}`);
+        const rect = element.getBoundingClientRect();
+        return { left: rect.left, right: rect.right };
+      };
+      const paragraph = document.querySelector<HTMLElement>(
+        ".intro-subheadline-text1",
+      );
+      if (!paragraph) throw new Error("Missing paragraph");
+      const rect = paragraph.getBoundingClientRect();
+      return {
+        portraitLeft: box(".intro-subheadline-photo-mask").left,
+        portraitRight: box(".intro-subheadline-photo-mask").right,
+        groupLeft: box(".intro-subheadline-visual-group").left,
+        paragraphLeft: rect.left,
+        paragraphRight: rect.right,
+      };
+    });
+
+  const sceneTop = await page.evaluate(() => {
+    const scene = document.querySelector<HTMLElement>(
+      ".intro-subheadline-stickytainer",
+    );
+    if (!scene) throw new Error("Missing first intro story");
+    return scene.getBoundingClientRect().top + window.scrollY;
+  });
+
+  const viewportHeight = 900;
+  const viewportWidth = 1440;
+  const samples: Array<Awaited<ReturnType<typeof readScene>>> = [];
+  for (let step = 0; step <= 12; step += 1) {
+    await scrollToContentY(page, sceneTop + step * 0.5 * viewportHeight, 0);
+    samples.push(await readScene());
   }
 
-  expect(overlappingSamples).toBe(3);
+  const onScreen = samples.filter((sample) => sample.paragraphRight > 0);
+  expect(onScreen.length).toBeGreaterThan(6);
+
+  // The paragraph starts off to the right...
+  expect(onScreen[0].paragraphRight).toBeGreaterThan(viewportWidth * 0.95);
+
+  // ...and it never crosses the portrait's edge on the way in, nor while the
+  // portrait is being pushed out. The copy pushes; it never overlays.
+  const crossing = samples.filter(
+    (sample) =>
+      sample.portraitRight > 0 &&
+      sample.paragraphRight > 0 &&
+      sample.paragraphLeft < sample.portraitRight - 40,
+  );
+  expect(crossing).toEqual([]);
+
+  // The portrait is genuinely held still for a stretch while the paragraph
+  // approaches it.
+  const parked = samples.filter((sample, index) => {
+    if (index === 0) return false;
+    const previous = samples[index - 1];
+    return (
+      Math.abs(sample.portraitLeft - previous.portraitLeft) < 1.5 &&
+      sample.paragraphRight > 0 &&
+      sample.paragraphLeft < viewportWidth
+    );
+  });
+  expect(parked.length).toBeGreaterThan(1);
+
+  // The copy lands *complete*: while the portrait is parked, the paragraph is
+  // fully inside the viewport and clear of the portrait, so it can be read
+  // before anything is pushed out. (It used to park half outside the right
+  // edge, which cropped the end of every line.)
+  const parkedComplete = samples.filter(
+    (sample) =>
+      sample.paragraphLeft > sample.portraitRight &&
+      sample.paragraphLeft >= 0 &&
+      sample.paragraphRight <= viewportWidth,
+  );
+  expect(parkedComplete.length).toBeGreaterThan(1);
+
+  // Then the group is pushed out of frame...
+  const pushed = samples.filter((sample) => sample.groupLeft < -400);
+  expect(pushed.length).toBeGreaterThan(1);
+  // ...and the paragraph leaves with it instead of staying behind.
+  expect(samples[samples.length - 1].paragraphRight).toBeLessThan(
+    viewportWidth * 0.5,
+  );
+  expect(pageErrors).toEqual([]);
+});
+
+test("the last screen of the page is the complete contact composition", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator(".page-home")).toHaveAttribute(
+    "data-scroll-runtime",
+    "ready",
+  );
+
+  await scrollToContentY(
+    page,
+    await page.evaluate(
+      () =>
+        document.querySelector("#smooth-content")!.getBoundingClientRect()
+          .height,
+    ),
+    1,
+  );
+
+  const lastScreen = await page.evaluate(() => {
+    const viewportBottom = window.innerHeight;
+    const read = (selector: string) => {
+      const element = document.querySelector<HTMLElement>(selector);
+      if (!element) throw new Error(`Missing ${selector}`);
+      const rect = element.getBoundingClientRect();
+      return {
+        top: rect.top,
+        bottom: rect.bottom,
+        visible: rect.top >= -1 && rect.bottom <= viewportBottom + 1,
+      };
+    };
+    return {
+      headline: read(".contact-hl1"),
+      lastHeadline: read(".contact-hl3"),
+      marquee: read(".runningtext"),
+      email: read(".contact-email"),
+      copyright: read(".contact-inner h3"),
+      credit: read(".contact-inner > p"),
+      creditText: document.querySelector(".contact-inner > p")?.textContent ?? "",
+      scrollY: window.scrollY,
+      maxScroll: document.documentElement.scrollHeight - window.innerHeight,
+    };
+  });
+
+  expect(lastScreen.scrollY).toBe(lastScreen.maxScroll);
+  for (const key of ["headline", "lastHeadline", "marquee", "email", "copyright", "credit"] as const) {
+    expect(lastScreen[key].visible).toBe(true);
+  }
+  expect(lastScreen.creditText).toContain("Bottom Think");
   expect(pageErrors).toEqual([]);
 });
 

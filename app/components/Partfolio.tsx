@@ -6,6 +6,7 @@ import type { Language, PortfolioContent } from "~/portfolio/types";
 interface PartfolioProps {
   lang: Language;
   content: PortfolioContent["works"];
+  contactPhone: string;
   activeWorkIndex: number;
   onWorkPreview: (index: number) => void;
 }
@@ -17,6 +18,7 @@ type PortfolioStyle = CSSProperties & {
 export default function Partfolio({
   lang,
   content,
+  contactPhone,
   activeWorkIndex,
   onWorkPreview,
 }: PartfolioProps) {
@@ -97,6 +99,19 @@ export default function Partfolio({
                   height={1707}
                 />
               </div>
+              {/*
+                The phone number is part of the tube, not a page paragraph, so
+                it sits in the glass rectangle and fades up on the dead screen
+                after the works list has left. It is its own layer *above* the
+                photograph: while it lived inside .tv-all-vids, the photo layer
+                (which keeps the bezel and glass reflections on top of the
+                screen) blended over the digits and dimmed half of them.
+              */}
+              <div className="tv-number-layer">
+                <div className="tv-contact-number" aria-hidden="true">
+                  <span>{contactPhone}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -162,6 +177,12 @@ export default function Partfolio({
           })}
         </div>
 
+        {/*
+          A dedicated phone plateau keeps its dwell independent of how many
+          works are configured: adding a project moves the whole stage down
+          instead of shortening the number's hold.
+        */}
+        <div className="tv-phone-spacer" aria-hidden="true" />
         <div className="tv-exit-spacer" aria-hidden="true" />
       </div>
     </section>

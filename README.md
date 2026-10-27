@@ -149,6 +149,21 @@ public/images/tv-bg.png
 
 `npm run dev` / `npm run build` automatically generate the optimized WebP used at runtime (same pixels, no resize). The current source is reduced from roughly 6 MB to roughly 0.6 MB. The artwork is fully opaque: the TV "screen" effect is a darken/screen blend composite, not an alpha hole. The photograph and screen mask share one 2560×1707 scene; the measured glass bounds are x 1110–1438 and y 980–1248. See [the scroll animation review](docs/scroll-animation-review.md) for the legacy/current comparison and calibration details.
 
+Anything written *on* the glass (the contact telephone number) uses the same normalised glass rectangle and `container-type: inline-size`, so its type size is measured in `cqi` of the screen rather than `vw` of the page: the readout keeps the same proportion of the glass at every viewport and survives the exit zoom.
+
+### 3D telephone model
+
+The editable source is `public/gltfs/telephone.gltf` (~37 MB: nine 2048² textures embedded as base64). It is **not** what the browser loads. `npm run assets:model` (`scripts/optimize-model.mjs`) rebuilds it into `public/generated/telephone.glb`:
+
+- one binary GLB with a single BIN chunk;
+- textures re-encoded to 1024² mozjpeg (quality 82);
+- geometry, UVs and materials untouched;
+- ~1.66 MB (about 5% of the source), rebuilt only when the `.gltf` is newer.
+
+`npm run prepare:assets` runs `assets:optimize` → `assets:model` → `assets:validate` (and both `predev` and `prebuild` run it), so the GLB exists before the page is served. Both paths are gitignored build products; commit the `.gltf` source, not the generated file.
+
+The runtime tries `/generated/telephone.glb` first and only falls back to `/gltfs/telephone.gltf` if that request actually fails — passing both to `useGLTF` as an array would download every candidate in parallel and defeat the optimisation. If the canvas, the scene or every model source fails, the contact composition keeps rendering: an error boundary drops only the phone booth and sets `data-scene-status="error"` on `.canvas-container`.
+
 ## Performance architecture
 
 - Archive routes never initialize GSAP or Three.js.
@@ -157,7 +172,7 @@ public/images/tv-bg.png
 - Scroll-linked scenes use direct scrub; desktop inertia lives only in ScrollSmoother and mobile uses native scrolling, avoiding double-smoothed pin lag.
 - Desktop TV exit restores the 2022-2023 beat: the screen blanks first, then a held/anticipation beat leads into the pinned television's zoom and white dissolve. Mobile keeps its grey-green → black → white exit.
 - Works media preloads only near the TV section.
-- The 3D phone scene dynamically imports near Contact and unmounts when inactive.
+- The 3D phone scene dynamically imports near Contact and unmounts when inactive; it loads a 1.66 MB GLB instead of the 37 MB editable glTF, and a failed load degrades to the copy-only contact screen instead of crashing the route.
 - Framer Motion, Locomotive Scroll and Supabase are not part of the current runtime.
 - Production publishes only `build/client` and has no runtime Netlify Function.
 

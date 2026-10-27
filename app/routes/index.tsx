@@ -96,6 +96,7 @@ export default function Index() {
             <Partifolio
               lang={language}
               content={portfolioContent.works}
+              contactPhone={portfolioContent.contact.phone}
               activeWorkIndex={activeWorkIndex}
               onWorkPreview={handleWorkPreview}
             />

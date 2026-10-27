@@ -115,18 +115,27 @@ function setupSectionTracking(
     const portfolioTop = document
       .getElementById("partfolio")
       ?.getBoundingClientRect().top;
-    const contactCopyTop = document
-      .querySelector("#contact .contact-text-box")
-      ?.getBoundingClientRect().top;
+    // #contact deliberately overlaps the television exit, so its section box
+    // is visible long before any contact copy is. Measure the copy itself.
+    // Desktop writes the phone number onto the tube, which makes
+    // .contact-text-box display:none there (a zero rect would otherwise read
+    // as "the copy is at the top of the page"), so measure the contact column.
+    const contactCopyTop = [
+      "#contact .contact-inner",
+      "#contact .contact-text-box",
+    ]
+      .map(
+        (selector) =>
+          document.querySelector<HTMLElement>(selector)?.getBoundingClientRect()
+            .top,
+      )
+      .find((top) => typeof top === "number" && top > 0);
 
     if (portfolioTop === undefined) return;
 
-    // #contact deliberately overlaps the television exit. Its section box is
-    // therefore visible long before any contact copy is; using that box made
-    // the navigation jump to Contact while the works list was still onscreen.
     const nextSection =
       contactCopyTop !== undefined &&
-      contactCopyTop <= window.innerHeight * 0.65
+      contactCopyTop <= window.innerHeight * 0.62
         ? "contact"
         : portfolioTop <= window.innerHeight * 0.55
           ? "partfolio"
@@ -238,17 +247,95 @@ function setupIntroParallax(isMobile: boolean) {
   );
 }
 
+/**
+ * First intro story (portrait + 简介 + biography).
+ *
+ * The best-working 2022-2023 build drove this scene in three beats inside one
+ * scrubbed timeline. Rebuilding it as one timeline again is what makes the
+ * paragraph read as *pushing* the artwork: nothing moves until the copy has
+ * arrived at the portrait's edge, and from there the visual group and the copy
+ * travel left together, so the paragraph can never slide across the portrait's
+ * face.
+ *
+ *   0.00 - 0.36  settle   portrait descends + rotates, title descends,
+ *                         ghost frame resolves, credit appears, mask widens
+ *   0.45 - 0.70  approach copy crosses the right half of the viewport
+ *   0.70 - 1.00  push     group and copy leave to the left together
+ *
+ * Everything is transform-based (no animated `left`/`top` layout work).
+ */
 function setupFirstIntroStory(isMobile: boolean) {
+  if (isMobile) {
+    // Mobile keeps the single portrait/mask beat: there is no room for the
+    // push composition on a 390px stage, and the copy sits below the image.
+    const timeline = gsap.timeline({
+      scrollTrigger: {
+        id: "intro-story-1",
+        trigger: ".intro-subheadline-stickytainer",
+        start: "top 12%",
+        end: () =>
+          `+=${getPinDistance(".intro-subheadline-stickytainer", 1.3)}`,
+        scrub: true,
+        pin: true,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+      },
+      defaults: { ease: "none" },
+    });
+
+    timeline
+      .to(".intro-subheadline-photo-box", {
+        y: "18svh",
+        x: "20vw",
+        rotation: -18.75,
+        scale: 1.45,
+        autoAlpha: 0.82,
+        filter: "grayscale(10%)",
+        duration: 4,
+      })
+      .to(
+        ".intro-subheadline-photo-mask",
+        {
+          x: "4vw",
+          width: "+=20vw",
+          borderTopLeftRadius: "14vw",
+          filter: "grayscale(0%)",
+          duration: 4,
+        },
+        ">+=0.3",
+      )
+      .to(
+        ".intro-subheadline-photo",
+        {
+          // As the portrait mask becomes landscape, centre-cropping would cut
+          // through the subject's head. Reframe with the same scrub.
+          objectPosition: "50% 0%",
+          duration: 4,
+        },
+        "<",
+      )
+      .to(
+        ".intro-subheadline-text-box1",
+        {
+          x: "-100vw",
+          duration: 4,
+        },
+        ">+=0.25",
+      );
+    return;
+  }
+
+  const scene = document.querySelector<HTMLElement>(
+    ".intro-subheadline-stickytainer",
+  );
+
   const timeline = gsap.timeline({
     scrollTrigger: {
       id: "intro-story-1",
       trigger: ".intro-subheadline-stickytainer",
-      start: isMobile ? "top 12%" : "top-=100 top",
+      start: "top top",
       end: () =>
-        `+=${getPinDistance(
-          ".intro-subheadline-stickytainer",
-          isMobile ? 1.3 : 4,
-        )}`,
+        `+=${getPinDistance(".intro-subheadline-stickytainer", 6)}`,
       scrub: true,
       pin: true,
       anticipatePin: 1,
@@ -257,105 +344,82 @@ function setupFirstIntroStory(isMobile: boolean) {
     defaults: { ease: "none" },
   });
 
-  timeline.to(".intro-subheadline-photo-box", {
-    y: isMobile ? "18svh" : "4vw",
-    x: isMobile ? "20vw" : "10vw",
-    rotation: -18.75,
-    scale: isMobile ? 1.45 : 1.2,
-    autoAlpha: 0.82,
-    filter: "grayscale(10%)",
-    duration: 4,
-  });
-
-  if (!isMobile) {
-    timeline
-      .to(
-        ".intro-subheadline-title",
-        {
-          left: "12vw",
-          top: "32vw",
-          ease: "sine.out",
-        },
-        "<1",
-      )
-      .to(
-        ".intro-subheadline-photo-ghost-mask",
-        {
-          autoAlpha: 0,
-          rotation: 18.15,
-        },
-        "<",
-      )
-      .to(
-        ".intro-subheadline-pic-info",
-        {
-          autoAlpha: 1,
-          scale: 1,
-          ease: "power1.out",
-        },
-        ">+=1",
-      );
-  }
-
+  // Beat 1 - settle. Portrait and title share the same start and duration, so
+  // their (different) pixel travel still reads as one movement.
   timeline
+    .fromTo(
+      ".intro-subheadline-photo-box",
+      { x: "22vw", y: "-22vw", rotation: 0, scale: 1, autoAlpha: 1 },
+      {
+        x: "10vw",
+        y: "5.5vw",
+        rotation: -18.75,
+        scale: 1.16,
+        autoAlpha: 0.84,
+        filter: "grayscale(10%)",
+        duration: 0.36,
+      },
+      0,
+    )
+    .to(
+      ".intro-subheadline-title",
+      { x: "-36vw", y: "37vw", duration: 0.36 },
+      0,
+    )
+    .to(
+      ".intro-subheadline-photo-ghost-mask",
+      { autoAlpha: 0, rotation: 18.15, duration: 0.18 },
+      0.09,
+    )
+    .to(
+      ".intro-subheadline-pic-info",
+      { autoAlpha: 1, scale: 1, duration: 0.16 },
+      0.2,
+    )
     .to(
       ".intro-subheadline-photo-mask",
       {
-        x: isMobile ? "4vw" : 0,
         width: "+=20vw",
         borderTopLeftRadius: "14vw",
         filter: "grayscale(0%)",
-        duration: 4,
+        duration: 0.18,
       },
-      ">+=0.3",
+      0.3,
     )
     .to(
       ".intro-subheadline-photo",
-      {
-        // As the portrait mask becomes landscape, centre-cropping would cut
-        // through the subject's head. Reframe with the same scrub instead of
-        // letting the expanded mask hide the upper half of the photograph.
-        objectPosition: "50% 0%",
-        duration: 4,
-      },
-      "<",
-    )
-    .to(
-      ".intro-subheadline-text-box1",
-      {
-        left: 0,
-        duration: 4,
-      },
-      ">+=0.25",
+      { objectPosition: "50% 0%", duration: 0.18 },
+      0.3,
     );
 
-  if (!isMobile) {
-    timeline
-      .to(
-        ".intro-subheadline-title",
-        {
-          left: "+=20vw",
-          duration: 3,
-        },
-        "<",
-      )
-      .to(
-        ".intro-subheadline-photo-box",
-        {
-          left: "-100%",
-          duration: 6,
-        },
-        ">+=1",
-      )
-      .to(
-        ".intro-subheadline-title",
-        {
-          left: "-66vw",
-          duration: 6,
-        },
-        "<",
-      );
-  }
+  // Beat 2 - approach. The copy crosses the right half of the viewport and
+  // parks flush inside it, next to the portrait. The artwork is deliberately
+  // still, and nothing is clipped at the end of this beat: the paragraph is
+  // readable as a complete column before anything leaves.
+  timeline.to(
+    ".intro-subheadline-text-box1",
+    { x: "-48vw", duration: 0.22 },
+    0.42,
+  );
+
+  // Beat 3 - hold (0.64 -> 0.74). No tweens: the visitor reads the copy
+  // beside the artwork for one beat of scroll before the push starts.
+
+  // Beat 4 - push. Group and copy leave in the same scroll interval, the copy
+  // travelling 48vw further so it keeps leading the artwork out of frame.
+  timeline
+    .to(".intro-subheadline-visual-group", { x: "-100vw", duration: 0.28 }, 0.74)
+    .to(".intro-subheadline-text-box1", { x: "-148vw", duration: 0.28 }, 0.74);
+
+  // The title keeps a small counter-drift so the push has a parallax layer
+  // instead of reading as one flat plate sliding away.
+  timeline.to(
+    ".intro-subheadline-title",
+    { x: "-16vw", duration: 0.28 },
+    0.74,
+  );
+
+  if (scene) scene.dataset.introPhase = "settle-approach-push";
 }
 
 function setupSecondIntroStory(isMobile: boolean) {
@@ -475,31 +539,66 @@ function setupWorkPreview(onWorkPreview: (index: number) => void) {
   });
 }
 
+type PreviewOwner = "rows" | "phone" | "exit";
+
+const TV_IDLE_PALETTE = {
+  "--tv-screen-top": "#777a76",
+  "--tv-screen-mid": "#626560",
+  "--tv-screen-bottom": "#545651",
+  "--tv-screen-glow": "rgba(255, 255, 255, 0.08)",
+} as const;
+
+/* The tube powers down as the number writes itself on, but only to a cool
+   grey-green: the earlier near-black plate read as a dead rectangle inside a
+   lit photograph and swallowed the set's own reflections. Keeping the phosphor
+   at mid grey lets the glass (and the road around it) stay part of the scene
+   while the number still has contrast. */
+const TV_PHONE_PALETTE = {
+  "--tv-screen-top": "#5d6159",
+  "--tv-screen-mid": "#4d514a",
+  "--tv-screen-bottom": "#3c403a",
+  "--tv-screen-glow": "rgba(255, 255, 255, 0.06)",
+} as const;
+
+const TV_BLANK_PALETTE = {
+  "--tv-screen-top": "#000000",
+  "--tv-screen-mid": "#000000",
+  "--tv-screen-bottom": "#000000",
+  "--tv-screen-glow": "rgba(0, 0, 0, 0)",
+} as const;
+
 function setupTelevisionSequence(
   onWorkPreview: (index: number) => void,
   isMobile: boolean,
 ) {
-  const lastWorkIndex = document.querySelectorAll(".work-item").length - 1;
-  const portfolio = document.querySelector("#partfolio");
-  portfolio?.classList.remove("is-tv-exiting");
-  let exitOwnsPreview = false;
-  const setExitPreviewOwnership = (ownsPreview: boolean) => {
-    exitOwnsPreview = ownsPreview;
-    portfolio?.classList.toggle("is-tv-exiting", ownsPreview);
+  const rows = gsap.utils.toArray<HTMLElement>(".work-item");
+  const lastWorkIndex = rows.length - 1;
+  const portfolio = document.querySelector<HTMLElement>("#partfolio");
+  portfolio?.classList.remove("is-tv-exiting", "is-tv-phone");
+
+  // One owner of the screen at a time. Without this the row triggers, the
+  // telephone-number beat and the exit all wrote to the same slot and could
+  // relight a project inside the zooming set (or blank a valid preview).
+  let previewOwner: PreviewOwner = "rows";
+  const setPreviewOwner = (owner: PreviewOwner) => {
+    previewOwner = owner;
+    portfolio?.classList.toggle("is-tv-exiting", owner === "exit");
+    portfolio?.classList.toggle("is-tv-phone", owner === "phone");
   };
   const showWork = (index: number) => {
-    // Row triggers can refresh or fire while the pinned television is already
-    // leaving. They must not relight a project after the exit has deliberately
-    // cleared it; only scrolling back above the exit returns preview ownership.
-    if (!exitOwnsPreview) onWorkPreview(index);
+    if (previewOwner === "rows") onWorkPreview(index);
   };
+  const clearPreview = () => onWorkPreview(-1);
 
   setupWorkPreview(showWork);
 
+  // The pinner is a full viewport stage pinned at "top top"; the exit spacer
+  // closes the pin. A 1px pinner used to leave the framing dependent on where
+  // the pin landed, which is what pushed the photograph's ground out of frame.
   ScrollTrigger.create({
     id: "tv-pin",
-    trigger: isMobile ? ".tv-bg-box" : ".tv-box",
-    start: isMobile ? "top top" : "center center",
+    trigger: ".tv-box-pinner",
+    start: "top top",
     endTrigger: ".tv-exit-spacer",
     end: "bottom bottom",
     pin: ".tv-box-pinner",
@@ -508,87 +607,142 @@ function setupTelevisionSequence(
     invalidateOnRefresh: true,
     onEnter: () => showWork(0),
     onEnterBack: () => {
-      const rows = gsap.utils.toArray<HTMLElement>(".work-item");
-      if (rows.length > 0) showWork(rows.length - 1);
+      if (lastWorkIndex >= 0) showWork(lastWorkIndex);
     },
   });
 
-  // Desktop restores the 2022-2023 exit beat: the project image vanishes the
-  // moment the exit begins (the old timeline hid the screen cover first),
-  // then the whole television zooms and dissolves. Scrolling back out of the
-  // exit relights the last work; scrolling back INTO the exit from Contact
-  // keeps the screen dark, mirroring the forward beat in reverse. Mobile
-  // kills this trigger and runs its own grey-green -> black -> white exit.
-  const exitCallbacks = isMobile
-    ? {}
-    : {
-        onEnter: () => {
-          setExitPreviewOwnership(true);
-          onWorkPreview(-1);
-        },
-        onEnterBack: () => {
-          setExitPreviewOwnership(true);
-          onWorkPreview(-1);
-        },
-        onLeaveBack: () => {
-          setExitPreviewOwnership(false);
-          if (lastWorkIndex >= 0) onWorkPreview(lastWorkIndex);
-        },
-      };
+  if (isMobile) {
+    // Mobile owns its own grey-green -> black -> white exit in
+    // mobile-choreography.client.ts (the tv-exit trigger is replaced there).
+    return;
+  }
 
-  const exitTimeline = gsap.timeline({
+  /* Telephone-number beat -------------------------------------------------
+     The number is written onto the dead tube and *held* there: the works list
+     scrolls away, the set leans in slightly, the number fades up and stays
+     until the visitor scrolls past a whole plateau of scroll. Only then does
+     the exit beat start, so the number has a real dwell instead of flashing
+     past inside the zoom. */
+  const phoneTimeline = gsap.timeline({
     scrollTrigger: {
-      id: "tv-exit",
-      trigger: ".tv-exit-spacer",
-      start: "top bottom",
-      end: "bottom bottom",
+      id: "tv-phone",
+      trigger: ".tv-phone-spacer",
+      // Starts while the works list is still leaving and ends exactly where
+      // the exit beat begins, so the number gets a full plateau of dwell
+      // instead of a flash inside the zoom.
+      start: "top 70%",
+      end: "bottom 30%",
       scrub: true,
       invalidateOnRefresh: true,
-      ...exitCallbacks,
+      onEnter: () => {
+        setPreviewOwner("phone");
+        clearPreview();
+      },
+      onEnterBack: () => {
+        setPreviewOwner("phone");
+        clearPreview();
+      },
+      onUpdate: (self) => {
+        if (self.isActive && previewOwner === "phone") clearPreview();
+      },
+      onLeaveBack: () => {
+        setPreviewOwner("rows");
+        if (lastWorkIndex >= 0) onWorkPreview(lastWorkIndex);
+      },
     },
     defaults: { ease: "none" },
   });
 
-  // Preserve the old two-beat exit instead of zooming as soon as the spacer
-  // arrives: a short held screen, a restrained anticipation, then an
-  // accelerating rotation/zoom. The photograph, glass and bezel always move
-  // as one composited unit.
+  phoneTimeline
+    // Blank the tube first: the project image is gone, the phosphor cools.
+    .to(".tv-showreel", { autoAlpha: 0, duration: 0.08 }, 0)
+    // Lean in so the glass fills the beat.
+    .to(".tv-box", { scale: 1.14, rotation: -1.5, duration: 0.34 }, 0)
+    // Phosphor cools so the number has a clean plate to sit on.
+    .to(".tv-blackscreen", { ...TV_PHONE_PALETTE, duration: 0.2 }, 0.06)
+    // The number writes itself on.
+    .fromTo(
+      ".tv-contact-number",
+      { autoAlpha: 0, yPercent: 18, filter: "blur(6px)" },
+      {
+        autoAlpha: 1,
+        yPercent: 0,
+        filter: "blur(0px)",
+        duration: 0.16,
+        ease: "power2.out",
+      },
+      0.08,
+    )
+    // ...and then simply holds for the rest of the plateau. The hold is the
+    // whole point of the beat, so it starts as soon as the fade finishes and
+    // lasts until the exit spacer takes over (~1.1 viewport of scroll).
+    .to(".tv-contact-number", { autoAlpha: 1, duration: 0.8 }, 0.24);
+
+  /* Exit beat -------------------------------------------------------------
+     Starts exactly where the number beat lets go (the exit spacer follows the
+     phone spacer, so "top 40%" is the same scroll instant). Order is the
+     2022-2023 one: number out, screen blanks, small anticipation, then the
+     accelerating rotation/zoom into the white page. */
+  const exitTimeline = gsap.timeline({
+    scrollTrigger: {
+      id: "tv-exit",
+      trigger: ".tv-exit-spacer",
+      // Continues from where the number beat let go (the two spacers are
+      // adjacent, so "top 30%" is the same scroll instant as "bottom 30%").
+      start: "top 30%",
+      end: "bottom bottom",
+      scrub: true,
+      invalidateOnRefresh: true,
+      onEnter: () => {
+        setPreviewOwner("exit");
+        clearPreview();
+      },
+      onEnterBack: () => {
+        setPreviewOwner("exit");
+        clearPreview();
+      },
+      onUpdate: (self) => {
+        if (self.isActive && previewOwner === "exit") clearPreview();
+      },
+      onLeaveBack: () => {
+        setPreviewOwner("phone");
+        clearPreview();
+      },
+    },
+    defaults: { ease: "none" },
+  });
+
   exitTimeline
     .to(
+      ".tv-contact-number",
+      { autoAlpha: 0, yPercent: -26, duration: 0.1, ease: "power1.in" },
+      0,
+    )
+    .to(".tv-blackscreen", { ...TV_BLANK_PALETTE, duration: 0.16 }, 0.04)
+    .to(
       ".tv-box",
-      {
-        rotation: isMobile ? -4 : -3,
-        scale: isMobile ? 1.18 : 1.08,
-        duration: 0.18,
-        ease: "sine.inOut",
-      },
-      0.14,
+      { scale: 1.24, rotation: -3, duration: 0.18, ease: "sine.inOut" },
+      0.12,
     )
     .to(
       ".tv-box",
       {
-        rotation: isMobile ? -12 : -11,
-        scale: isMobile ? 2.8 : 4,
+        rotation: -11,
+        scale: 4,
         autoAlpha: 0,
-        duration: 0.68,
+        duration: 0.62,
         ease: "power1.in",
       },
       0.32,
-    );
-
-  if (!isMobile) {
-    // The 2022-2023 partfolio section was transparent, so the television
-    // dissolved into the white page behind it while the black Contact type
-    // stayed readable. The current section is black (load-bearing for the
-    // mobile black-plateau exit), so scrub the exit zone to white underneath
-    // the zooming television instead. Ends at 0.85 so the whiteout completes
-    // just before the television finishes fading at 1.0.
-    exitTimeline.to(
+    )
+    // The 2022-2023 partfolio section dissolved into the white page, so the
+    // zoom now carries the page with it: the black stage is scrubbed white
+    // underneath the set and completes just before the set finishes fading.
+    .to(
       ["#partfolio", ".tv-box-stickytainer", ".tv-box-pinner", ".tv-box-mask"],
-      { backgroundColor: "#ffffff", duration: 0.55 },
-      0.3,
+      { backgroundColor: "#ffffff", duration: 0.52 },
+      0.36,
     );
-  }
 }
 
 function setupContactCanvas(isMobile: boolean) {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ComponentType } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import { localize } from "~/portfolio/content";
 import type { Language, PortfolioContent } from "~/portfolio/types";
 
@@ -9,8 +9,11 @@ interface Props {
 
 type SceneStatus = "idle" | "loading" | "ready" | "error";
 
+type SceneProps = { onError?: () => void };
+
 const MARQUEE_WORDS = Array.from({ length: 10 }, (_, index) => index);
-let telephoneScenePromise: Promise<{ default: ComponentType }> | null = null;
+let telephoneScenePromise: Promise<{ default: ComponentType<SceneProps> }> | null =
+  null;
 
 function loadTelephoneScene() {
   telephoneScenePromise ??= import("../3d/TelephoneScene.client");
@@ -23,7 +26,15 @@ export default function Contact({ lang, content }: Props) {
   const [sceneActive, setSceneActive] = useState(false);
   const [sceneStatus, setSceneStatus] = useState<SceneStatus>("idle");
   const [TelephoneScene, setTelephoneScene] =
-    useState<ComponentType | null>(null);
+    useState<ComponentType<SceneProps> | null>(null);
+
+  // A failed WebGL scene must never take the contact copy with it. The canvas
+  // unmounts, the status is recorded for diagnostics and for the scroll
+  // runtime, and everything else on the page keeps working.
+  const handleSceneError = useCallback(() => {
+    setSceneStatus("error");
+    setSceneActive(false);
+  }, []);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -96,7 +107,9 @@ export default function Contact({ lang, content }: Props) {
           data-scene-active={sceneActive ? "true" : "false"}
           data-scene-status={sceneStatus}
         >
-          {sceneActive && TelephoneScene ? <TelephoneScene /> : null}
+          {sceneActive && TelephoneScene && sceneStatus !== "error" ? (
+            <TelephoneScene onError={handleSceneError} />
+          ) : null}
         </div>
 
         <a href={mailto} className="contact-link" aria-label={content.email}>
