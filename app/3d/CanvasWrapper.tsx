@@ -1,9 +1,24 @@
 import { Canvas } from "@react-three/fiber";
 import { Suspense, type ReactNode } from "react";
 
+/* The cabinet is a tall, narrow object: 0.82 x 2 x 0.82 world units before the
+   scene's own 1.8 scale. R3F's default camera is a 75 degree fov at z = 5,
+   which shows about 7.7 units of height, so the booth filled barely half of
+   its own container and roughly a fifth of its width. 34 degrees at z = 8
+   shows about 4.9 units, so the booth fills about three quarters of the
+   container height; the container's 2/5 aspect ratio keeps it centred with
+   sane side margins. Getting the framing right is also what makes the
+   entrance trustworthy - a booth that is never cropped can be moved by a
+   transform without losing its edges. */
+const CANVAS_CAMERA = {
+  position: [0, 0, 8] as [number, number, number],
+  fov: 34,
+};
+
 const CanvasWrapper = ({ children }: { children: ReactNode }) => {
   return (
     <Canvas
+      camera={CANVAS_CAMERA}
       dpr={[1, 1.5]}
       frameloop="always"
       gl={{

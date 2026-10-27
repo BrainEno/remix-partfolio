@@ -27,12 +27,27 @@
   font-size: 18px;
 }
 
+/* The last screen is a poster: the headline block sits top-left, the booth
+   stands opposite it on the right, and the running line + colophon are
+   anchored to the bottom. `margin-top: auto` on .contact-link is what pins the
+   lower group to the floor, so the booth never has to share a row with it.
+
+   The UA stylesheet gives h2 a 0.83em bottom margin, which added ~127px *per
+   line* and pushed the whole composition past 100svh: the top of CALL ME and
+   the credit line were both sliced off by `overflow: hidden`. Headings are
+   reset here and spaced explicitly. */
 .contact-headline {
-  text-align: center;
+  margin: 0;
+  text-align: left;
   text-transform: uppercase;
-  font-size: 12vw;
-  line-height: 0.9em;
-  margin-top: -10vw;
+  /* 8.6vw is the widest size at which "MARQUEE MOON" (~7.9em of Aeonik) still
+     clears the booth on the right at every desktop width; the clamp keeps the
+     extremes readable instead of letting the line run off the stage. */
+  font-size: clamp(40px, 8.6vw, 172px);
+  /* Display leading plus a small optical overlap. The old -10vw negative
+     margin (≈ -0.83em) stacked the three lines into one illegible block:
+     CALL ME, FOR THE and MARQUEE MOON all collided. */
+  line-height: 0.92em;
   font-weight: 500;
   color: transparent;
   -webkit-text-stroke-color: var(--black);
@@ -43,6 +58,13 @@
   margin-top: 0;
 }
 
+.contact-hl2,
+.contact-hl3 {
+  /* Tighter than line-height so the three lines read as one lockup, but only
+     just: enough to knit them together, not enough to make them collide. */
+  margin-top: -0.06em;
+}
+
 .contact-hl3 {
   color: var(--black);
 }
@@ -51,40 +73,45 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   /* Exactly one viewport: the last screen of the page is the complete contact
      composition, with nothing clipped by the top or bottom edge. */
   min-height: 100vh;
   min-height: 100svh;
   height: 100vh;
   height: 100svh;
-  padding: 0;
+  padding: 7svh 4.5vw 5svh;
   overflow: hidden;
 }
 
 .contact-inner p,
-.contact-inner h1 {
+.contact-inner h1,
+.contact-inner h3 {
   color: var(--black);
+  margin: 0;
 }
 
 /* The booth belongs to the contact composition, not to the viewport: it used
    to be `position: fixed` with a vw-height mismatch, which is why it drifted
-   out of frame (or off-screen entirely) on most desktop sizes. */
+   out of frame (or off-screen entirely) on most desktop sizes. It is sized by
+   height because the model is a tall narrow cabinet (0.82 × 2 × 0.82 units),
+   so a vw width either letterboxes it or crops it. */
 .canvas-container {
   display: flex;
   position: absolute;
-  top: 2svh;
-  right: 2vw;
+  top: 8svh;
+  right: 4.5vw;
   z-index: 3;
-  width: 42vw;
-  height: 74svh;
+  height: min(50svh, 460px);
+  aspect-ratio: 2 / 5;
+  width: auto;
   pointer-events: none;
   align-items: center;
   justify-content: center;
   background-color: transparent;
   contain: layout paint;
-  will-change: transform;
+  will-change: transform, opacity;
 }
 
 .contact-link {
@@ -92,11 +119,17 @@
   display: block;
   cursor: pointer;
   z-index: 10;
-  margin-bottom: 3vw;
+  /* Full-bleed of the padded column: as a shrink-to-fit flex item it used to
+     be as wide as its own content (~11k px), so the running line was clipped
+     by .contact-inner instead of by its own mask and started mid-word. */
+  align-self: stretch;
+  width: 100%;
+  margin-top: auto;
+  margin-bottom: 2.4vw;
 }
 
 .runningtext-bufferdiv {
-  font-size: 5.2vw;
+  font-size: clamp(26px, 4.6vw, 92px);
   line-height: 1em;
   display: block;
 }
@@ -160,6 +193,7 @@
 
 .contact-email-link {
   font-size: 18px;
+  margin-top: 2.2vw;
 }
 
 .contact-email-link:hover,
@@ -171,6 +205,17 @@
 .github-link {
   cursor: pointer;
   text-decoration: underline;
+}
+
+.contact-inner h3 {
+  font-size: 14px;
+  font-weight: 400;
+  margin-top: 1.4vw;
+}
+
+.contact-inner > p {
+  font-size: 13px;
+  margin-top: 0.5vw;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -190,6 +235,9 @@
   }
 
   .contact-headline {
+    /* 12vw made "MARQUEE MOON" wider than a 390px stage; 11vw keeps the whole
+       lockup inside the screen. */
+    font-size: 11vw;
     -webkit-text-stroke-width: 1px;
   }
 
@@ -202,19 +250,41 @@
   .contact-inner {
     min-height: 0;
     height: auto;
-    padding-bottom: 0;
-  }
-
-  .contact-inner {
+    padding: 0;
+    align-items: center;
     overflow: visible;
+    padding-bottom: 0;
   }
 
   .canvas-container {
     position: absolute;
     top: -350px;
     left: -60px;
-    width: min(100vw, 480px);
+    right: auto;
     height: 50svh;
+    aspect-ratio: auto;
+    width: min(100vw, 480px);
     contain: strict;
+  }
+
+  .contact-link {
+    margin-top: 0;
+    margin-bottom: 6vw;
+  }
+
+  .runningtext-bufferdiv {
+    font-size: 5.2vw;
+  }
+
+  .contact-email-link {
+    margin-top: 0;
+  }
+
+  .contact-inner h3 {
+    margin-top: 12px;
+  }
+
+  .contact-inner > p {
+    margin-top: 4px;
   }
 }
