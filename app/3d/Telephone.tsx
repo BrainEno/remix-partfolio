@@ -8,7 +8,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Mesh } from "three";
+import type { Object3D } from "three";
+import { useMediaQuery } from "~/hooks/useMediaQuery";
 
 /*
  * The editable source model is public/gltfs/telephone.gltf (37 MB, base64
@@ -24,15 +25,30 @@ const MODEL_SOURCES = ["/generated/telephone.glb", "/gltfs/telephone.gltf"];
 
 type TelephoneProps = {
   url: string;
+  onReady?: () => void;
 };
 
-const Telephone = ({ url }: TelephoneProps) => {
-  const ref = useRef<Mesh>(null);
+const Telephone = ({ url, onReady }: TelephoneProps) => {
+  const ref = useRef<Object3D>(null);
+  const elapsed = useRef(0);
+  const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const { scene } = useGLTF(url);
+
+  useEffect(() => {
+    onReady?.();
+  }, [onReady, scene]);
 
   useFrame((_, delta) => {
     if (!ref.current) return;
-    ref.current.rotation.y += delta * 0.18;
+    if (reducedMotion) {
+      ref.current.rotation.y = Math.PI / 2;
+      return;
+    }
+    // An unhurried, bounded turn keeps the front of the booth readable. The
+    // previous perpetual spin could present its back as the contact arrived.
+    elapsed.current += Math.min(delta, 0.05);
+    ref.current.rotation.y =
+      Math.PI / 2 + Math.sin(elapsed.current * 0.45) * 0.2;
   });
 
   return (
@@ -74,6 +90,7 @@ class ModelSourceBoundary extends Component<
 
 type TelephoneModelProps = {
   onError?: () => void;
+  onReady?: () => void;
 };
 
 /**
@@ -81,7 +98,7 @@ type TelephoneModelProps = {
  * caller is told, so the contact composition can drop the booth entirely
  * instead of showing an empty stage.
  */
-export const TelephoneModel = ({ onError }: TelephoneModelProps) => {
+export const TelephoneModel = ({ onError, onReady }: TelephoneModelProps) => {
   const [sourceIndex, setSourceIndex] = useState(0);
   const source = MODEL_SOURCES[sourceIndex] as string | undefined;
 
@@ -97,7 +114,7 @@ export const TelephoneModel = ({ onError }: TelephoneModelProps) => {
       onFail={() => setSourceIndex((index) => index + 1)}
     >
       <Suspense fallback={null}>
-        <Telephone url={source} />
+        <Telephone url={source} onReady={onReady} />
       </Suspense>
     </ModelSourceBoundary>
   );

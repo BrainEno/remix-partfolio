@@ -139,7 +139,15 @@ export default function Partfolio({
                 // the cursor drifts off a row while scroll-driven rows no
                 // longer re-fire; scroll choreography owns the idle/exit
                 // states instead.
-                onMouseEnter={() => onWorkPreview(index)}
+                onMouseEnter={() => {
+                  const section = sectionRef.current;
+                  if (
+                    section?.classList.contains("is-tv-exiting") ||
+                    section?.classList.contains("is-tv-phone")
+                  )
+                    return;
+                  onWorkPreview(index);
+                }}
               >
                 <div className="work-item-entry">
                   <div className="work-item-topline" />

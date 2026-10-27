@@ -1,114 +1,53 @@
-@media (max-width: 480px) {
-  /* Opening composition: headline words and the portrait are one choreography. */
+@media (max-width: 767px) {
   .intro-headline-box .intro-photo-box,
   .intro-photo-wrapper .intro-photo {
     will-change: transform;
   }
 
-  /* The photo rail starts fully outside the right edge and glides into place. */
-  .intro-subheadline-photo-box2 {
-    left: 104vw;
-    top: 3svh;
-    width: 34vw;
-    height: 94svh;
-    opacity: 1;
-    transform-origin: 50% 50%;
-  }
-
-  .intro-subheadline-text-box2 {
-    left: 100vw;
-  }
-
-  /* The idle CRT palette, showreel gating and the exit variables now live in
-     partfolio.css so desktop and mobile cannot drift apart again. */
-
-  /* Mobile keeps the phone in the Contact copy; the in-tube number is the
-     desktop beat only. */
-  .tv-contact-number {
-    display: none;
-  }
-
+  /* Mobile shows the number as a full-sized reading beat after the TV. */
+  .tv-contact-number,
   .tv-phone-spacer {
     display: none;
   }
 
+  /* Rows grow with their content: the previous fixed 13.5svh rows and 9.5px
+     credits made the work list noticeably smaller and clipped long titles. */
   .work-item,
   .work-item.zh {
-    min-height: 13.5svh;
-    height: 13.5svh;
-    padding: 7px 0 6px;
+    min-height: clamp(112px, 15svh, 160px);
+    height: auto;
+    padding: 12px 0;
   }
 
   .work-name {
-    width: min(70vw, 330px);
-    max-width: calc(100vw - 56px);
-    font-size: clamp(20px, 6.15vw, 29px);
-    line-height: 1.02;
+    width: min(78vw, 400px);
+    max-width: calc(100vw - 40px);
+    font-size: clamp(26px, 7.2vw, 36px);
+    line-height: 1.08;
     letter-spacing: -0.02em;
   }
 
   .work-name.zh {
-    line-height: 1.12;
+    line-height: 1.18;
     letter-spacing: 0;
   }
 
   .work-teaser {
-    margin-top: 5px;
-    font-size: 9.5px;
-    opacity: 0.84;
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1.35;
+    opacity: 0.9;
   }
 
   .work-items-headline,
   .work-items-headline.zh {
-    margin-bottom: 12px;
-    font-size: 11px;
+    margin-bottom: 16px;
+    font-size: 13px;
   }
 
   .tv-exit-spacer {
-    height: 126svh;
-  }
-
-  /* Contact overlaps the enlarged CRT. There is a deliberate black plateau,
-     followed by a gradual fade into the original white bottom section. */
-  #contact {
-    margin-top: -50svh;
-    /* Rises over the (white-painted) works stage during the exit, so its own
-       black -> white gradient is what the visitor sees. Without this the
-       stage's white plate covered the number and the top of the copy. */
-    z-index: 2;
-    background: linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0) 0,
-      #000 18svh,
-      #000 38svh,
-      #4a4a4a 62svh,
-      #d8d8d8 86svh,
-      #fff 106svh,
-      #fff 100%
-    );
-  }
-
-  .contact-text-box {
-    margin-top: 18svh;
-    margin-bottom: 24svh;
-    min-height: 20svh;
-  }
-
-  .contact-number,
-  .contact-headline {
-    mix-blend-mode: difference;
-    color: #fff;
-  }
-
-  .contact-headline {
-    -webkit-text-stroke-color: #fff;
-  }
-
-  .contact-hl3 {
-    color: #fff;
-  }
-
-  .canvas-container {
-    top: -20svh;
+    /* Keep the TV parked until the last work has passed the header, then give
+       the black-to-white exit roughly one viewport of scroll to breathe. */
+    height: 205svh;
   }
 }

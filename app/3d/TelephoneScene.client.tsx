@@ -4,6 +4,7 @@ import { TelephoneModel, TelephoneSceneBoundary } from "./Telephone";
 
 type Props = {
   onError?: () => void;
+  onReady?: () => void;
 };
 
 /**
@@ -32,12 +33,12 @@ class CanvasErrorBoundary extends Component<
   }
 }
 
-export default function TelephoneScene({ onError }: Props) {
+export default function TelephoneScene({ onError, onReady }: Props) {
   return (
     <CanvasErrorBoundary onError={onError}>
       <CanvasWrapper>
         <TelephoneSceneBoundary onError={() => onError?.()} fallback={null}>
-          <TelephoneModel onError={() => onError?.()} />
+          <TelephoneModel onError={onError} onReady={onReady} />
         </TelephoneSceneBoundary>
       </CanvasWrapper>
     </CanvasErrorBoundary>

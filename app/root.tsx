@@ -1,4 +1,6 @@
 import interFont from "@fontsource/inter/index.css?url";
+import notoSansTc from "@fontsource/noto-sans-tc/400.css?url";
+import notoSansSc from "@fontsource/noto-sans-sc/400.css?url";
 import inria from "@fontsource/inria-serif/index.css?url";
 import type { ReactNode } from "react";
 import {
@@ -16,6 +18,8 @@ import { portfolioContent } from "./portfolio/content";
 export const links = () => [
   { rel: "stylesheet", href: interFont },
   { rel: "stylesheet", href: inria },
+  { rel: "stylesheet", href: notoSansTc },
+  { rel: "stylesheet", href: notoSansSc },
   { rel: "stylesheet", href: globalStylesUrl },
 ];
 

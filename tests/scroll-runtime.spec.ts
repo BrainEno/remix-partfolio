@@ -9,7 +9,7 @@ async function scrollUntilAttribute(
   selector: string,
   attribute: string,
   expectedValue: string,
-  options: { maxSteps: number; stepViewport: number }
+  options: { maxSteps: number; stepViewport: number },
 ) {
   for (let step = 0; step < options.maxSteps; step += 1) {
     const value = await page.locator(selector).getAttribute(attribute);
@@ -18,12 +18,15 @@ async function scrollUntilAttribute(
     await page.evaluate(
       ({ stepViewport }: { stepViewport: number }) =>
         window.scrollBy(0, window.innerHeight * stepViewport),
-      options
+      options,
     );
     await waitForScroll(page, 100);
   }
 
-  await expect(page.locator(selector)).toHaveAttribute(attribute, expectedValue);
+  await expect(page.locator(selector)).toHaveAttribute(
+    attribute,
+    expectedValue,
+  );
 }
 
 /**
@@ -49,8 +52,7 @@ async function scrollToContentY(
       viewportFraction: number;
     }) => {
       const viewportHeight = window.innerHeight;
-      const maxScroll =
-        document.documentElement.scrollHeight - viewportHeight;
+      const maxScroll = document.documentElement.scrollHeight - viewportHeight;
       const content = document.querySelector("#smooth-content");
       const contentHeight = content?.getBoundingClientRect().height ?? 0;
       const bodyHeight =
@@ -78,7 +80,9 @@ async function scrollToContentY(
     let stable = 0;
     const started = performance.now();
     while (performance.now() - started < 8_000 && stable < 3) {
-      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => resolve(null)),
+      );
       const current = offset();
       if (Math.abs(current - previous) < 0.5) stable += 1;
       else stable = 0;
@@ -99,7 +103,7 @@ function parseCssRgb(value: string) {
             .join("")
         : hexMatch[1];
     return [0, 2, 4].map((offset) =>
-      Number.parseInt(hex.slice(offset, offset + 2), 16)
+      Number.parseInt(hex.slice(offset, offset + 2), 16),
     );
   }
 
@@ -119,13 +123,15 @@ function parseCssRgb(value: string) {
 async function readCssColorLuma(
   page: Page,
   selector: string,
-  property: string
+  property: string,
 ) {
-  const color = await page.locator(selector).evaluate(
-    (element, cssProperty: string) =>
-      getComputedStyle(element).getPropertyValue(cssProperty).trim(),
-    property
-  );
+  const color = await page
+    .locator(selector)
+    .evaluate(
+      (element, cssProperty: string) =>
+        getComputedStyle(element).getPropertyValue(cssProperty).trim(),
+      property,
+    );
   const rgb = parseCssRgb(color);
   if (!rgb) throw new Error(`Could not parse ${property}: ${color}`);
   return rgb.reduce((sum, component) => sum + component, 0) / 3;
@@ -140,7 +146,7 @@ test("desktop section tracking follows the complete smooth-scroll range", async 
   await page.goto("/", { waitUntil: "networkidle" });
   await expect(page.locator(".page-home")).toHaveAttribute(
     "data-scroll-runtime",
-    "ready"
+    "ready",
   );
   await page.locator('[data-language="en"]').click();
 
@@ -149,28 +155,28 @@ test("desktop section tracking follows the complete smooth-scroll range", async 
     .poll(() =>
       page.locator("#partfolio").evaluate((element) => {
         return Math.abs(element.getBoundingClientRect().top);
-      })
+      }),
     )
     .toBeLessThan(2);
-  await expect(page.locator(".nav-entry.nav-active .nav-entry-text")).toHaveText(
-    "Works"
-  );
+  await expect(
+    page.locator(".nav-entry.nav-active .nav-entry-text"),
+  ).toHaveText("Works");
 
   await page.getByRole("button", { name: "Contact", exact: true }).click();
-  await expect(page.locator(".nav-entry.nav-active .nav-entry-text")).toHaveText(
-    "Contact"
-  );
+  await expect(
+    page.locator(".nav-entry.nav-active .nav-entry-text"),
+  ).toHaveText("Contact");
   await expect
     .poll(() =>
-      page.locator("#contact .contact-text-box").evaluate((element) => {
+      page.locator("#contact .contact-inner").evaluate((element) => {
         return element.getBoundingClientRect().top;
-      })
+      }),
     )
     .toBeLessThan(900 * 0.65);
   expect(pageErrors).toEqual([]);
 });
 
-test("desktop intro portrait keeps its top visible as the mask expands", async ({
+test("desktop intro portrait retains the complete image and clears the header", async ({
   page,
 }) => {
   const pageErrors: string[] = [];
@@ -187,40 +193,37 @@ test("desktop intro portrait keeps its top visible as the mask expands", async (
     .poll(() => photo.evaluate((image: HTMLImageElement) => image.naturalWidth))
     .toBeGreaterThan(0);
   const widthBefore = await photo.evaluate((image) => image.clientWidth);
-
-  // Mid-way through the pinned scene: past the mask expansion, before the push.
-  const sceneTop = await page.evaluate(() => {
-    const scene = document.querySelector<HTMLElement>(
-      ".intro-subheadline-stickytainer",
-    );
-    if (!scene) throw new Error("Missing first intro story");
-    return scene.getBoundingClientRect().top + window.scrollY - window.scrollY;
-  });
-  await scrollToContentY(page, sceneTop + 4.2 * 724, 0);
-
-  await expect
-    .poll(() => photo.evaluate((image) => getComputedStyle(image).objectPosition))
-    .toBe("50% 0%");
+  const sceneTop = await page
+    .locator(".intro-subheadline-stickytainer")
+    .evaluate((element) => element.getBoundingClientRect().top);
+  await scrollToContentY(page, sceneTop + 4.2 * 724);
 
   const framing = await photo.evaluate((image: HTMLImageElement) => {
-    const scale = Math.max(
-      image.clientWidth / image.naturalWidth,
-      image.clientHeight / image.naturalHeight,
-    );
-    const renderedHeight = image.naturalHeight * scale;
-    const objectPositionY = Number.parseFloat(
-      getComputedStyle(image).objectPosition.split(" ")[1],
-    );
+    const mask = image.parentElement!;
+    const rect = mask.getBoundingClientRect();
+    const title = document
+      .querySelector(".intro-subheadline-title")!
+      .getBoundingClientRect();
+    const header = document.querySelector(".header")!.getBoundingClientRect();
     return {
       width: image.clientWidth,
-      croppedFromTop:
-        Math.max(0, renderedHeight - image.clientHeight) *
-        (objectPositionY / 100),
+      fit: getComputedStyle(image).objectFit,
+      imageRatio: image.naturalWidth / image.naturalHeight,
+      maskRatio: rect.width / rect.height,
+      top: rect.top,
+      bottom: rect.bottom,
+      titleTop: title.top,
+      headerBottom: header.bottom,
+      radius: Number.parseFloat(getComputedStyle(mask).borderTopLeftRadius),
     };
   });
 
-  expect(framing.width).toBeGreaterThan(widthBefore * 1.8);
-  expect(framing.croppedFromTop).toBeLessThanOrEqual(1);
+  expect(framing.width).toBeGreaterThan(widthBefore * 1.2);
+  expect(framing.fit).toBe("contain");
+  expect(framing.maskRatio).toBeCloseTo(framing.imageRatio, 2);
+  expect(framing.top).toBeGreaterThan(framing.headerBottom);
+  expect(framing.bottom).toBeLessThan(framing.titleTop);
+  expect(framing.radius).toBeLessThan(framing.width * 0.1);
   expect(pageErrors).toEqual([]);
 });
 
@@ -453,17 +456,25 @@ test("the last screen of the page is the complete contact composition", async ({
       headline: read(".contact-hl1"),
       lastHeadline: read(".contact-hl3"),
       marquee: read(".runningtext"),
-      email: read(".contact-email"),
-      copyright: read(".contact-inner h3"),
-      credit: read(".contact-inner > p"),
-      creditText: document.querySelector(".contact-inner > p")?.textContent ?? "",
+      email: read(".contact-email-link"),
+      copyright: read(".contact-details h3"),
+      credit: read(".contact-details p"),
+      creditText:
+        document.querySelector(".contact-details p")?.textContent ?? "",
       scrollY: window.scrollY,
       maxScroll: document.documentElement.scrollHeight - window.innerHeight,
     };
   });
 
   expect(lastScreen.scrollY).toBe(lastScreen.maxScroll);
-  for (const key of ["headline", "lastHeadline", "marquee", "email", "copyright", "credit"] as const) {
+  for (const key of [
+    "headline",
+    "lastHeadline",
+    "marquee",
+    "email",
+    "copyright",
+    "credit",
+  ] as const) {
     expect(lastScreen[key].visible).toBe(true);
   }
   expect(lastScreen.creditText).toContain("Bottom Think");
@@ -471,6 +482,7 @@ test("the last screen of the page is the complete contact composition", async ({
 });
 
 test("mobile GSAP runtime animates the required scenes", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
@@ -483,22 +495,22 @@ test("mobile GSAP runtime animates the required scenes", async ({ page }) => {
   const heroPhoto = page.locator(".intro-photo");
 
   const headlineBefore = await headline.evaluate(
-    (element) => getComputedStyle(element).transform
+    (element) => getComputedStyle(element).transform,
   );
   const heroBefore = await heroPhoto.evaluate(
-    (element) => getComputedStyle(element).transform
+    (element) => getComputedStyle(element).transform,
   );
 
   await page.evaluate(() =>
-    window.scrollTo(0, Math.min(360, document.body.scrollHeight))
+    window.scrollTo(0, Math.min(360, document.body.scrollHeight)),
   );
   await page.waitForTimeout(450);
 
   const headlineAfter = await headline.evaluate(
-    (element) => getComputedStyle(element).transform
+    (element) => getComputedStyle(element).transform,
   );
   const heroAfter = await heroPhoto.evaluate(
-    (element) => getComputedStyle(element).transform
+    (element) => getComputedStyle(element).transform,
   );
 
   expect(headlineAfter).not.toBe(headlineBefore);
@@ -506,12 +518,12 @@ test("mobile GSAP runtime animates the required scenes", async ({ page }) => {
 
   const portraitBox = page.locator(".intro-subheadline-photo-box");
   const portraitBefore = await portraitBox.evaluate(
-    (element) => getComputedStyle(element).transform
+    (element) => getComputedStyle(element).transform,
   );
 
   await page.evaluate(() => {
     const target = document.querySelector<HTMLElement>(
-      ".intro-subheadline-stickytainer"
+      ".intro-subheadline-stickytainer",
     );
     if (!target) throw new Error("Missing first intro story trigger");
     const top = target.getBoundingClientRect().top + window.scrollY;
@@ -520,70 +532,82 @@ test("mobile GSAP runtime animates the required scenes", async ({ page }) => {
   await page.waitForTimeout(450);
 
   const portraitAfter = await portraitBox.evaluate(
-    (element) => getComputedStyle(element).transform
+    (element) => getComputedStyle(element).transform,
   );
   expect(portraitAfter).not.toBe(portraitBefore);
 
   const tvPinner = page.locator(".tv-box-pinner");
   await expect
     .poll(async () =>
-      tvPinner.evaluate((element) =>
-        element.parentElement?.classList.contains("pin-spacer") ?? false
-      )
+      tvPinner.evaluate(
+        (element) =>
+          element.parentElement?.classList.contains("pin-spacer") ?? false,
+      ),
     )
     .toBe(true);
 
   expect(pageErrors).toEqual([]);
 });
 
-test("mobile second intro gallery enters from the right while the copy travels with it", async ({
+test("mobile gallery moves above the copy without covering its reading column", async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/", { waitUntil: "networkidle" });
   await expect(page.locator(".page-home")).toHaveAttribute(
     "data-scroll-runtime",
-    "ready"
+    "ready",
   );
 
   const scene = page.locator(".intro-subheadline-stickytainer2");
   const gallery = page.locator(".intro-subheadline-photo-box2");
   const copy = page.locator(".intro-subheadline-text-box2");
-
-  await scene.scrollIntoViewIfNeeded();
-  await waitForScroll(page, 350);
-
-  const viewportWidth = page.viewportSize()?.width ?? 390;
+  const sceneTop = await scene.evaluate(
+    (element) => element.getBoundingClientRect().top + scrollY,
+  );
+  await page.evaluate(
+    (y) => window.scrollTo(0, y - window.innerHeight * 0.75),
+    sceneTop,
+  );
+  await waitForScroll(page, 300);
   const galleryBefore = await gallery.boundingBox();
   const copyBefore = await copy.boundingBox();
   expect(galleryBefore).not.toBeNull();
   expect(copyBefore).not.toBeNull();
-  if (galleryBefore)
-    expect(galleryBefore.x).toBeGreaterThan(viewportWidth * 0.75);
-  if (copyBefore) expect(copyBefore.x).toBeGreaterThan(viewportWidth * 0.7);
 
-  await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.65));
-  await waitForScroll(page, 450);
-
+  await page.evaluate(
+    (y) => window.scrollTo(0, y + window.innerHeight * 0.35),
+    sceneTop,
+  );
+  await waitForScroll(page, 400);
   const galleryAfter = await gallery.boundingBox();
   const copyAfter = await copy.boundingBox();
   expect(galleryAfter).not.toBeNull();
   expect(copyAfter).not.toBeNull();
-  if (galleryBefore && galleryAfter)
-    expect(galleryAfter.x).toBeLessThan(galleryBefore.x);
-  if (copyBefore && copyAfter)
-    expect(copyAfter.x).toBeLessThan(copyBefore.x);
+  if (galleryBefore && galleryAfter && copyBefore && copyAfter) {
+    expect(galleryAfter.x).toBeLessThan(galleryBefore.x - 30);
+    expect(Math.abs(copyAfter.x - copyBefore.x)).toBeLessThan(1);
+    expect(copyAfter.y).toBeGreaterThanOrEqual(
+      galleryAfter.y + galleryAfter.height,
+    );
+    expect(copyAfter.x).toBeGreaterThanOrEqual(0);
+    expect(copyAfter.x + copyAfter.width).toBeLessThanOrEqual(
+      (page.viewportSize()?.width ?? 390) + 1,
+    );
+  }
 });
 
 test("mobile TV follows the grey-green to black to white visual state order", async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
   await page.goto("/", { waitUntil: "networkidle" });
   await expect(page.locator(".page-home")).toHaveAttribute(
     "data-scroll-runtime",
-    "ready"
+    "ready",
   );
 
   await page.evaluate(() => {
@@ -603,9 +627,10 @@ test("mobile TV follows the grey-green to black to white visual state order", as
 
   await expect
     .poll(async () =>
-      tvPinner.evaluate((element) =>
-        element.parentElement?.classList.contains("pin-spacer") ?? false
-      )
+      tvPinner.evaluate(
+        (element) =>
+          element.parentElement?.classList.contains("pin-spacer") ?? false,
+      ),
     )
     .toBe(true);
 
@@ -614,7 +639,7 @@ test("mobile TV follows the grey-green to black to white visual state order", as
     ".tv-all-vids",
     "data-preview-active",
     "true",
-    { maxSteps: 28, stepViewport: 0.07 }
+    { maxSteps: 28, stepViewport: 0.07 },
   );
   await expect(page.locator(".tv-cover")).toHaveCount(1);
 
@@ -625,21 +650,35 @@ test("mobile TV follows the grey-green to black to white visual state order", as
   expect(workRect).not.toBeNull();
   expect(screenRect).not.toBeNull();
   if (workRect && screenRect) {
-    expect(workRect.height).toBeLessThan(screenRect.height * 1.05);
+    // Rows can grow for long names, but an active row must overlap the tube.
+    expect(workRect.y).toBeLessThan(screenRect.y + screenRect.height);
+    expect(workRect.y + workRect.height).toBeGreaterThan(screenRect.y);
   }
+  expect(
+    await page
+      .locator(".work-name")
+      .first()
+      .evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+  ).toBeGreaterThanOrEqual(26);
+  expect(
+    await page
+      .locator(".work-teaser")
+      .first()
+      .evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+  ).toBeGreaterThanOrEqual(12);
 
   await scrollUntilAttribute(
     page,
     ".tv-all-vids",
     "data-preview-active",
     "false",
-    { maxSteps: 48, stepViewport: 0.09 }
+    { maxSteps: 48, stepViewport: 0.09 },
   );
   await expect(page.locator(".tv-cover")).toHaveCount(0);
 
   const tvBox = page.locator(".tv-box");
   const transformBeforeExit = await tvBox.evaluate(
-    (element) => getComputedStyle(element).transform
+    (element) => getComputedStyle(element).transform,
   );
 
   const samples: Array<{
@@ -649,19 +688,17 @@ test("mobile TV follows the grey-green to black to white visual state order", as
     transform: string;
   }> = [];
 
-  for (let step = 0; step < 48; step += 1) {
+  for (let step = 0; step < 80; step += 1) {
     samples.push({
-      luma: await readCssColorLuma(
-        page,
-        ".tv-blackscreen",
-        "--tv-screen-mid"
-      ),
+      luma: await readCssColorLuma(page, ".tv-blackscreen", "--tv-screen-mid"),
       contactVisible: await contactHeadline.isVisible(),
       backgroundOpacity: Number(
-        await tvBackground.evaluate((element) => getComputedStyle(element).opacity)
+        await tvBackground.evaluate(
+          (element) => getComputedStyle(element).opacity,
+        ),
       ),
       transform: await tvBox.evaluate(
-        (element) => getComputedStyle(element).transform
+        (element) => getComputedStyle(element).transform,
       ),
     });
 
@@ -670,10 +707,14 @@ test("mobile TV follows the grey-green to black to white visual state order", as
   }
 
   const darkestLuma = Math.min(...samples.map((sample) => sample.luma));
-  const darkestIndex = samples.findIndex((sample) => sample.luma === darkestLuma);
-  const firstContactIndex = samples.findIndex((sample) => sample.contactVisible);
+  const darkestIndex = samples.findIndex(
+    (sample) => sample.luma === darkestLuma,
+  );
+  const firstContactIndex = samples.findIndex(
+    (sample) => sample.contactVisible,
+  );
   const brightestAfterDark = Math.max(
-    ...samples.slice(darkestIndex).map((sample) => sample.luma)
+    ...samples.slice(darkestIndex).map((sample) => sample.luma),
   );
 
   expect(darkestIndex).toBeGreaterThan(0);
@@ -682,16 +723,17 @@ test("mobile TV follows the grey-green to black to white visual state order", as
   expect(firstContactIndex).toBeGreaterThan(darkestIndex);
   expect(brightestAfterDark).toBeGreaterThan(darkestLuma + 100);
   expect(brightestAfterDark).toBeGreaterThan(150);
-  expect(samples.some((sample) => sample.transform !== transformBeforeExit)).toBe(
-    true
-  );
+  expect(
+    samples.some((sample) => sample.transform !== transformBeforeExit),
+  ).toBe(true);
   expect(samples.some((sample) => sample.backgroundOpacity < 1)).toBe(true);
   expect(pageErrors).toEqual([]);
 });
 
-test("mobile WebGL scene mounts only when its observed Contact content is near the viewport", async ({
+test("mobile WebGL scene mounts only when Contact is near the viewport", async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
@@ -711,7 +753,7 @@ test("mobile WebGL scene mounts only when its observed Contact content is near t
 
   await page.locator("#intro").scrollIntoViewIfNeeded();
   await expect(sceneContainer).toHaveAttribute("data-scene-active", "false");
-  await expect(sceneContainer).toHaveAttribute("data-scene-status", "ready");
+  await expect(sceneContainer).toHaveAttribute("data-scene-status", "idle");
   await expect(canvas).toHaveCount(0);
 
   await contactInner.scrollIntoViewIfNeeded();

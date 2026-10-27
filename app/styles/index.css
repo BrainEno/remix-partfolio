@@ -150,19 +150,31 @@
   }
 }
 
-/**mobile*/
-@media (max-width: 480px) {
+/** Mobile / narrow tablet */
+@media (max-width: 767px) {
   .header {
     position: fixed;
+    top: 12px;
     left: 20px;
-    height: 50px;
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    align-items: start;
     width: calc(100vw - 40px);
+    height: auto;
     font-size: 12px;
   }
 
+  .header-left {
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
   .header-link {
-    font-size: 14px;
-    letter-spacing: 0.2px;
+    font-size: 16px;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
   }
 
   .header-reveal {
@@ -181,26 +193,167 @@
   }
 
   .lang-switch {
-    position: fixed;
-    left: 72.5px;
-    top: 35px;
-    margin-left: 4px;
-    display: block;
-    transform: scale(75%);
+    position: static;
+    display: flex;
+    align-items: center;
+    margin-left: 12px;
+    transform: none;
   }
 
   .lang-switch .lang {
     font-size: 12px;
   }
 
+  .nav {
+    justify-content: space-between;
+    width: 100%;
+  }
+
   .nav-entry {
-    margin-left: 20px;
+    margin-left: 0;
+  }
+
+  .nav-entry-text {
+    font-size: 12px;
   }
 
   .nav-entry-bg {
-    width: calc(100% + 20px);
-    height: calc(100% + 10px);
-    left: -10px;
-    top: -5px;
+    width: calc(100% + 16px);
+    height: calc(100% + 8px);
+    left: -8px;
+    top: -4px;
+  }
+}
+
+/* Reduced motion is a readable, unpinned document, not a scrubbed timeline
+   stopped half way through. Every image and paragraph remains in normal flow. */
+@media (prefers-reduced-motion: reduce) {
+  .intro-subheadline-stickytainer,
+  .intro-subheadline-stickytainer2,
+  .intro-subheadline-wrapper,
+  .intro-subheadline-wrapper2 {
+    width: 100vw;
+    height: auto;
+    display: block;
+    position: relative;
+    overflow: visible;
+  }
+
+  .intro-subheadline-visual-group {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: auto;
+    padding: 6svh 6vw 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .intro-subheadline-photo-box {
+    position: relative;
+    inset: auto;
+    width: min(70vw, 42svh);
+    height: auto;
+    transform: none;
+  }
+
+  .intro-subheadline-photo-mask {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1080 / 1438;
+    transform: none;
+  }
+
+  .intro-subheadline-photo-ghost-mask,
+  .intro-subheadline-pic-info {
+    display: none;
+  }
+
+  .intro-subheadline-title,
+  .intro-subheadline-title.zh {
+    display: block;
+    position: static;
+    margin-top: 1rem;
+    font-size: clamp(48px, 8vw, 96px);
+    line-height: 1;
+  }
+
+  .intro-subheadline-slider,
+  .intro-subheadline-slider2 {
+    display: block;
+    width: 100%;
+    height: auto;
+    padding: 5svh 6vw 10svh;
+  }
+
+  .intro-subheadline-text-box1,
+  .intro-subheadline-text-box2 {
+    position: static;
+    display: block;
+    width: 100%;
+    height: auto;
+    padding: 0;
+  }
+
+  .intro-subheadline-text1,
+  .intro-subheadline-text2 {
+    position: static;
+    width: 100%;
+    margin: 0;
+  }
+
+  .intro-subheadline-wrapper2 {
+    overflow-x: auto;
+  }
+
+  .intro-subheadline-photo-box2 {
+    position: relative;
+    inset: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    width: max-content;
+    height: clamp(190px, 30svh, 340px);
+    padding-left: 6vw;
+    gap: 14px;
+    transform: none;
+  }
+
+  .intro-subheadline-photo-mask2 {
+    flex: 0 0 auto;
+    width: min(65vw, 380px);
+    height: 100%;
+    margin: 0;
+  }
+
+  .intro-subheadline-text2-pic1,
+  .intro-subheadline-text2-pic2,
+  .tv-phone-spacer,
+  .tv-exit-spacer,
+  .contact-text-box {
+    display: none;
+  }
+
+  #partfolio {
+    min-height: 0;
+  }
+
+  .work-items-box {
+    min-height: 0;
+    margin-top: 0;
+    padding: 4svh 6vw 8svh;
+  }
+
+  .work-teaser-date,
+  .work-teaser-seperator,
+  .work-teaser-group {
+    opacity: 1;
+    transform: none;
+  }
+
+  #contact {
+    margin-top: 0;
+    background: #fff;
   }
 }

@@ -1,35 +1,9 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { MOBILE_MEDIA_QUERY } from "~/portfolio/media";
 
 type SetupMobileChoreographyOptions = {
-  scope: HTMLElement;
   onWorkPreview: (index: number) => void;
 };
-
-function killTrigger(id: string) {
-  const trigger = ScrollTrigger.getById(id);
-  trigger?.animation?.kill();
-  trigger?.kill(true);
-}
-
-function replaceBaseMobileTriggers() {
-  [
-    "intro-headline",
-    "intro-photo",
-    "intro-story-2",
-    "tv-pin",
-    "tv-phone",
-    "tv-exit",
-  ].forEach(killTrigger);
-
-  ScrollTrigger.getAll()
-    .filter((trigger) => trigger.vars.id?.toString().startsWith("work-"))
-    .forEach((trigger) => {
-      trigger.animation?.kill();
-      trigger.kill(true);
-    });
-}
 
 function setupHero() {
   const timeline = gsap.timeline({
@@ -84,50 +58,47 @@ function setupSecondIntroStory() {
   const scene = document.querySelector<HTMLElement>(
     ".intro-subheadline-stickytainer2",
   );
-  if (!scene) return;
+  const rail = document.querySelector<HTMLElement>(
+    ".intro-subheadline-photo-box2",
+  );
+  if (!scene || !rail) return;
 
-  const timeline = gsap.timeline({
-    scrollTrigger: {
-      id: "mobile-intro-story-2",
-      trigger: scene,
-      start: "top top",
-      end: () => `+=${Math.max(scene.offsetHeight, window.innerHeight * 1.35)}`,
-      scrub: true,
-      pin: true,
-      anticipatePin: 1,
-      invalidateOnRefresh: true,
+  // A horizontal rail moves independently above the paragraph. Keeping the
+  // paragraph in normal flow allows any language or viewport height to wrap
+  // without drawing text over the photographs.
+  gsap.fromTo(
+    rail,
+    { x: 0 },
+    {
+      x: () =>
+        -Math.max(
+          0,
+          rail.scrollWidth - window.innerWidth + window.innerWidth * 0.06,
+        ),
+      ease: "none",
+      scrollTrigger: {
+        id: "mobile-intro-story-2",
+        trigger: scene,
+        start: "top 85%",
+        end: "bottom 15%",
+        scrub: true,
+        invalidateOnRefresh: true,
+      },
     },
-    defaults: { ease: "none" },
-  });
-
-  timeline
-    .to(
-      ".intro-subheadline-photo-box2",
-      {
-        x: "-104vw",
-        y: "-3svh",
-        rotation: -1.25,
-        duration: 0.92,
-      },
-      0,
-    )
-    .to(
-      ".intro-subheadline-text-box2",
-      {
-        x: "-100vw",
-        duration: 1,
-      },
-      0,
-    );
+  );
 }
 
-function setupWorkPreview(onWorkPreview: (index: number) => void) {
+function setupWorkPreview(
+  onWorkPreview: (index: number) => void,
+  canPreview: () => boolean,
+) {
   const rows = gsap.utils.toArray<HTMLElement>(".work-item");
   const screen = document.querySelector<HTMLElement>(".tv-all-vids");
   const workItems = document.querySelector<HTMLElement>(".work-items-box");
-  if (!screen || !workItems || rows.length === 0) return;
+  if (!screen || !workItems || rows.length === 0) return () => undefined;
 
   const syncPreviewToScreen = () => {
+    if (!canPreview()) return;
     const screenRect = screen.getBoundingClientRect();
     let activeIndex = -1;
     let greatestOverlap = 0;
@@ -163,10 +134,30 @@ function setupWorkPreview(onWorkPreview: (index: number) => void) {
     onLeaveBack: () => onWorkPreview(-1),
     invalidateOnRefresh: true,
   });
+  return syncPreviewToScreen;
 }
 
 function setupTelevision(onWorkPreview: (index: number) => void) {
-  setupWorkPreview(onWorkPreview);
+  const portfolio = document.querySelector<HTMLElement>("#partfolio");
+  let isExiting = false;
+  let previewFrame = 0;
+  const syncPreview = setupWorkPreview(onWorkPreview, () => !isExiting);
+  const syncExit = (trigger: ScrollTrigger) => {
+    const next = trigger.progress > 0;
+    if (next === isExiting) return;
+    isExiting = next;
+    portfolio?.classList.toggle("is-tv-exiting", next);
+    window.cancelAnimationFrame(previewFrame);
+    if (next) {
+      onWorkPreview(-1);
+    } else {
+      // The TV pin and the exit can update in either order on a large jump.
+      // Measure the restored screen after both have settled for this frame.
+      previewFrame = window.requestAnimationFrame(() => {
+        if (!isExiting && portfolio?.isConnected) syncPreview();
+      });
+    }
+  };
 
   ScrollTrigger.create({
     id: "mobile-tv-pin",
@@ -187,12 +178,15 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
     scrollTrigger: {
       id: "mobile-tv-exit",
       trigger: ".tv-exit-spacer",
-      start: "top 56%",
+      start: "top 10%",
       end: "bottom bottom",
       scrub: true,
       invalidateOnRefresh: true,
-      onEnter: () => onWorkPreview(-1),
-      onEnterBack: () => onWorkPreview(-1),
+      // onUpdate also runs when a fast jump skips the entire trigger; with
+      // limitCallbacks enabled, enter/leave callbacks alone would leave the
+      // TV stuck in its exit state after jumping back to the work list.
+      onUpdate: syncExit,
+      onRefresh: syncExit,
     },
     defaults: { ease: "none" },
   });
@@ -252,24 +246,20 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
         "--tv-screen-top": "#ffffff",
         "--tv-screen-mid": "#ffffff",
         "--tv-screen-bottom": "#ffffff",
-        duration: 0.42,
+        duration: 0.08,
       },
-      0.72,
+      1.1,
     )
     .to(
       ["#partfolio", ".tv-box-stickytainer", ".tv-box-pinner", ".tv-box-mask"],
       {
         backgroundColor: "#ffffff",
-        duration: 0.42,
+        duration: 0.08,
       },
-      0.72,
+      1.1,
     )
     .fromTo(
-      [
-        "#contact .contact-text-box",
-        "#contact .contact-headline",
-        ".canvas-container",
-      ],
+      "#contact .contact-text-box",
       {
         autoAlpha: 0,
         y: "9svh",
@@ -277,9 +267,9 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
       {
         autoAlpha: 1,
         y: 0,
-        duration: 0.34,
+        duration: 0.32,
       },
-      0.78,
+      0.6,
     )
     .to(
       ".tv-box",
@@ -289,36 +279,16 @@ function setupTelevision(onWorkPreview: (index: number) => void) {
       },
       1.1,
     );
+
+  return () => window.cancelAnimationFrame(previewFrame);
 }
 
+/** Called inside the same gsap.matchMedia context as desktop choreography. */
 export function setupMobileChoreography({
-  scope,
   onWorkPreview,
 }: SetupMobileChoreographyOptions) {
-  if (
-    typeof window === "undefined" ||
-    !window.matchMedia(MOBILE_MEDIA_QUERY).matches
-  ) {
-    return () => undefined;
-  }
-
-  gsap.registerPlugin(ScrollTrigger);
-  replaceBaseMobileTriggers();
   onWorkPreview(-1);
-
-  const context = gsap.context(() => {
-    setupHero();
-    setupSecondIntroStory();
-    setupTelevision(onWorkPreview);
-  }, scope);
-
-  const refreshFrame = window.requestAnimationFrame(() =>
-    ScrollTrigger.refresh(),
-  );
-
-  return () => {
-    window.cancelAnimationFrame(refreshFrame);
-    context.revert();
-    onWorkPreview(-1);
-  };
+  setupHero();
+  setupSecondIntroStory();
+  return setupTelevision(onWorkPreview);
 }

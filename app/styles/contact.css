@@ -1,116 +1,135 @@
 #contact {
   display: block;
   position: relative;
-  /* The contact column follows the television exit instead of overlapping it.
-     Overlapping it with a negative margin shortened the document so much that
-     the zoom could never reach its end: the page bottomed out mid-exit, which
-     is what left the last screen almost empty. */
-  margin-top: 0;
-  margin-bottom: 0;
+  margin: 0;
+  background: #fff;
 }
 
-/* Desktop writes the number onto the tube (see .tv-contact-number), so the
-   page-level copy is mobile-only. */
+/* The desktop number is written onto the TV. Mobile gets a second, larger
+   reading beat between the TV and the final contact composition. */
 .contact-text-box {
   display: none;
-  position: relative;
   align-items: center;
   justify-content: center;
-  margin-top: 55vh;
-  margin-bottom: 60vh;
 }
 
 .contact-number {
-  position: absolute;
+  margin: 0;
   text-align: center;
-  z-index: 10;
-  font-size: 18px;
-}
-
-.contact-headline {
-  text-align: center;
-  text-transform: uppercase;
-  font-size: 12vw;
-  line-height: 0.9em;
-  margin-top: -10vw;
-  font-weight: 500;
-  color: transparent;
-  -webkit-text-stroke-color: var(--black);
-  -webkit-text-stroke-width: 4px;
-}
-
-.contact-hl1 {
-  margin-top: 0;
-}
-
-.contact-hl3 {
-  color: var(--black);
+  font-size: clamp(18px, 4.6vw, 24px);
+  color: #fff;
 }
 
 .contact-inner {
+  /* Width AND height constrain the display type. The old 12vw type inside a
+     fixed 100vh box clipped the first line and footer on wide, short screens. */
+  --contact-heading-size: clamp(38px, min(11vw, 17svh), 176px);
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* Exactly one viewport: the last screen of the page is the complete contact
-     composition, with nothing clipped by the top or bottom edge. */
-  min-height: 100vh;
+  gap: clamp(12px, 2svh, 22px);
   min-height: 100svh;
-  height: 100vh;
-  height: 100svh;
-  padding: 0;
-  overflow: hidden;
+  height: auto;
+  padding: clamp(72px, 8svh, 96px) 0 28px;
+  background: #fff;
 }
 
-.contact-inner p,
-.contact-inner h1 {
+.contact-hero {
+  position: relative;
+  width: 100%;
+  flex: 0 0 auto;
+}
+
+.contact-headlines {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.08em 12px;
+}
+
+.contact-headline {
+  max-width: 100%;
+  margin: 0;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-size: var(--contact-heading-size);
+  line-height: 0.96;
+  letter-spacing: -0.025em;
+  font-weight: 500;
+  color: transparent;
+  -webkit-text-stroke: clamp(1px, 0.2vw, 3px) var(--black);
+}
+
+.contact-hl3 {
   color: var(--black);
+  -webkit-text-stroke-width: 0;
 }
 
-/* The booth belongs to the contact composition, not to the viewport: it used
-   to be `position: fixed` with a vw-height mismatch, which is why it drifted
-   out of frame (or off-screen entirely) on most desktop sizes. */
+/* The canvas is a carefully bounded part of the contact stage, not a fixed
+   viewport object. On desktop it occupies the white space alongside the first
+   two lines; it never covers the full-width MARQUEE MOON line. */
 .canvas-container {
   display: flex;
   position: absolute;
-  top: 2svh;
-  right: 2vw;
+  top: 0;
+  right: clamp(20px, 3vw, 60px);
   z-index: 3;
-  width: 42vw;
-  height: 74svh;
+  width: min(24vw, 320px);
+  height: calc(var(--contact-heading-size) * 1.84);
   pointer-events: none;
   align-items: center;
   justify-content: center;
-  background-color: transparent;
+  background: transparent;
   contain: layout paint;
-  will-change: transform;
+  will-change: transform, opacity;
+}
+
+/* A loaded JS chunk is not the same as a decoded model. Fade the actual canvas
+   in only when the model has mounted, so a slow connection cannot make the
+   booth pop into an already-finished scroll animation. */
+.canvas-container canvas {
+  opacity: 0;
+  transition: opacity 350ms ease-out;
+}
+
+.canvas-container[data-scene-status="ready"] canvas {
+  opacity: 1;
+}
+
+/* No empty sculpture slot on devices where WebGL or both model sources fail. */
+.canvas-container[data-scene-status="error"] {
+  display: none;
 }
 
 .contact-link {
   position: relative;
   display: block;
+  flex: 0 0 auto;
+  width: 100%;
   cursor: pointer;
   z-index: 10;
-  margin-bottom: 3vw;
 }
 
 .runningtext-bufferdiv {
-  font-size: 5.2vw;
-  line-height: 1em;
   display: block;
-}
-
-.runningtext-bufferdiv,
-.runningtext {
   width: 100%;
-  height: 100%;
+  /* Keep at least one complete “Contact me” visible even on a 320px phone,
+     without shrinking it to the old 5.2vw (about 17px on that screen). */
+  font-size: clamp(22px, min(6.7vw, 7svh), 76px);
+  line-height: 1.15;
 }
 
 .runningtext {
   overflow: hidden;
   position: relative;
   display: flex;
+  width: 100%;
+  /* The extra leading protects ascenders/descenders and text stroke from
+     being clipped while still clipping the moving tracks horizontally. */
+  padding-block: 0.08em;
 }
 
 .runningtext-l1,
@@ -119,7 +138,7 @@
   display: inline-flex;
   align-items: center;
   flex-direction: row;
-  line-height: 1em;
+  line-height: 1.15;
   cursor: pointer;
   will-change: transform;
   animation: contact-marquee 80s linear infinite;
@@ -136,41 +155,55 @@
 
 .runningtext-word {
   text-transform: uppercase;
-  margin-right: 1.5vw;
+  margin-right: 0.3em;
   display: inline-block;
   white-space: nowrap;
   position: relative;
-  cursor: pointer;
   color: var(--black);
   font-weight: 500;
 }
 
-.contact-link:hover .runningtext-word {
-  color: #e55139;
-  mix-blend-mode: difference;
+@media (hover: hover) and (pointer: fine) {
+  .contact-link:hover .runningtext-word {
+    color: #e55139;
+  }
+}
+
+.contact-details {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.contact-details p,
+.contact-details h3 {
+  margin: 0;
+  font-size: clamp(13px, 1vw, 16px);
+  line-height: 1.35;
 }
 
 .contact-email-link,
+.contact-phone-link,
 .github-link {
-  z-index: 10;
   cursor: pointer;
-  outline: none;
-  transition: transform 200ms ease-in;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
 }
 
-.contact-email-link {
+.contact-email-link,
+.contact-phone-link {
   font-size: 18px;
 }
 
 .contact-email-link:hover,
+.contact-phone-link:hover,
 .github-link:hover {
-  transform: scale(1.05);
-}
-
-.contact-email,
-.github-link {
-  cursor: pointer;
-  text-decoration: underline;
+  color: #e55139;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -178,43 +211,60 @@
   .runningtext-l2 {
     animation: none;
   }
+  .canvas-container canvas {
+    transition: none;
+  }
 }
 
-/** Mobile */
-@media (max-width: 480px) {
+@media (max-width: 767px) {
   #contact {
     width: 100vw;
-    margin-top: 0;
-    margin-bottom: 20px;
-    overflow: hidden;
-  }
-
-  .contact-headline {
-    -webkit-text-stroke-width: 1px;
+    /* The number overlaps the end of the TV blackout; the white contact
+       stage follows it rather than interrupting the television mid-exit. */
+    margin-top: -100svh;
+    z-index: 2;
+    background: transparent;
   }
 
   .contact-text-box {
     display: flex;
-    margin-bottom: 300px;
-    margin-top: 300px;
+    min-height: 50svh;
+    margin: 0;
+    /* A single black-to-white transition continues the TV blackout; a second
+       fade at the top made an unnatural white–black–white band on mobile. */
+    background: linear-gradient(to bottom, #000 0%, #000 82%, #fff 100%);
   }
 
   .contact-inner {
-    min-height: 0;
-    height: auto;
-    padding-bottom: 0;
+    --contact-heading-size: min(11.3vw, 80px);
+    gap: 16px;
+    padding: 72px 0 28px;
   }
 
-  .contact-inner {
-    overflow: visible;
+  .contact-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
   }
 
+  /* Phones get a dedicated sculpture stage instead of placing the booth on
+     top of the words. This also gives the model a meaningful size on 320px. */
   .canvas-container {
-    position: absolute;
-    top: -350px;
-    left: -60px;
-    width: min(100vw, 480px);
-    height: 50svh;
-    contain: strict;
+    position: relative;
+    order: -1;
+    top: auto;
+    right: auto;
+    width: min(64vw, 300px);
+    height: clamp(190px, 31svh, 300px);
+    flex: 0 0 auto;
+  }
+
+  .contact-headline {
+    -webkit-text-stroke-width: 1.2px;
+  }
+
+  .contact-hl3 {
+    -webkit-text-stroke-width: 0;
   }
 }

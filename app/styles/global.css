@@ -47,7 +47,7 @@ html {
 
 html,
 body {
-  font-family: "Aeonik", Arial, sans-serif;
+  font-family: "Aeonik", Arial, "Noto Sans TC", "Noto Sans SC", sans-serif;
   font-style: normal;
   padding: 0;
   margin: 0;
@@ -93,5 +93,7 @@ div {
     "Microsoft YaHei",
     "Noto Sans CJK TC",
     "Heiti TC",
+    "Noto Sans TC",
+    "Noto Sans SC",
     sans-serif;
 }

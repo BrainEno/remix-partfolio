@@ -267,7 +267,8 @@
 
 /* Once the exit owns the screen, a stationary pointer crossing a scrolling
    work row must not light a project inside the zooming television again. */
-#partfolio.is-tv-exiting .work-items-box {
+#partfolio.is-tv-exiting .work-items-box,
+#partfolio.is-tv-phone .work-items-box {
   pointer-events: none;
 }
 
@@ -453,7 +454,7 @@
 }
 
 /** Mobile */
-@media (max-width: 480px) {
+@media (max-width: 767px) {
   #partfolio {
     width: 100vw;
     min-height: 0;

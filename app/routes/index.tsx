@@ -8,7 +8,6 @@ import Partifolio from "../components/Partfolio";
 import { useSiteLanguage } from "../hooks/useSiteLanguage";
 import { localize, portfolioContent } from "../portfolio/content";
 import type { PortfolioSection } from "../portfolio/types";
-import { setupMobileChoreography } from "../scroll/mobile-choreography.client";
 import {
   scrollToPortfolioSection,
   setupPortfolioScroll,
@@ -52,14 +51,9 @@ export default function Index() {
         onSectionChange: setSection,
         onWorkPreview: handleWorkPreview,
       });
-      const cleanupMobile = setupMobileChoreography({
-        scope,
-        onWorkPreview: handleWorkPreview,
-      });
       scope.dataset.scrollRuntime = "ready";
 
       return () => {
-        cleanupMobile?.();
         cleanupBase?.();
         delete scope.dataset.scrollRuntime;
       };

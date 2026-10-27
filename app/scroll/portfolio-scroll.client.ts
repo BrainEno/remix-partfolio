@@ -3,6 +3,7 @@ import { ScrollSmoother } from "gsap/ScrollSmoother";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { DESKTOP_MEDIA_QUERY, MOBILE_MEDIA_QUERY } from "~/portfolio/media";
 import type { PortfolioSection } from "~/portfolio/types";
+import { setupMobileChoreography } from "./mobile-choreography.client";
 
 type SetupOptions = {
   scope: HTMLElement;
@@ -14,6 +15,8 @@ type SetupOptions = {
 type ResponsiveConditions = {
   isMobile: boolean;
   isDesktop: boolean;
+  reduceMotion: boolean;
+  motionOK: boolean;
 };
 
 let pluginsRegistered = false;
@@ -58,7 +61,7 @@ export function ensurePortfolioSmoother() {
 
   registerScrollPlugins();
 
-  if (isMobileViewport()) {
+  if (isMobileViewport() || prefersReducedMotion()) {
     disablePortfolioSmoother();
     return null;
   }
@@ -73,7 +76,7 @@ export function ensurePortfolioSmoother() {
     // ({ smooth: true, lerp: 0.08, multiplier: 0.9 }): lerp 0.08 settles to
     // ~95% in about 0.6s, which maps to a ScrollSmoother catch-up of ~0.65s.
     // Larger values make the scrubbed pin scenes feel detached and floaty.
-    smooth: prefersReducedMotion() ? 0 : 0.65,
+    smooth: 0.65,
     speed: 0.9,
     effects: false,
   });
@@ -87,7 +90,7 @@ export function scrollToPortfolioSection(section: PortfolioSection) {
   const target = document.getElementById(section);
   if (!target) return;
 
-  if (isMobileViewport()) {
+  if (isMobileViewport() || prefersReducedMotion()) {
     disablePortfolioSmoother();
     target.scrollIntoView({
       behavior: prefersReducedMotion() ? "auto" : "smooth",
@@ -98,7 +101,7 @@ export function scrollToPortfolioSection(section: PortfolioSection) {
 
   const smoother = ensurePortfolioSmoother();
   if (smoother) {
-    smoother.scrollTo(target, !prefersReducedMotion(), "top top");
+    smoother.scrollTo(target, true, "top top");
     return;
   }
 
@@ -115,21 +118,19 @@ function setupSectionTracking(
     const portfolioTop = document
       .getElementById("partfolio")
       ?.getBoundingClientRect().top;
-    // #contact deliberately overlaps the television exit, so its section box
-    // is visible long before any contact copy is. Measure the copy itself.
-    // Desktop writes the phone number onto the tube, which makes
-    // .contact-text-box display:none there (a zero rect would otherwise read
-    // as "the copy is at the top of the page"), so measure the contact column.
+    // The mobile number may precede the contact column; the desktop number
+    // is in the tube. Ignore display:none, but keep negative tops: a section
+    // remains active after its top has scrolled past the viewport.
     const contactCopyTop = [
-      "#contact .contact-inner",
       "#contact .contact-text-box",
+      "#contact .contact-inner",
     ]
-      .map(
-        (selector) =>
-          document.querySelector<HTMLElement>(selector)?.getBoundingClientRect()
-            .top,
-      )
-      .find((top) => typeof top === "number" && top > 0);
+      .map((selector) => document.querySelector<HTMLElement>(selector))
+      .find((element) => {
+        if (!element || element.getClientRects().length === 0) return false;
+        return getComputedStyle(element).visibility !== "hidden";
+      })
+      ?.getBoundingClientRect().top;
 
     if (portfolioTop === undefined) return;
 
@@ -157,13 +158,13 @@ function setupSectionTracking(
   syncSection();
 }
 
-function setupIntroHeadlineChoreography(isZh: boolean, isMobile: boolean) {
+function setupIntroHeadlineChoreography(isZh: boolean) {
   const timeline = gsap.timeline({
     scrollTrigger: {
       id: "intro-headline",
       trigger: ".intro-headline-box",
-      start: isMobile ? "top top" : "top 8%",
-      end: isMobile ? "bottom 42%" : "bottom 28%",
+      start: "top 8%",
+      end: "bottom 28%",
       scrub: true,
       invalidateOnRefresh: true,
     },
@@ -171,8 +172,8 @@ function setupIntroHeadlineChoreography(isZh: boolean, isMobile: boolean) {
 
   if (isZh) {
     timeline.to(".intro-headline-word.zh", {
-      y: isMobile ? 96 : 56,
-      x: isMobile ? 18 : 20,
+      y: 56,
+      x: 20,
       stagger: 0.18,
       ease: "none",
     });
@@ -181,16 +182,16 @@ function setupIntroHeadlineChoreography(isZh: boolean, isMobile: boolean) {
 
   timeline
     .to(".intro-headline-word.word-1", {
-      y: isMobile ? 96 : 50,
-      x: isMobile ? -12 : -16.905,
+      y: 50,
+      x: -16.905,
       ease: "none",
       duration: 1,
     })
     .to(
       ".intro-headline-word.word-2",
       {
-        y: isMobile ? 96 : 50,
-        x: isMobile ? -12 : -16.905,
+        y: 50,
+        x: -16.905,
         ease: "none",
       },
       "<-=0.1",
@@ -198,41 +199,39 @@ function setupIntroHeadlineChoreography(isZh: boolean, isMobile: boolean) {
     .to(
       ".intro-headline-word.word-3",
       {
-        y: isMobile ? 96 : 50,
-        x: isMobile ? -12 : -16.905,
+        y: 50,
+        x: -16.905,
         ease: "none",
       },
       "<-=0.2",
     );
 }
 
-function setupIntroParallax(isMobile: boolean) {
-  if (!isMobile) {
-    gsap.fromTo(
-      ".intro-headline-bar-image",
-      { yPercent: -15 },
-      {
-        yPercent: 15,
-        ease: "none",
-        scrollTrigger: {
-          id: "intro-bars",
-          trigger: ".intro-headline-box",
-          start: "top bottom",
-          end: "bottom top",
-          scrub: true,
-          invalidateOnRefresh: true,
-        },
+function setupIntroParallax() {
+  gsap.fromTo(
+    ".intro-headline-bar-image",
+    { yPercent: -15 },
+    {
+      yPercent: 15,
+      ease: "none",
+      scrollTrigger: {
+        id: "intro-bars",
+        trigger: ".intro-headline-box",
+        start: "top bottom",
+        end: "bottom top",
+        scrub: true,
+        invalidateOnRefresh: true,
       },
-    );
-  }
+    },
+  );
 
   gsap.fromTo(
     ".intro-photo",
-    { yPercent: isMobile ? 0 : 7, scale: 1, rotation: 0 },
+    { yPercent: 7, scale: 1, rotation: 0 },
     {
-      yPercent: isMobile ? -10 : -7,
-      scale: isMobile ? 1.16 : 1.06,
-      rotation: isMobile ? 7 : 2.5,
+      yPercent: -7,
+      scale: 1.06,
+      rotation: 2.5,
       transformOrigin: "50% 55%",
       ease: "none",
       scrollTrigger: {
@@ -257,24 +256,30 @@ function setupIntroParallax(isMobile: boolean) {
  * travel left together, so the paragraph can never slide across the portrait's
  * face.
  *
- *   0.00 - 0.36  settle   portrait descends + rotates, title descends,
- *                         ghost frame resolves, credit appears, mask widens
- *   0.45 - 0.70  approach copy crosses the right half of the viewport
- *   0.70 - 1.00  push     group and copy leave to the left together
+ *   0.00 - 0.48  settle   portrait descends + rotates, ghost resolves,
+ *                         credit appears, mask widens within safe bounds
+ *   0.42 - 0.64  approach copy crosses the right half of the viewport
+ *   0.64 - 0.74  hold     a reading beat with both elements at rest
+ *   0.74 - 1.02  push     group and copy leave to the left together
  *
- * Everything is transform-based (no animated `left`/`top` layout work).
+ * The large movements use transforms; only the contained mask width changes.
  */
 function setupFirstIntroStory(isMobile: boolean) {
   if (isMobile) {
-    // Mobile keeps the single portrait/mask beat: there is no room for the
-    // push composition on a 390px stage, and the copy sits below the image.
+    // Give the portrait a short, self-contained settle; the biography follows
+    // in normal document flow so it never covers the face or gets clipped on
+    // a short phone. The pin holds only the visual, not the reading column.
+    const visual = document.querySelector<HTMLElement>(
+      ".intro-subheadline-visual-group",
+    );
+    if (!visual) return;
+
     const timeline = gsap.timeline({
       scrollTrigger: {
         id: "intro-story-1",
-        trigger: ".intro-subheadline-stickytainer",
-        start: "top 12%",
-        end: () =>
-          `+=${getPinDistance(".intro-subheadline-stickytainer", 1.3)}`,
+        trigger: visual,
+        start: "top 14%",
+        end: () => `+=${window.innerHeight * 0.65}`,
         scrub: true,
         pin: true,
         anticipatePin: 1,
@@ -284,44 +289,36 @@ function setupFirstIntroStory(isMobile: boolean) {
     });
 
     timeline
-      .to(".intro-subheadline-photo-box", {
-        y: "18svh",
-        x: "20vw",
-        rotation: -18.75,
-        scale: 1.45,
-        autoAlpha: 0.82,
-        filter: "grayscale(10%)",
-        duration: 4,
-      })
-      .to(
-        ".intro-subheadline-photo-mask",
-        {
-          x: "4vw",
-          width: "+=20vw",
-          borderTopLeftRadius: "14vw",
-          filter: "grayscale(0%)",
-          duration: 4,
-        },
-        ">+=0.3",
+      .fromTo(
+        ".intro-subheadline-photo-box",
+        { xPercent: -50, rotation: -4, scale: 0.94 },
+        { xPercent: -50, rotation: 0, scale: 1, duration: 0.7 },
+        0,
       )
-      .to(
-        ".intro-subheadline-photo",
-        {
-          // As the portrait mask becomes landscape, centre-cropping would cut
-          // through the subject's head. Reframe with the same scrub.
-          objectPosition: "50% 0%",
-          duration: 4,
-        },
-        "<",
-      )
-      .to(
-        ".intro-subheadline-text-box1",
-        {
-          x: "-100vw",
-          duration: 4,
-        },
-        ">+=0.25",
+      .fromTo(
+        ".intro-subheadline-title",
+        { autoAlpha: 0.35, y: 18 },
+        { autoAlpha: 1, y: 0, duration: 0.55 },
+        0.15,
       );
+
+    gsap.fromTo(
+      ".intro-subheadline-text1",
+      { autoAlpha: 0.6, y: 24 },
+      {
+        autoAlpha: 1,
+        y: 0,
+        ease: "none",
+        scrollTrigger: {
+          id: "mobile-intro-copy",
+          trigger: ".intro-subheadline-slider",
+          start: "top 95%",
+          end: "top 58%",
+          scrub: true,
+          invalidateOnRefresh: true,
+        },
+      },
+    );
     return;
   }
 
@@ -334,8 +331,7 @@ function setupFirstIntroStory(isMobile: boolean) {
       id: "intro-story-1",
       trigger: ".intro-subheadline-stickytainer",
       start: "top top",
-      end: () =>
-        `+=${getPinDistance(".intro-subheadline-stickytainer", 6)}`,
+      end: () => `+=${getPinDistance(".intro-subheadline-stickytainer", 6)}`,
       scrub: true,
       pin: true,
       anticipatePin: 1,
@@ -344,31 +340,33 @@ function setupFirstIntroStory(isMobile: boolean) {
     defaults: { ease: "none" },
   });
 
-  // Beat 1 - settle. Portrait and title share the same start and duration, so
-  // their (different) pixel travel still reads as one movement.
+  // Beat 1 - settle. The complete portrait has a safe top/bottom margin at
+  // every aspect ratio; a modest rounded corner keeps the old graphic motif
+  // without cutting into the subject's hair.
   timeline
     .fromTo(
       ".intro-subheadline-photo-box",
-      { x: "22vw", y: "-22vw", rotation: 0, scale: 1, autoAlpha: 1 },
+      { x: "15vw", y: "12svh", rotation: -7, scale: 0.92, autoAlpha: 1 },
       {
-        x: "10vw",
-        y: "5.5vw",
-        rotation: -18.75,
-        scale: 1.16,
-        autoAlpha: 0.84,
-        filter: "grayscale(10%)",
+        x: "7vw",
+        y: "14svh",
+        rotation: 0,
+        scale: 1,
+        autoAlpha: 1,
+        filter: "grayscale(0%)",
         duration: 0.36,
       },
       0,
     )
-    .to(
+    .fromTo(
       ".intro-subheadline-title",
-      { x: "-36vw", y: "37vw", duration: 0.36 },
-      0,
+      { y: 20, autoAlpha: 0.35 },
+      { y: 0, autoAlpha: 1, duration: 0.3 },
+      0.06,
     )
     .to(
       ".intro-subheadline-photo-ghost-mask",
-      { autoAlpha: 0, rotation: 18.15, duration: 0.18 },
+      { autoAlpha: 0, rotation: 0, duration: 0.2 },
       0.09,
     )
     .to(
@@ -379,16 +377,12 @@ function setupFirstIntroStory(isMobile: boolean) {
     .to(
       ".intro-subheadline-photo-mask",
       {
-        width: "+=20vw",
-        borderTopLeftRadius: "14vw",
+        width: () =>
+          Math.min(window.innerWidth * 0.38, window.innerHeight * 0.43),
+        borderTopLeftRadius: 24,
         filter: "grayscale(0%)",
         duration: 0.18,
       },
-      0.3,
-    )
-    .to(
-      ".intro-subheadline-photo",
-      { objectPosition: "50% 0%", duration: 0.18 },
       0.3,
     );
 
@@ -408,31 +402,23 @@ function setupFirstIntroStory(isMobile: boolean) {
   // Beat 4 - push. Group and copy leave in the same scroll interval, the copy
   // travelling 48vw further so it keeps leading the artwork out of frame.
   timeline
-    .to(".intro-subheadline-visual-group", { x: "-100vw", duration: 0.28 }, 0.74)
+    .to(
+      ".intro-subheadline-visual-group",
+      { x: "-100vw", duration: 0.28 },
+      0.74,
+    )
     .to(".intro-subheadline-text-box1", { x: "-148vw", duration: 0.28 }, 0.74);
-
-  // The title keeps a small counter-drift so the push has a parallax layer
-  // instead of reading as one flat plate sliding away.
-  timeline.to(
-    ".intro-subheadline-title",
-    { x: "-16vw", duration: 0.28 },
-    0.74,
-  );
 
   if (scene) scene.dataset.introPhase = "settle-approach-push";
 }
 
-function setupSecondIntroStory(isMobile: boolean) {
+function setupSecondIntroStory() {
   const timeline = gsap.timeline({
     scrollTrigger: {
       id: "intro-story-2",
       trigger: ".intro-subheadline-stickytainer2",
       start: "top top",
-      end: () =>
-        `+=${getPinDistance(
-          ".intro-subheadline-stickytainer2",
-          isMobile ? 1.15 : 4,
-        )}`,
+      end: () => `+=${getPinDistance(".intro-subheadline-stickytainer2", 4)}`,
       scrub: true,
       pin: true,
       anticipatePin: 1,
@@ -440,31 +426,6 @@ function setupSecondIntroStory(isMobile: boolean) {
     },
     defaults: { ease: "none" },
   });
-
-  if (isMobile) {
-    // The photo rail and paragraph now start moving at the same scroll instant.
-    // The paragraph begins exactly one viewport to the right, so its leading
-    // edge enters immediately instead of waiting for a whole blank viewport.
-    timeline
-      .to(
-        ".intro-subheadline-photo-box2",
-        {
-          x: "-52vw",
-          autoAlpha: 0.35,
-          duration: 1,
-        },
-        0,
-      )
-      .to(
-        ".intro-subheadline-text-box2",
-        {
-          x: "-100vw",
-          duration: 1,
-        },
-        0,
-      );
-    return;
-  }
 
   timeline
     .to(".intro-subheadline-photo-box2", {
@@ -523,20 +484,42 @@ function setupSecondIntroStory(isMobile: boolean) {
 
 function setupWorkPreview(onWorkPreview: (index: number) => void) {
   const rows = gsap.utils.toArray<HTMLElement>(".work-item");
+  const workItems = document.querySelector<HTMLElement>(".work-items-box");
+  if (!workItems || rows.length === 0) return () => false;
 
-  rows.forEach((row, index) => {
-    const activate = () => onWorkPreview(index);
-
-    ScrollTrigger.create({
-      id: `work-${index}`,
-      trigger: row,
-      start: "top 60%",
-      end: "bottom 40%",
-      onEnter: activate,
-      onEnterBack: activate,
-      invalidateOnRefresh: true,
+  // Several short desktop rows can simultaneously cross the old 40–60%
+  // thresholds. Separate onEnter callbacks picked different images depending
+  // on scroll direction. One reading line makes the selection deterministic.
+  const syncPreview = () => {
+    const focus = window.innerHeight * 0.55;
+    let index = -1;
+    let nearest = Infinity;
+    rows.forEach((row, candidate) => {
+      const rect = row.getBoundingClientRect();
+      if (rect.bottom < 0 || rect.top > window.innerHeight) return;
+      const distance = Math.abs((rect.top + rect.bottom) / 2 - focus);
+      if (distance < nearest) {
+        nearest = distance;
+        index = candidate;
+      }
     });
+    if (index >= 0) onWorkPreview(index);
+    return index >= 0;
+  };
+
+  ScrollTrigger.create({
+    id: "work-preview",
+    trigger: workItems,
+    start: "top bottom",
+    end: "bottom top",
+    onEnter: syncPreview,
+    onEnterBack: syncPreview,
+    onUpdate: syncPreview,
+    onRefresh: syncPreview,
+    onLeaveBack: () => onWorkPreview(-1),
+    invalidateOnRefresh: true,
   });
+  return syncPreview;
 }
 
 type PreviewOwner = "rows" | "phone" | "exit";
@@ -567,10 +550,7 @@ const TV_BLANK_PALETTE = {
   "--tv-screen-glow": "rgba(0, 0, 0, 0)",
 } as const;
 
-function setupTelevisionSequence(
-  onWorkPreview: (index: number) => void,
-  isMobile: boolean,
-) {
+function setupTelevisionSequence(onWorkPreview: (index: number) => void) {
   const rows = gsap.utils.toArray<HTMLElement>(".work-item");
   const lastWorkIndex = rows.length - 1;
   const portfolio = document.querySelector<HTMLElement>("#partfolio");
@@ -580,6 +560,7 @@ function setupTelevisionSequence(
   // telephone-number beat and the exit all wrote to the same slot and could
   // relight a project inside the zooming set (or blank a valid preview).
   let previewOwner: PreviewOwner = "rows";
+  let previewFrame = 0;
   const setPreviewOwner = (owner: PreviewOwner) => {
     previewOwner = owner;
     portfolio?.classList.toggle("is-tv-exiting", owner === "exit");
@@ -589,8 +570,25 @@ function setupTelevisionSequence(
     if (previewOwner === "rows") onWorkPreview(index);
   };
   const clearPreview = () => onWorkPreview(-1);
+  const syncPreviewOwner = () => {
+    const exitProgress = ScrollTrigger.getById("tv-exit")?.progress ?? 0;
+    const phoneProgress = ScrollTrigger.getById("tv-phone")?.progress ?? 0;
+    const owner: PreviewOwner =
+      exitProgress > 0 ? "exit" : phoneProgress > 0 ? "phone" : "rows";
+    if (owner === previewOwner) return;
+    setPreviewOwner(owner);
+    window.cancelAnimationFrame(previewFrame);
+    if (owner !== "rows") {
+      clearPreview();
+      return;
+    }
+    // Wait for the pin to settle before remeasuring after a reverse jump.
+    previewFrame = window.requestAnimationFrame(() => {
+      if (previewOwner === "rows" && portfolio?.isConnected) syncWorkPreview();
+    });
+  };
 
-  setupWorkPreview(showWork);
+  const syncWorkPreview = setupWorkPreview(showWork);
 
   // The pinner is a full viewport stage pinned at "top top"; the exit spacer
   // closes the pin. A 1px pinner used to leave the framing dependent on where
@@ -605,17 +603,13 @@ function setupTelevisionSequence(
     pinSpacing: false,
     anticipatePin: 1,
     invalidateOnRefresh: true,
-    onEnter: () => showWork(0),
+    onEnter: () => {
+      if (!syncWorkPreview()) showWork(0);
+    },
     onEnterBack: () => {
-      if (lastWorkIndex >= 0) showWork(lastWorkIndex);
+      if (!syncWorkPreview() && lastWorkIndex >= 0) showWork(lastWorkIndex);
     },
   });
-
-  if (isMobile) {
-    // Mobile owns its own grey-green -> black -> white exit in
-    // mobile-choreography.client.ts (the tv-exit trigger is replaced there).
-    return;
-  }
 
   /* Telephone-number beat -------------------------------------------------
      The number is written onto the dead tube and *held* there: the works list
@@ -634,21 +628,8 @@ function setupTelevisionSequence(
       end: "bottom 30%",
       scrub: true,
       invalidateOnRefresh: true,
-      onEnter: () => {
-        setPreviewOwner("phone");
-        clearPreview();
-      },
-      onEnterBack: () => {
-        setPreviewOwner("phone");
-        clearPreview();
-      },
-      onUpdate: (self) => {
-        if (self.isActive && previewOwner === "phone") clearPreview();
-      },
-      onLeaveBack: () => {
-        setPreviewOwner("rows");
-        if (lastWorkIndex >= 0) onWorkPreview(lastWorkIndex);
-      },
+      onUpdate: syncPreviewOwner,
+      onRefresh: syncPreviewOwner,
     },
     defaults: { ease: "none" },
   });
@@ -680,7 +661,7 @@ function setupTelevisionSequence(
 
   /* Exit beat -------------------------------------------------------------
      Starts exactly where the number beat lets go (the exit spacer follows the
-     phone spacer, so "top 40%" is the same scroll instant). Order is the
+     phone spacer, so "top 30%" is the same scroll instant). Order is the
      2022-2023 one: number out, screen blanks, small anticipation, then the
      accelerating rotation/zoom into the white page. */
   const exitTimeline = gsap.timeline({
@@ -693,21 +674,10 @@ function setupTelevisionSequence(
       end: "bottom bottom",
       scrub: true,
       invalidateOnRefresh: true,
-      onEnter: () => {
-        setPreviewOwner("exit");
-        clearPreview();
-      },
-      onEnterBack: () => {
-        setPreviewOwner("exit");
-        clearPreview();
-      },
-      onUpdate: (self) => {
-        if (self.isActive && previewOwner === "exit") clearPreview();
-      },
-      onLeaveBack: () => {
-        setPreviewOwner("phone");
-        clearPreview();
-      },
+      // Progress, rather than enter/leave callbacks, remains correct even
+      // when a large scroll jump crosses the whole exit in a single frame.
+      onUpdate: syncPreviewOwner,
+      onRefresh: syncPreviewOwner,
     },
     defaults: { ease: "none" },
   });
@@ -743,28 +713,53 @@ function setupTelevisionSequence(
       { backgroundColor: "#ffffff", duration: 0.52 },
       0.36,
     );
+
+  return () => window.cancelAnimationFrame(previewFrame);
 }
 
 function setupContactCanvas(isMobile: boolean) {
-  if (isMobile) return;
+  // The TV has already completed its exit when the contact column reaches the
+  // viewport. Move the booth from a subtle lower-left lead-in to its reserved
+  // stage, then leave it there while the visitor reads and uses the links.
+  const timeline = gsap.timeline({
+    scrollTrigger: {
+      id: "contact-canvas",
+      trigger: ".contact-inner",
+      start: isMobile ? "top 52%" : "top 92%",
+      end: isMobile ? "top top" : "top 20%",
+      scrub: true,
+      invalidateOnRefresh: true,
+    },
+    defaults: { ease: "none" },
+  });
 
-  gsap
-    .timeline({
-      scrollTrigger: {
-        id: "contact-canvas",
-        trigger: ".contact-inner",
-        start: "top center",
-        end: "bottom bottom",
-        scrub: true,
-        invalidateOnRefresh: true,
+  timeline
+    .fromTo(
+      ".canvas-container",
+      {
+        autoAlpha: 0,
+        x: isMobile ? "-6vw" : "-10vw",
+        y: "14svh",
+        scale: 0.84,
+        rotation: -6,
       },
-      defaults: { duration: 30, ease: "none" },
-    })
-    .to(".canvas-container", {
-      top: "78vw",
-      left: "75vw",
-      scale: 1.3,
-    });
+      {
+        autoAlpha: 1,
+        x: 0,
+        y: 0,
+        scale: 1,
+        rotation: 0,
+        duration: 0.8,
+        ease: "sine.out",
+      },
+      0.12,
+    )
+    .fromTo(
+      ".contact-headlines",
+      { autoAlpha: 0, y: 24 },
+      { autoAlpha: 1, y: 0, duration: 0.62, ease: "sine.out" },
+      0.15,
+    );
 }
 
 // Locomotive's best-working scenes used scrub: true. Keep that direct
@@ -776,12 +771,19 @@ function setupResponsiveAnimations(
   isMobile: boolean,
   onWorkPreview: (index: number) => void,
 ) {
-  setupIntroHeadlineChoreography(isZh, isMobile);
-  setupIntroParallax(isMobile);
-  setupFirstIntroStory(isMobile);
-  setupSecondIntroStory(isMobile);
-  setupTelevisionSequence(onWorkPreview, isMobile);
+  let cleanupPreview: () => void;
+  if (isMobile) {
+    setupFirstIntroStory(true);
+    cleanupPreview = setupMobileChoreography({ onWorkPreview });
+  } else {
+    setupIntroHeadlineChoreography(isZh);
+    setupIntroParallax();
+    setupFirstIntroStory(false);
+    setupSecondIntroStory();
+    cleanupPreview = setupTelevisionSequence(onWorkPreview);
+  }
   setupContactCanvas(isMobile);
+  return cleanupPreview;
 }
 
 export function setupPortfolioScroll({
@@ -802,18 +804,31 @@ export function setupPortfolioScroll({
     {
       isMobile: MOBILE_MEDIA_QUERY,
       isDesktop: DESKTOP_MEDIA_QUERY,
+      reduceMotion: "(prefers-reduced-motion: reduce)",
+      motionOK: "(prefers-reduced-motion: no-preference)",
     },
     (context) => {
-      const { isMobile } = context.conditions as ResponsiveConditions;
+      const { isMobile, reduceMotion } =
+        context.conditions as ResponsiveConditions;
 
-      if (isMobile) {
+      if (isMobile || reduceMotion) {
         disablePortfolioSmoother();
       } else {
         ensurePortfolioSmoother();
       }
 
       setupSectionTracking(onSectionChange);
-      setupResponsiveAnimations(isZh, isMobile, onWorkPreview);
+      const cleanupPreview = reduceMotion
+        ? () => undefined
+        : setupResponsiveAnimations(isZh, isMobile, onWorkPreview);
+
+      return () => {
+        cleanupPreview();
+        scope
+          .querySelector("#partfolio")
+          ?.classList.remove("is-tv-exiting", "is-tv-phone");
+        onWorkPreview(-1);
+      };
     },
     scope,
   );
@@ -839,6 +854,7 @@ export function setupPortfolioScroll({
   // delayed layout jump.
   const handleWindowLoad = () => refresh();
   window.addEventListener("load", handleWindowLoad);
+  window.addEventListener("portfolio:layoutchange", refresh);
 
   const tvFrame = scope.querySelector(".tv-bg");
   const handleTvFrameLoad = () => refresh();
@@ -849,6 +865,7 @@ export function setupPortfolioScroll({
     window.cancelAnimationFrame(firstFrame);
     if (settleFrame) window.cancelAnimationFrame(settleFrame);
     window.removeEventListener("load", handleWindowLoad);
+    window.removeEventListener("portfolio:layoutchange", refresh);
     tvFrame?.removeEventListener("load", handleTvFrameLoad);
     media.revert();
     ScrollSmoother.get()?.kill();

@@ -12,7 +12,7 @@
     "dev": "react-router dev",
     "start": "sirv build/client --single --host 127.0.0.1 --port 3000",
     "typecheck": "react-router typegen && tsc",
-    "test:scroll": "playwright test tests/scroll-runtime.spec.ts tests/tv-geometry.spec.ts tests/template-runtime.spec.ts tests/archive-runtime.spec.ts --project=webkit-mobile",
+    "test:scroll": "playwright test tests/scroll-runtime.spec.ts tests/portfolio-layout.spec.ts tests/tv-geometry.spec.ts tests/template-runtime.spec.ts tests/archive-runtime.spec.ts --project=webkit-mobile",
     "format": "prettier --write .",
     "check": "npm run typecheck && npm run build",
     "assets:model": "node scripts/optimize-model.mjs"
@@ -21,6 +21,8 @@
   "dependencies": {
     "@fontsource/inria-serif": "^4.5.8",
     "@fontsource/inter": "^4.5.14",
+    "@fontsource/noto-sans-sc": "^5.3.1",
+    "@fontsource/noto-sans-tc": "^5.3.1",
     "@react-router/node": "^8.4.0",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.1",
