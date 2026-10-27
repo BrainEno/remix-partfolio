@@ -152,14 +152,34 @@
   justify-content: flex-end;
 }
 
+/* The first story is a three-beat composition (see
+   setupFirstIntroStory): the portrait + title settle as one visual group,
+   the paragraph travels in from the right, then group and paragraph leave
+   together. Everything here is transform-driven so the beat has no layout
+   work in it and the copy cannot drift onto the portrait's face. */
+.intro-subheadline-wrapper {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.intro-subheadline-visual-group {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  will-change: transform;
+}
+
 .intro-subheadline-slider {
   position: relative;
   display: flex;
   flex: 0 0 auto;
   flex-direction: row;
   align-items: center;
-  width: 200vw;
-  height: 120vh;
+  width: 100vw;
+  height: 100vh;
 }
 
 .intro-subheadline-photo-box {
@@ -256,29 +276,38 @@
   font-size: 7vw;
 }
 
+/* The copy owns the right-hand column of the pinned stage. It starts one
+   viewport to the right, lands *entirely inside* the viewport next to the
+   portrait, holds there for a readable beat and is only then pushed out with
+   the artwork. Sizing the column to the free half of the stage is what makes
+   the paragraph arrive complete: a 100vw box parked at 50vw was always
+   clipped by the viewport edge, so the copy was never fully readable. */
 .intro-subheadline-text-box1 {
-  width: 100vw;
-  height: 100vh;
   position: absolute;
-  bottom: 0.8vw;
+  /* Column width leaves the portrait (10vw–50vw after its mask widens) and a
+     comfortable gutter untouched. */
+  width: 44vw;
+  height: 100vh;
+  top: 0;
   left: 100vw;
+  display: flex;
+  align-items: center;
+  padding-bottom: 6vh;
+  will-change: transform;
 }
 
 .intro-subheadline-text {
-  font-size: 2.5vw;
+  font-size: clamp(15px, 1.85vw, 28px);
   color: var(--white);
-  text-indent: 12.1vw;
-  line-height: 1.3em;
-  margin-top: -0.45vw;
-  margin-bottom: -0.15em;
-  padding-right: 1vw;
-  padding-top: 1.0416666666666667vw;
-  padding-left: 1vw;
+  line-height: 1.45em;
+  text-indent: 0;
+  margin: 0;
+  padding: 0;
 }
 
 .intro-subheadline-text1 {
-  position: absolute;
-  width: 85vw;
+  position: relative;
+  width: 100%;
 }
 
 /*stickytainer2*/
@@ -466,6 +495,23 @@
     margin-top: 0.45svh;
     width: 90vw;
     line-height: 1.28;
+  }
+
+  /* Mobile keeps the original full-width band at the bottom of the stage: the
+     portrait has no room for a side column, so the copy slides a whole
+     viewport to the left instead of parking in a half-width column. */
+  .intro-subheadline-text-box1 {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    top: auto;
+    bottom: 0.8vw;
+    padding-bottom: 0;
+  }
+
+  .intro-subheadline-text1 {
+    position: absolute;
+    width: 85vw;
   }
 
   /* Keep the second story in the viewport from the instant it is pinned.

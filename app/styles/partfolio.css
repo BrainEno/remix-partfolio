@@ -15,20 +15,29 @@
   background: var(--black);
 }
 
+/* The pinner is the stage itself: exactly one viewport tall, pinned at
+   "top top". A 1px pinner with an overflowing mask made the visible framing
+   depend on where the pin happened to land, which is why the photograph's
+   ground drifted out of frame between viewports. */
 .tv-box-pinner {
-  width: 100vw;
-  height: 1px;
   position: relative;
+  width: 100vw;
+  height: 100vh;
+  height: 100svh;
+  background: var(--black);
 }
 
 .tv-box-mask {
-  position: relative;
+  position: absolute;
+  inset: 0;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   overflow: hidden;
   width: 100vw;
-  top: -14vw;
+  height: 100vh;
+  height: 100svh;
+  background: var(--black);
 }
 
 /* The photograph and its screen are one 2560 × 1707 scene. Keeping the
@@ -40,6 +49,11 @@
   flex: 0 0 auto;
   width: 2560px;
   aspect-ratio: 2560 / 1707;
+  /* The scene is taller than the viewport once it is wide enough for the set
+     to read, so the crop is biased upward: the glass ends up around two
+     thirds of the viewport height and the road under the television stays in
+     frame on every desktop size. */
+  margin-bottom: 24svh;
   transform-origin: 50% 64%;
   isolation: isolate;
   will-change: transform, opacity;
@@ -71,13 +85,37 @@
   width: 100%;
 }
 
+/* Idle CRT glass. A dead tube is never pure black: it keeps the grey-green
+   phosphor glow of the photograph. The exit timelines scrub these variables
+   through grey-green -> black (-> white on mobile). */
 .tv-blackscreen {
-  background: #020202;
+  --tv-screen-top: #777a76;
+  --tv-screen-mid: #626560;
+  --tv-screen-bottom: #545651;
+  --tv-screen-glow: rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(
+      circle at 48% 42%,
+      var(--tv-screen-glow),
+      transparent 46%
+    ),
+    linear-gradient(
+      180deg,
+      var(--tv-screen-top) 0%,
+      var(--tv-screen-mid) 54%,
+      var(--tv-screen-bottom) 100%
+    );
 }
 
 .tv-showreel {
   overflow: hidden;
   border-radius: inherit;
+  opacity: 0;
+  transition: opacity 220ms ease-out;
+}
+
+.tv-all-vids.has-preview .tv-showreel {
+  opacity: 1;
 }
 
 /* The source photograph still supplies the bezel and its original shadows.
@@ -101,7 +139,7 @@
     transparent 1px,
     transparent 3px
   );
-  opacity: 0.42;
+  opacity: 0.3;
 }
 
 .tv-showreel::after {
@@ -120,9 +158,9 @@
     ),
     radial-gradient(
       ellipse at 50% 46%,
-      transparent 48%,
-      rgba(0, 0, 0, 0.12) 72%,
-      rgba(0, 0, 0, 0.5) 112%
+      transparent 52%,
+      rgba(0, 0, 0, 0.1) 78%,
+      rgba(0, 0, 0, 0.34) 112%
     );
 }
 
@@ -133,12 +171,17 @@
   transform-origin: center;
 }
 
+/* The still sits *behind* the glass: blended with the phosphor base instead
+   of a black plate, so a project never reads as a dark hole in the photo. */
 .tv-showreel img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   mix-blend-mode: screen;
-  filter: saturate(0.88) contrast(1.05) brightness(0.92);
+  /* A still on a CRT is *lit*: it must stay brighter than the road around the
+     set. The old 1.06 gain plus a heavy corner vignette turned every project
+     into a dark hole, and the photograph's ground read as a black frame. */
+  filter: saturate(1.02) contrast(0.98) brightness(1.22);
 }
 
 .tv-bg-box {
@@ -159,6 +202,67 @@
   mix-blend-mode: screen;
   -webkit-user-select: none;
   user-select: none;
+}
+
+/* The readout shares the glass rectangle with .tv-all-vids but lives on top of
+   the photograph layer, so the bezel reflections cannot dim it. It is also the
+   container for the number's own type size. */
+.tv-number-layer {
+  position: absolute;
+  z-index: 3;
+  top: 57.4107%;
+  left: 43.3594%;
+  width: 12.8125%;
+  height: 15.7006%;
+  overflow: hidden;
+  border-radius: 9% 7% 8% 10% / 9% 8% 9% 10%;
+  container-type: inline-size;
+  pointer-events: none;
+}
+
+/* The number belongs to the tube. It fades up on the dead screen after the
+   works list has travelled past, holds while the visitor keeps scrolling, and
+   only then does the television zoom away.
+ *
+ * It is measured in container query units of the glass, not in `vw` of the
+ * page: a 1vw font was ~14px on a 328px screen, which read as a caption
+ * floating in a dark rectangle instead of as the tube's own readout. At 6.6cqi
+ * the line spans most of the glass at every viewport, and it keeps its
+ * proportion while the set zooms out instead of staying page-sized. */
+.tv-contact-number {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6%;
+  opacity: 0;
+  visibility: hidden;
+  color: rgba(247, 252, 240, 1);
+  font-size: 6.6cqi;
+  font-weight: 600;
+  letter-spacing: 0.055em;
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.65),
+    0 0 0.35em rgba(240, 250, 226, 0.55),
+    0 0 1em rgba(214, 255, 200, 0.3);
+  will-change: transform, opacity;
+}
+
+.tv-contact-number::after {
+  content: "";
+  position: absolute;
+  inset: -40% -10%;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(6, 10, 6, 0.28),
+    rgba(6, 10, 6, 0.05) 46%,
+    transparent 70%
+  );
+  opacity: 0.9;
+  pointer-events: none;
 }
 
 /* Once the exit owns the screen, a stationary pointer crossing a scrolling
@@ -318,8 +422,21 @@
   opacity: 1;
 }
 
+/* A dedicated plateau of scroll where the number simply holds on the dead
+   screen. Adding or removing projects moves this spacer, never its length. */
+.tv-phone-spacer {
+  /* Long enough for the number to be read (~1.1 viewports of scroll after the
+     reveal), short enough that it never feels like the page has stalled. */
+  height: 112svh;
+  pointer-events: none;
+  background: var(--black);
+}
+
 .tv-exit-spacer {
-  height: 150vh;
+  /* Owns the whole zoom. Must finish inside the scrollable range: the contact
+     composition is the last screen, so the zoom has to be complete before the
+     page bottoms out. */
+  height: 150svh;
   pointer-events: none;
 }
 

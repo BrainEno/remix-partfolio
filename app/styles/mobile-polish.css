@@ -19,34 +19,17 @@
     left: 100vw;
   }
 
-  /* Idle CRT palette. The exit timeline animates these variables through the
-     intended grey-green -> black -> white sequence. */
-  .tv-blackscreen {
-    --tv-screen-top: #777a76;
-    --tv-screen-mid: #626560;
-    --tv-screen-bottom: #545651;
-    --tv-screen-glow: rgba(255, 255, 255, 0.08);
-    background:
-      radial-gradient(
-        circle at 48% 42%,
-        var(--tv-screen-glow),
-        transparent 46%
-      ),
-      linear-gradient(
-        180deg,
-        var(--tv-screen-top) 0%,
-        var(--tv-screen-mid) 54%,
-        var(--tv-screen-bottom) 100%
-      );
+  /* The idle CRT palette, showreel gating and the exit variables now live in
+     partfolio.css so desktop and mobile cannot drift apart again. */
+
+  /* Mobile keeps the phone in the Contact copy; the in-tube number is the
+     desktop beat only. */
+  .tv-contact-number {
+    display: none;
   }
 
-  .tv-showreel {
-    opacity: 0;
-    transition: opacity 180ms ease-out;
-  }
-
-  .tv-all-vids.has-preview .tv-showreel {
-    opacity: 1;
+  .tv-phone-spacer {
+    display: none;
   }
 
   .work-item,
@@ -89,6 +72,10 @@
      followed by a gradual fade into the original white bottom section. */
   #contact {
     margin-top: -50svh;
+    /* Rises over the (white-painted) works stage during the exit, so its own
+       black -> white gradient is what the visitor sees. Without this the
+       stage's white plate covered the number and the top of the copy. */
+    z-index: 2;
     background: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 0,

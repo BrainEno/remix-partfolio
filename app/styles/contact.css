@@ -1,13 +1,19 @@
 #contact {
   display: block;
   position: relative;
-  margin-top: -140vh;
-  margin-bottom: 80px;
+  /* The contact column follows the television exit instead of overlapping it.
+     Overlapping it with a negative margin shortened the document so much that
+     the zoom could never reach its end: the page bottomed out mid-exit, which
+     is what left the last screen almost empty. */
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
+/* Desktop writes the number onto the tube (see .tv-contact-number), so the
+   page-level copy is mobile-only. */
 .contact-text-box {
+  display: none;
   position: relative;
-  display: flex;
   align-items: center;
   justify-content: center;
   margin-top: 55vh;
@@ -46,7 +52,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 0;
+  justify-content: center;
+  /* Exactly one viewport: the last screen of the page is the complete contact
+     composition, with nothing clipped by the top or bottom edge. */
+  min-height: 100vh;
+  min-height: 100svh;
+  height: 100vh;
+  height: 100svh;
+  padding: 0;
   overflow: hidden;
 }
 
@@ -55,17 +68,23 @@
   color: var(--black);
 }
 
+/* The booth belongs to the contact composition, not to the viewport: it used
+   to be `position: fixed` with a vw-height mismatch, which is why it drifted
+   out of frame (or off-screen entirely) on most desktop sizes. */
 .canvas-container {
   display: flex;
-  position: fixed;
-  top: 80vh;
-  left: 5vw;
+  position: absolute;
+  top: 2svh;
+  right: 2vw;
   z-index: 3;
+  width: 42vw;
+  height: 74svh;
   pointer-events: none;
   align-items: center;
-  height: 100vh;
+  justify-content: center;
   background-color: transparent;
   contain: layout paint;
+  will-change: transform;
 }
 
 .contact-link {
@@ -73,7 +92,7 @@
   display: block;
   cursor: pointer;
   z-index: 10;
-  margin-bottom: 6vw;
+  margin-bottom: 3vw;
 }
 
 .runningtext-bufferdiv {
@@ -175,8 +194,15 @@
   }
 
   .contact-text-box {
+    display: flex;
     margin-bottom: 300px;
     margin-top: 300px;
+  }
+
+  .contact-inner {
+    min-height: 0;
+    height: auto;
+    padding-bottom: 0;
   }
 
   .contact-inner {

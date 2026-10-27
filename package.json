@@ -5,7 +5,7 @@
   "scripts": {
     "assets:optimize": "node scripts/optimize-assets.mjs",
     "assets:validate": "node scripts/validate-content-assets.mjs",
-    "prepare:assets": "npm run assets:optimize && npm run assets:validate",
+    "prepare:assets": "npm run assets:optimize && npm run assets:model && npm run assets:validate",
     "prebuild": "npm run prepare:assets",
     "predev": "npm run prepare:assets",
     "build": "react-router build",
@@ -14,7 +14,8 @@
     "typecheck": "react-router typegen && tsc",
     "test:scroll": "playwright test tests/scroll-runtime.spec.ts tests/tv-geometry.spec.ts tests/template-runtime.spec.ts tests/archive-runtime.spec.ts --project=webkit-mobile",
     "format": "prettier --write .",
-    "check": "npm run typecheck && npm run build"
+    "check": "npm run typecheck && npm run build",
+    "assets:model": "node scripts/optimize-model.mjs"
   },
   "prettier": {},
   "dependencies": {

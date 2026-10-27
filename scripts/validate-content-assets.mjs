@@ -35,6 +35,17 @@ for (const assetPath of localPaths) {
   }
 }
 
+// The Contact model is generated from the editable glTF source at build time,
+// so validate the runtime target as well as the hand-authored assets above.
+const modelSource = resolve(root, "public/gltfs/telephone.gltf");
+const modelOutput = resolve(root, "public/generated/telephone.glb");
+try {
+  await access(modelSource);
+  await access(modelOutput);
+} catch {
+  missing.push("/generated/telephone.glb (run npm run assets:model)");
+}
+
 if (missing.length > 0) {
   console.error("Configured local content assets are missing or have incorrect case:");
   missing.forEach((path) => console.error(`  - ${path}`));

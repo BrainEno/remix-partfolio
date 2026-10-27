@@ -7,3 +7,6 @@ build
 .env
 *.log
 public/generated
+.arena
+test-results
+playwright-report
