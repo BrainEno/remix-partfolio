@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { type CSSProperties, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { localize } from "~/portfolio/content";
 import type { Language, PortfolioContent } from "~/portfolio/types";
 
@@ -10,10 +10,6 @@ interface PartfolioProps {
   activeWorkIndex: number;
   onWorkPreview: (index: number) => void;
 }
-
-type PortfolioStyle = CSSProperties & {
-  "--portfolio-work-space": string;
-};
 
 export default function Partfolio({
   lang,
@@ -27,10 +23,6 @@ export default function Partfolio({
   const works = content.items;
   const activeWork =
     activeWorkIndex >= 0 ? (works[activeWorkIndex] ?? null) : null;
-  const portfolioStyle: PortfolioStyle = {
-    "--portfolio-work-space": `${Math.max(works.length, 1) * 14}svh`,
-  };
-
   useEffect(() => {
     const section = sectionRef.current;
     if (!section || !("IntersectionObserver" in window)) return;
@@ -58,7 +50,7 @@ export default function Partfolio({
   }, [content.tvFrame.src, works]);
 
   return (
-    <section id="partfolio" ref={sectionRef} style={portfolioStyle}>
+    <section id="partfolio" ref={sectionRef}>
       <div className="tv-box-stickytainer">
         <div className="tv-box-pinner">
           <div className="tv-box-mask">

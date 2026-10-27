@@ -140,7 +140,13 @@
 .intro-subheadline-stickytainer {
   position: relative;
   width: 100vw;
-  height: 100vh;
+  /* Zero-height stage. A pinned stage that keeps its own 100vh in the flow
+     inserts a full viewport of dead scroll once the pin releases - that empty
+     navy screen between the portrait beat and the gallery was exactly this.
+     The 2022-2023 partfolio used the same trick (.tv-box-pinner); the scene
+     itself is 100vh and absolutely positioned, so nothing is lost, and
+     getPinDistance() falls back to the explicit stage count. */
+  height: 0;
   -webkit-box-orient: horizontal;
   -webkit-box-direction: normal;
   -webkit-flex-direction: row;
@@ -158,7 +164,9 @@
    together. Everything here is transform-driven so the beat has no layout
    work in it and the copy cannot drift onto the portrait's face. */
 .intro-subheadline-wrapper {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
@@ -187,7 +195,10 @@
   height: 100vh;
   left: 0;
   top: 0;
-  transform: translate3d(22vw, -22vw, 0);
+  /* Mirrors the first keyframe of setupFirstIntroStory: the portrait starts a
+     full stage above the frame so it *descends into* the viewport instead of
+     being born already clipped by the top edge. */
+  transform: translate3d(22vw, -72svh, 0);
 }
 
 .intro-subheadline-pic-info {
@@ -284,9 +295,9 @@
    clipped by the viewport edge, so the copy was never fully readable. */
 .intro-subheadline-text-box1 {
   position: absolute;
-  /* Column width leaves the portrait (10vw–50vw after its mask widens) and a
+  /* Column width leaves the portrait (8vw–46vw after its mask widens) and a
      comfortable gutter untouched. */
-  width: 44vw;
+  width: 46vw;
   height: 100vh;
   top: 0;
   left: 100vw;
@@ -296,10 +307,15 @@
   will-change: transform;
 }
 
+/* Body copy keeps the 2022-2023 measure: the biography is the longest block of
+   running text on the page, so it has to be set at the size it was designed
+   at. The earlier `1.85vw` cap dropped it to ~26px on a 1440 stage (the
+   original was 36px), which made the whole introduction read like a footnote
+   next to the artwork. The clamp only guards the extremes. */
 .intro-subheadline-text {
-  font-size: clamp(15px, 1.85vw, 28px);
+  font-size: clamp(21px, 2.35vw, 36px);
   color: var(--white);
-  line-height: 1.45em;
+  line-height: 1.4em;
   text-indent: 0;
   margin: 0;
   padding: 0;
@@ -314,7 +330,8 @@
 .intro-subheadline-stickytainer2 {
   position: relative;
   width: max-content;
-  height: 100vh;
+  /* See .intro-subheadline-stickytainer: no dead viewport after the pin. */
+  height: 0;
   display: flex;
   -webkit-box-orient: horizontal;
   -webkit-box-direction: normal;
@@ -325,6 +342,14 @@
   -webkit-justify-content: flex-end;
   -ms-flex-pack: end;
   justify-content: flex-end;
+}
+
+.intro-subheadline-wrapper2 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
 }
 
 .intro-subheadline-photo-box2 {
@@ -406,11 +431,19 @@
     height: 60vh;
   }
 
+  /* On a 390px stage a 50vw x 50vh window shows only a slice of the 1240x1644
+     figure, and the -100px inner offset pushes the subject's head out of even
+     that. Giving the window most of the stage height and resetting the offset
+     lets the portrait read as a person again. */
   .intro-headline-box .intro-photo-box {
-    width: 50vw;
-    height: 50vh;
-    top: -10px;
-    right: 20px;
+    width: 54vw;
+    height: 74vh;
+    top: 6vh;
+    right: 5vw;
+  }
+
+  .intro-photo-wrapper .intro-photo {
+    top: 0;
   }
 
   .intro-headline-word {
@@ -448,10 +481,12 @@
     display: none;
   }
 
+  /* Same zero-height stage as desktop: otherwise the pin leaves a full
+     viewport of dead scroll between the two mobile stories. */
   .intro-subheadline-stickytainer {
     position: relative;
     width: 100vw;
-    height: 100svh;
+    height: 0;
   }
 
   .intro-subheadline-slider {
@@ -490,11 +525,11 @@
   }
 
   .intro-subheadline-text {
-    font-size: clamp(20px, 5.9vw, 24px);
+    font-size: clamp(21px, 6.2vw, 26px);
     text-indent: 6svh;
     margin-top: 0.45svh;
     width: 90vw;
-    line-height: 1.28;
+    line-height: 1.3;
   }
 
   /* Mobile keeps the original full-width band at the bottom of the stage: the
@@ -521,7 +556,7 @@
     display: flex;
     position: relative;
     width: 100vw;
-    height: 100svh;
+    height: 0;
     transform: none;
   }
 

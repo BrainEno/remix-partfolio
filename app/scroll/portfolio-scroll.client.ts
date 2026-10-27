@@ -155,6 +155,28 @@ function setupSectionTracking(
     invalidateOnRefresh: true,
   });
   syncSection();
+
+  /* Safety net: the trigger above is the source of truth, but a pinned stage
+     plus a smoothing wrapper can leave the callback starved for a frame or two
+     right after a refresh, and the nav would then keep highlighting a section
+     the visitor has already left. A rAF-throttled listener re-runs the same
+     pure measurement; setState with an unchanged value is a no-op. */
+  let frame = 0;
+  const onScroll = () => {
+    if (frame) return;
+    frame = window.requestAnimationFrame(() => {
+      frame = 0;
+      syncSection();
+    });
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  ScrollTrigger.addEventListener("refresh", syncSection);
+
+  return () => {
+    window.removeEventListener("scroll", onScroll);
+    ScrollTrigger.removeEventListener("refresh", syncSection);
+    if (frame) window.cancelAnimationFrame(frame);
+  };
 }
 
 function setupIntroHeadlineChoreography(isZh: boolean, isMobile: boolean) {
@@ -257,12 +279,20 @@ function setupIntroParallax(isMobile: boolean) {
  * travel left together, so the paragraph can never slide across the portrait's
  * face.
  *
- *   0.00 - 0.36  settle   portrait descends + rotates, title descends,
- *                         ghost frame resolves, credit appears, mask widens
- *   0.45 - 0.70  approach copy crosses the right half of the viewport
- *   0.70 - 1.00  push     group and copy leave to the left together
+ *   0.00 - 0.36  settle   portrait descends from a full stage above the frame,
+ *                         rotates, title descends, ghost resolves, credit
+ *                         appears, mask widens (and reframes to the head)
+ *   0.42 - 0.64  approach copy crosses the right half of the viewport
+ *   0.64 - 0.74  hold     the visitor reads the copy beside the artwork
+ *   0.74 - 1.00  push     group and copy leave to the left together
  *
  * Everything is transform-based (no animated `left`/`top` layout work).
+ *
+ * The portrait starts one whole stage above the viewport rather than at -22vw:
+ * at -22vw the top of the mask was already above the frame, so the subject's
+ * head was sliced off by the viewport edge for the entire settle beat and the
+ * photograph never read as the original portrait. Starting off screen makes
+ * the same descent read as an entrance instead of an occlusion.
  */
 function setupFirstIntroStory(isMobile: boolean) {
   if (isMobile) {
@@ -321,6 +351,12 @@ function setupFirstIntroStory(isMobile: boolean) {
           duration: 4,
         },
         ">+=0.25",
+      )
+      .fromTo(
+        "#intro",
+        { backgroundColor: "#000000" },
+        { backgroundColor: "#013171", duration: 4, ease: "power1.in" },
+        "<",
       );
     return;
   }
@@ -334,8 +370,11 @@ function setupFirstIntroStory(isMobile: boolean) {
       id: "intro-story-1",
       trigger: ".intro-subheadline-stickytainer",
       start: "top top",
+      // 4.8 stages: enough for settle + approach + hold + push to each read as
+      // their own beat. The previous 6 stages made the introduction alone
+      // longer than the rest of the page and every beat feel slow.
       end: () =>
-        `+=${getPinDistance(".intro-subheadline-stickytainer", 6)}`,
+        `+=${getPinDistance(".intro-subheadline-stickytainer", 4.8)}`,
       scrub: true,
       pin: true,
       anticipatePin: 1,
@@ -349,10 +388,10 @@ function setupFirstIntroStory(isMobile: boolean) {
   timeline
     .fromTo(
       ".intro-subheadline-photo-box",
-      { x: "22vw", y: "-22vw", rotation: 0, scale: 1, autoAlpha: 1 },
+      { x: "22vw", y: "-72svh", rotation: 0, scale: 1, autoAlpha: 1 },
       {
-        x: "10vw",
-        y: "5.5vw",
+        x: "8vw",
+        y: "4svh",
         rotation: -18.75,
         scale: 1.16,
         autoAlpha: 0.84,
@@ -363,7 +402,7 @@ function setupFirstIntroStory(isMobile: boolean) {
     )
     .to(
       ".intro-subheadline-title",
-      { x: "-36vw", y: "37vw", duration: 0.36 },
+      { x: "-30vw", y: "33vw", duration: 0.36 },
       0,
     )
     .to(
@@ -376,16 +415,16 @@ function setupFirstIntroStory(isMobile: boolean) {
       { autoAlpha: 1, scale: 1, duration: 0.16 },
       0.2,
     )
-    .to(
-      ".intro-subheadline-photo-mask",
-      {
-        width: "+=20vw",
-        borderTopLeftRadius: "14vw",
-        filter: "grayscale(0%)",
-        duration: 0.18,
-      },
-      0.3,
-    )
+      .to(
+        ".intro-subheadline-photo-mask",
+        {
+          width: "+=18vw",
+          borderTopLeftRadius: "14vw",
+          filter: "grayscale(0%)",
+          duration: 0.18,
+        },
+        0.3,
+      )
     .to(
       ".intro-subheadline-photo",
       { objectPosition: "50% 0%", duration: 0.18 },
@@ -395,10 +434,12 @@ function setupFirstIntroStory(isMobile: boolean) {
   // Beat 2 - approach. The copy crosses the right half of the viewport and
   // parks flush inside it, next to the portrait. The artwork is deliberately
   // still, and nothing is clipped at the end of this beat: the paragraph is
-  // readable as a complete column before anything leaves.
+  // readable as a complete column before anything leaves. -52vw (not -48vw)
+  // is what puts the column's right edge inside the frame: the column starts
+  // at left:100vw of a stage that already begins 3.125vw in.
   timeline.to(
     ".intro-subheadline-text-box1",
-    { x: "-48vw", duration: 0.22 },
+    { x: "-52vw", duration: 0.22 },
     0.42,
   );
 
@@ -406,18 +447,23 @@ function setupFirstIntroStory(isMobile: boolean) {
   // beside the artwork for one beat of scroll before the push starts.
 
   // Beat 4 - push. Group and copy leave in the same scroll interval, the copy
-  // travelling 48vw further so it keeps leading the artwork out of frame.
+  // travelling a further 100vw so it keeps leading the artwork out of frame.
   timeline
     .to(".intro-subheadline-visual-group", { x: "-100vw", duration: 0.28 }, 0.74)
-    .to(".intro-subheadline-text-box1", { x: "-148vw", duration: 0.28 }, 0.74);
-
-  // The title keeps a small counter-drift so the push has a parallax layer
-  // instead of reading as one flat plate sliding away.
-  timeline.to(
-    ".intro-subheadline-title",
-    { x: "-16vw", duration: 0.28 },
-    0.74,
-  );
+    .to(".intro-subheadline-text-box1", { x: "-152vw", duration: 0.28 }, 0.74)
+    // The title keeps a small counter-drift so the push has a parallax layer
+    // instead of reading as one flat plate sliding away.
+    .to(".intro-subheadline-title", { x: "-16vw", duration: 0.28 }, 0.74)
+    // The stage washes to the 2022-2023 navy while the artwork leaves, so the
+    // gallery that follows opens on the navy plate it was designed for. The
+    // wash used to live in the gallery timeline and only completed after the
+    // pin had already released - i.e. the imagery slid in over black.
+    .fromTo(
+      "#intro",
+      { backgroundColor: "#000000" },
+      { backgroundColor: "#013171", duration: 0.4, ease: "power1.in" },
+      0.6,
+    );
 
   if (scene) scene.dataset.introPhase = "settle-approach-push";
 }
@@ -427,11 +473,14 @@ function setupSecondIntroStory(isMobile: boolean) {
     scrollTrigger: {
       id: "intro-story-2",
       trigger: ".intro-subheadline-stickytainer2",
+      // The stages above are zero-height, so this one's top reaches the
+      // viewport top the instant the portrait beat's pin releases: the gallery
+      // opens with no dead scroll in between.
       start: "top top",
       end: () =>
         `+=${getPinDistance(
           ".intro-subheadline-stickytainer2",
-          isMobile ? 1.15 : 4,
+          isMobile ? 1.15 : 3.6,
         )}`,
       scrub: true,
       pin: true,
@@ -510,14 +559,6 @@ function setupSecondIntroStory(isMobile: boolean) {
         duration: 20,
       },
       "<+=2",
-    )
-    .to(
-      "#intro",
-      {
-        backgroundColor: "#013171",
-        duration: 20,
-      },
-      ">-=2",
     );
 }
 
@@ -745,6 +786,21 @@ function setupTelevisionSequence(
     );
 }
 
+/**
+ * Contact booth entrance.
+ *
+ * The old timeline tweened `top`/`left` on `.canvas-container`, which is
+ * positioned by `right` + `top`: writing `left` on top of that made the box
+ * over-constrained (and `left` wins in LTR), so the booth was dragged to
+ * `left: 75vw` / `top: 78vw` - down and off the right edge of the contact
+ * screen, scaled up and clipped away by `overflow: hidden`. It also started
+ * the instant the contact column appeared, so the sculpture popped in mid
+ * exit-zoom instead of arriving.
+ *
+ * Now the booth *arrives*: it rises and fades up over the first part of the
+ * last screen's travel, then simply holds. Transform-only, so the layout (and
+ * the camera framing in CanvasWrapper) never has to re-measure.
+ */
 function setupContactCanvas(isMobile: boolean) {
   if (isMobile) return;
 
@@ -753,18 +809,21 @@ function setupContactCanvas(isMobile: boolean) {
       scrollTrigger: {
         id: "contact-canvas",
         trigger: ".contact-inner",
-        start: "top center",
-        end: "bottom bottom",
+        // Begins while the contact column is still rising into view, so the
+        // booth is already fading up before the visitor reaches the last
+        // screen, and finishes well before the page bottoms out.
+        start: "top 92%",
+        end: "top 42%",
         scrub: true,
         invalidateOnRefresh: true,
       },
-      defaults: { duration: 30, ease: "none" },
+      defaults: { ease: "none" },
     })
-    .to(".canvas-container", {
-      top: "78vw",
-      left: "75vw",
-      scale: 1.3,
-    });
+    .fromTo(
+      ".canvas-container",
+      { autoAlpha: 0, y: "7svh", scale: 0.9 },
+      { autoAlpha: 1, y: 0, scale: 1, duration: 1 },
+    );
 }
 
 // Locomotive's best-working scenes used scrub: true. Keep that direct
@@ -774,14 +833,16 @@ function setupContactCanvas(isMobile: boolean) {
 function setupResponsiveAnimations(
   isZh: boolean,
   isMobile: boolean,
+  onSectionChange: (section: PortfolioSection) => void,
   onWorkPreview: (index: number) => void,
-) {
+): () => void {
   setupIntroHeadlineChoreography(isZh, isMobile);
   setupIntroParallax(isMobile);
   setupFirstIntroStory(isMobile);
   setupSecondIntroStory(isMobile);
   setupTelevisionSequence(onWorkPreview, isMobile);
   setupContactCanvas(isMobile);
+  return setupSectionTracking(onSectionChange);
 }
 
 export function setupPortfolioScroll({
@@ -797,6 +858,10 @@ export function setupPortfolioScroll({
   const media = gsap.matchMedia();
   let disposed = false;
   let settleFrame = 0;
+  // Section tracking installs a scroll listener, so it has to hand back a
+  // teardown that matchMedia can run when a breakpoint switch reverts the
+  // scene; otherwise every resize would leave another listener behind.
+  let teardownTracking: (() => void) | undefined;
 
   media.add(
     {
@@ -812,8 +877,12 @@ export function setupPortfolioScroll({
         ensurePortfolioSmoother();
       }
 
-      setupSectionTracking(onSectionChange);
-      setupResponsiveAnimations(isZh, isMobile, onWorkPreview);
+      teardownTracking = setupResponsiveAnimations(
+        isZh,
+        isMobile,
+        onSectionChange,
+        onWorkPreview,
+      );
     },
     scope,
   );
@@ -850,6 +919,7 @@ export function setupPortfolioScroll({
     if (settleFrame) window.cancelAnimationFrame(settleFrame);
     window.removeEventListener("load", handleWindowLoad);
     tvFrame?.removeEventListener("load", handleTvFrameLoad);
+    teardownTracking?.();
     media.revert();
     ScrollSmoother.get()?.kill();
     gsap.set("#smooth-content", { clearProps: "transform" });

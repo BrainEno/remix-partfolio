@@ -196,7 +196,7 @@ test("desktop intro portrait keeps its top visible as the mask expands", async (
     if (!scene) throw new Error("Missing first intro story");
     return scene.getBoundingClientRect().top + window.scrollY - window.scrollY;
   });
-  await scrollToContentY(page, sceneTop + 4.2 * 724, 0);
+  await scrollToContentY(page, sceneTop + 3.3 * 724, 0);
 
   await expect
     .poll(() => photo.evaluate((image) => getComputedStyle(image).objectPosition))
@@ -359,8 +359,11 @@ test("desktop intro paragraph pushes the portrait instead of covering it", async
   const viewportHeight = 900;
   const viewportWidth = 1440;
   const samples: Array<Awaited<ReturnType<typeof readScene>>> = [];
-  for (let step = 0; step <= 12; step += 1) {
-    await scrollToContentY(page, sceneTop + step * 0.5 * viewportHeight, 0);
+  // Quarter-viewport steps: the scene now has an explicit hold beat between
+  // the approach and the push, and the assertion below ("the copy lands
+  // complete while the portrait is parked") needs samples inside that hold.
+  for (let step = 0; step <= 24; step += 1) {
+    await scrollToContentY(page, sceneTop + step * 0.25 * viewportHeight, 0);
     samples.push(await readScene());
   }
 
@@ -718,6 +721,313 @@ test("mobile WebGL scene mounts only when its observed Contact content is near t
   await expect(sceneContainer).toHaveAttribute("data-scene-active", "true");
   await expect(sceneContainer).toHaveAttribute("data-scene-status", "ready");
   await expect(canvas).toHaveCount(1);
+
+  expect(pageErrors).toEqual([]);
+});
+
+test("the biography is set at its designed size, not a shrunken one", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator(".page-home")).toHaveAttribute(
+    "data-scroll-runtime",
+    "ready",
+  );
+
+  // The 2022-2023 build set this paragraph at 2.5vw. A later clamp to
+  // 1.85vw/28px dropped it to ~26px on a 1440 stage, which made the whole
+  // introduction read like a footnote beside the artwork. The floor is now
+  // ~33px at 1440 and the paragraph is capped only at the extremes.
+  const size = await page
+    .locator(".intro-subheadline-text1")
+    .evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize));
+  expect(size).toBeGreaterThan(30);
+
+  // ...and it is a readable measure: the column is wide enough that the
+  // paragraph does not run to a single character per line on any desktop.
+  const measure = await page
+    .locator(".intro-subheadline-text-box1")
+    .evaluate((element) => element.getBoundingClientRect().width);
+  expect(measure).toBeGreaterThan(500);
+
+  expect(pageErrors).toEqual([]);
+});
+
+test("the portrait enters from above the frame instead of being born clipped", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator(".page-home")).toHaveAttribute(
+    "data-scroll-runtime",
+    "ready",
+  );
+
+  const sceneTop = await page.evaluate(() => {
+    const scene = document.querySelector<HTMLElement>(
+      ".intro-subheadline-stickytainer",
+    );
+    if (!scene) throw new Error("Missing first intro story");
+    return scene.getBoundingClientRect().top + window.scrollY;
+  });
+
+  // The portrait used to start at y:-22vw, i.e. already above the viewport, so
+  // its head was sliced off for the whole settle beat. It now starts a whole
+  // stage above the frame and descends into it.
+  await scrollToContentY(page, sceneTop, 0);
+  const entering = await page.evaluate(() => {
+    const mask = document.querySelector<HTMLElement>(
+      ".intro-subheadline-photo-mask",
+    );
+    if (!mask) throw new Error("Missing portrait mask");
+    return mask.getBoundingClientRect().top;
+  });
+  expect(entering).toBeLessThan(-40);
+
+  // ...and once it has settled, the whole mask - head included - is inside the
+  // viewport, which is what makes the photograph read as the original portrait.
+  await scrollToContentY(page, sceneTop + 3.3 * 900, 0);
+  const settled = await page.evaluate(() => {
+    const mask = document.querySelector<HTMLElement>(
+      ".intro-subheadline-photo-mask",
+    );
+    if (!mask) throw new Error("Missing portrait mask");
+    const rect = mask.getBoundingClientRect();
+    return { top: rect.top, bottom: rect.bottom, height: rect.height };
+  });
+  expect(settled.top).toBeGreaterThan(-60);
+  expect(settled.bottom).toBeLessThan(900 + 1);
+  expect(settled.height).toBeGreaterThan(400);
+
+  expect(pageErrors).toEqual([]);
+});
+
+test("the gallery opens on the navy plate with no dead scroll before it", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator(".page-home")).toHaveAttribute(
+    "data-scroll-runtime",
+    "ready",
+  );
+
+  const stages = await page.evaluate(() => {
+    const first = document.querySelector<HTMLElement>(
+      ".intro-subheadline-stickytainer",
+    );
+    const second = document.querySelector<HTMLElement>(
+      ".intro-subheadline-stickytainer2",
+    );
+    if (!first || !second) throw new Error("Missing intro stories");
+    return {
+      first: Math.round(first.getBoundingClientRect().top + window.scrollY),
+      second: Math.round(second.getBoundingClientRect().top + window.scrollY),
+      firstHeight: first.offsetHeight,
+      secondHeight: second.offsetHeight,
+    };
+  });
+
+  // Both stages are zero-height, so the pin spacer of the first one is the only
+  // thing between them. A stage that kept its own 100vh in the flow left a
+  // whole viewport of empty navy here.
+  expect(stages.firstHeight).toBe(0);
+  expect(stages.secondHeight).toBe(0);
+
+  const storyOnePin = 4.8 * 900;
+  // One pin distance, not one pin distance plus a dead viewport.
+  expect(stages.second - stages.first).toBeLessThanOrEqual(storyOnePin + 60);
+
+  // The wash to the 2022-2023 navy has to have arrived by the time the gallery
+  // pins: it used to finish only after the pin had already released, so the
+  // imagery slid in over black.
+  await scrollToContentY(page, stages.second, 0);
+  const luma = await page.evaluate(() => {
+    const match = getComputedStyle(
+      document.querySelector<HTMLElement>("#intro")!,
+    ).backgroundColor.match(/\d+/g);
+    if (!match) throw new Error("Could not read #intro background");
+    return match.reduce((sum, part) => sum + Number(part), 0) / match.length;
+  });
+  expect(luma).toBeGreaterThan(20);
+
+  expect(pageErrors).toEqual([]);
+});
+
+test("the 3D booth enters by transform and never leaves its slot", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator(".page-home")).toHaveAttribute(
+    "data-scroll-runtime",
+    "ready",
+  );
+
+  const contactTop = await page.evaluate(() => {
+    const contact = document.querySelector<HTMLElement>("#contact");
+    if (!contact) throw new Error("Missing contact");
+    return contact.getBoundingClientRect().top + window.scrollY;
+  });
+
+  const readBooth = () =>
+    page.evaluate(() => {
+      const canvas = document.querySelector<HTMLElement>(".canvas-container");
+      if (!canvas) throw new Error("Missing canvas container");
+      const style = getComputedStyle(canvas);
+      const rect = canvas.getBoundingClientRect();
+      return {
+        position: style.position,
+        right: style.right,
+        // Layout slot: transforms do not touch these, so a constant pair is
+        // proof that the entrance is transform-only.
+        offsetLeft: canvas.offsetLeft,
+        offsetTop: canvas.offsetTop,
+        opacity: style.opacity,
+        transform: style.transform,
+        matrix: style.transform.startsWith("matrix")
+          ? style.transform
+              .slice(7, -1)
+              .split(",")
+              .map((part) => Number.parseFloat(part))
+          : [],
+        rect: {
+          left: rect.left,
+          right: rect.right,
+          top: rect.top,
+          bottom: rect.bottom,
+        },
+      };
+    });
+
+  // Still well outside the contact screen: the entrance has not started.
+  await scrollToContentY(page, contactTop - 3 * 900, 0);
+  const before = await readBooth();
+
+  // Half way up the last screen: the booth is mid-entrance.
+  await scrollToContentY(page, contactTop - 600, 0);
+  const during = await readBooth();
+
+  // Arrived: settled in its slot on the right of the composition.
+  await scrollToContentY(page, contactTop, 0);
+  const after = await readBooth();
+
+  // Positioned by right + top. The old timeline wrote `left: 75vw` on top of
+  // that, which over-constrains the box and dragged the booth off screen.
+  expect(after.position).toBe("absolute");
+
+  // The layout slot never moves...
+  expect(during.offsetLeft).toBe(before.offsetLeft);
+  expect(during.offsetTop).toBe(before.offsetTop);
+  expect(after.offsetLeft).toBe(before.offsetLeft);
+  expect(after.offsetTop).toBe(before.offsetTop);
+
+  // ...the entrance is a transform, and it fades up rather than popping in...
+  expect(Number(before.opacity)).toBeLessThan(0.2);
+  expect(during.matrix.length).toBe(6);
+  expect(during.matrix[0]).toBeGreaterThan(before.matrix[0]);
+  expect(during.matrix[0]).toBeLessThan(1);
+  // ...and it ends settled: unscaled, untranslated, fully opaque.
+  expect(after.matrix[0]).toBeCloseTo(1, 2);
+  expect(after.matrix[5]).toBeCloseTo(0, 1);
+  expect(Number(after.opacity)).toBeCloseTo(1, 1);
+
+  // The booth never shares space with the headline lockup, and it never leaves
+  // the viewport.
+  const headline = await page.evaluate(() => {
+    const element = document.querySelector<HTMLElement>(".contact-hl3");
+    if (!element) throw new Error("Missing contact headline");
+    const rect = element.getBoundingClientRect();
+    return { left: rect.left, right: rect.right };
+  });
+  expect(after.rect.left).toBeGreaterThanOrEqual(headline.right);
+  expect(after.rect.right).toBeLessThanOrEqual(1440);
+  expect(after.rect.top).toBeGreaterThanOrEqual(0);
+  expect(after.rect.bottom).toBeLessThanOrEqual(900);
+
+  expect(pageErrors).toEqual([]);
+});
+
+test("the contact headline lockup is never clipped", async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  for (const [width, height] of [
+    [1280, 720],
+    [1366, 768],
+    [1440, 900],
+    [1920, 1080],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await page.goto("/", { waitUntil: "networkidle" });
+    await expect(page.locator(".page-home")).toHaveAttribute(
+      "data-scroll-runtime",
+      "ready",
+    );
+
+    await scrollToContentY(
+      page,
+      await page.evaluate(
+        () => document.querySelector("#smooth-content")!.getBoundingClientRect().height,
+      ),
+      1,
+    );
+
+    const layout = await page.evaluate(() => {
+      const read = (selector: string) => {
+        const element = document.querySelector<HTMLElement>(selector);
+        if (!element) throw new Error(`Missing ${selector}`);
+        const rect = element.getBoundingClientRect();
+        return { top: rect.top, bottom: rect.bottom, right: rect.right };
+      };
+      const inner = document.querySelector<HTMLElement>(".contact-inner");
+      if (!inner) throw new Error("Missing .contact-inner");
+      let lowest = 0;
+      for (const child of Array.from(inner.children)) {
+        lowest = Math.max(lowest, child.getBoundingClientRect().bottom);
+      }
+      return {
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        firstHeadline: read(".contact-hl1"),
+        lastHeadline: read(".contact-hl3"),
+        marquee: read(".runningtext"),
+        credit: read(".contact-inner > p"),
+        lowest,
+      };
+    });
+
+    const message = `${width}x${height}`;
+    // The UA stylesheet's h2 bottom margin used to cost three full line boxes,
+    // which pushed CALL ME above the top edge and the credit below the bottom.
+    expect(layout.firstHeadline.top, message).toBeGreaterThanOrEqual(0);
+    expect(layout.lastHeadline.bottom, message).toBeLessThanOrEqual(
+      layout.viewport.height,
+    );
+    expect(layout.credit.bottom, message).toBeLessThanOrEqual(
+      layout.viewport.height,
+    );
+    // "MARQUEE MOON" stays inside the stage horizontally...
+    expect(layout.lastHeadline.right, message).toBeLessThanOrEqual(
+      layout.viewport.width,
+    );
+    // ...and the running line is a full-bleed track, not a shrink-to-fit flex
+    // item that only gets clipped by the section.
+    const marquee = await page.evaluate(
+      () =>
+        document.querySelector<HTMLElement>(".runningtext")!.getBoundingClientRect()
+          .width,
+    );
+    expect(marquee, message).toBeGreaterThan(layout.viewport.width * 0.85);
+  }
 
   expect(pageErrors).toEqual([]);
 });
