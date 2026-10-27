@@ -265,10 +265,19 @@
   pointer-events: none;
 }
 
-/* Once the exit owns the screen, a stationary pointer crossing a scrolling
-   work row must not light a project inside the zooming television again. */
-#partfolio.is-tv-exiting .work-items-box {
+/* Once the phone or exit beat owns the screen, a stationary pointer crossing
+   a scrolling work row must not light a project inside the tube again. */
+#partfolio.is-tv-exiting .work-items-box,
+#partfolio.is-tv-phone .work-items-box {
   pointer-events: none;
+}
+
+/* The row currently showing on the television keeps a trace of its hover
+   state after the cursor leaves: with a sticky preview the visitor needs to
+   be able to see *which* line is on the tube. */
+.work-item.is-active .work-item-topline,
+.work-item.is-active .work-item-botline {
+  opacity: 0.55;
 }
 
 .work-items-box {
@@ -286,6 +295,14 @@
   margin-left: 0.5vw;
   margin-bottom: 3vw;
   color: var(--white);
+  /* The global heading reset (`h2 { font-size: 100% }`) left this at the
+     16px document default while the work names below it are ~54px - the
+     section title read as a footnote over its own list, one of the
+     "text shrank" spots. It now scales with the stage like the names do. */
+  font-size: clamp(22px, 2.3vw, 38px);
+  line-height: 1.1em;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .work-items-headline.zh {
@@ -380,6 +397,10 @@
 .work-teaser {
   pointer-events: none;
   text-transform: uppercase;
+  /* Caption scale, set deliberately instead of inheriting the 16px document
+     default at random: small, tracked-out, and subordinate to the names. */
+  font-size: 13px;
+  letter-spacing: 0.06em;
   margin-top: 0.4vw;
   line-height: 1.1em;
   margin-right: 0.4vw;
@@ -497,7 +518,7 @@
   .work-items-headline.zh {
     margin: 0 0 24px;
     padding-top: 18px;
-    font-size: 13px;
+    font-size: 15px;
     letter-spacing: 0.08em;
   }
 

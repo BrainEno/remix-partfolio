@@ -117,6 +117,19 @@ export default function Partfolio({
             const isActive = index === activeWorkIndex;
             const title = localize(work.title, lang);
 
+            // The only thing that lights the television on desktop, exactly
+            // as in the 2022-2023 build (`onMouseEnter={handleHover(...)}`):
+            // before any row is pointed at, the tube stays powered off.
+            // The choice is recorded on the section so the scroll runtime
+            // can restore *this* picture (and only this one) when the
+            // visitor scrolls back up from the phone-number beat.
+            const activateWork = () => {
+              if (sectionRef.current) {
+                sectionRef.current.dataset.lastHoveredWork = String(index);
+              }
+              onWorkPreview(index);
+            };
+
             return (
               <div
                 key={work.id}
@@ -125,13 +138,17 @@ export default function Partfolio({
                   "is-active": isActive,
                 })}
                 data-work-index={index}
-                // Sticky preview, matching the 2022-2023 behavior: hovering a
-                // row lights the TV screen and the image persists. Resetting
-                // to -1 on mouse-leave would black out the screen whenever
-                // the cursor drifts off a row while scroll-driven rows no
-                // longer re-fire; scroll choreography owns the idle/exit
-                // states instead.
-                onMouseEnter={() => onWorkPreview(index)}
+                // Sticky preview: the image persists after the cursor leaves
+                // the row. Resetting to -1 on mouse-leave would black out the
+                // screen whenever the cursor drifts off a row; the phone and
+                // exit beats own the blank states instead.
+                onMouseEnter={activateWork}
+                // Keyboard and touch equivalents of the hover: focusing or
+                // tapping a row is the same "show me this one" gesture.
+                onFocus={activateWork}
+                onClick={activateWork}
+                tabIndex={0}
+                aria-label={title}
               >
                 <div className="work-item-entry">
                   <div className="work-item-topline" />

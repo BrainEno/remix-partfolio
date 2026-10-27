@@ -56,7 +56,13 @@ export default function Contact({ lang, content }: Props) {
       ([entry]) => setSceneActive(entry.isIntersecting),
       {
         root: null,
-        rootMargin: "240px 0px",
+        // Preload well ahead of the booth's entrance trigger: the old 240px
+        // margin started the (1.7 MB) model download only a moment before
+        // the entrance began, so the booth routinely popped in *after* its
+        // own rise had finished. A full viewport of lead time lets the scene
+        // be decoded and ready while the television exit still owns the
+        // screen, and the booth then arrives exactly on its scroll beat.
+        rootMargin: "120% 0px 120% 0px",
         threshold: 0,
       }
     );

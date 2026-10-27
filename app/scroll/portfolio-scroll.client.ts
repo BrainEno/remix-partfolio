@@ -439,7 +439,10 @@ function setupFirstIntroStory(isMobile: boolean) {
   // at left:100vw of a stage that already begins 3.125vw in.
   timeline.to(
     ".intro-subheadline-text-box1",
-    { x: "-52vw", duration: 0.22 },
+    // Decelerate into the reading position: a linear arrival stops as
+    // abruptly as a conveyor belt, which made the copy feel mechanical
+    // next to the artwork.
+    { x: "-52vw", duration: 0.22, ease: "power1.inOut" },
     0.42,
   );
 
@@ -449,8 +452,16 @@ function setupFirstIntroStory(isMobile: boolean) {
   // Beat 4 - push. Group and copy leave in the same scroll interval, the copy
   // travelling a further 100vw so it keeps leading the artwork out of frame.
   timeline
-    .to(".intro-subheadline-visual-group", { x: "-100vw", duration: 0.28 }, 0.74)
-    .to(".intro-subheadline-text-box1", { x: "-152vw", duration: 0.28 }, 0.74)
+    .to(
+      ".intro-subheadline-visual-group",
+      { x: "-100vw", duration: 0.28, ease: "power1.inOut" },
+      0.74,
+    )
+    .to(
+      ".intro-subheadline-text-box1",
+      { x: "-152vw", duration: 0.28, ease: "power1.inOut" },
+      0.74,
+    )
     // The title keeps a small counter-drift so the push has a parallax layer
     // instead of reading as one flat plate sliding away.
     .to(".intro-subheadline-title", { x: "-16vw", duration: 0.28 }, 0.74)
@@ -562,24 +573,6 @@ function setupSecondIntroStory(isMobile: boolean) {
     );
 }
 
-function setupWorkPreview(onWorkPreview: (index: number) => void) {
-  const rows = gsap.utils.toArray<HTMLElement>(".work-item");
-
-  rows.forEach((row, index) => {
-    const activate = () => onWorkPreview(index);
-
-    ScrollTrigger.create({
-      id: `work-${index}`,
-      trigger: row,
-      start: "top 60%",
-      end: "bottom 40%",
-      onEnter: activate,
-      onEnterBack: activate,
-      invalidateOnRefresh: true,
-    });
-  });
-}
-
 type PreviewOwner = "rows" | "phone" | "exit";
 
 const TV_IDLE_PALETTE = {
@@ -612,8 +605,6 @@ function setupTelevisionSequence(
   onWorkPreview: (index: number) => void,
   isMobile: boolean,
 ) {
-  const rows = gsap.utils.toArray<HTMLElement>(".work-item");
-  const lastWorkIndex = rows.length - 1;
   const portfolio = document.querySelector<HTMLElement>("#partfolio");
   portfolio?.classList.remove("is-tv-exiting", "is-tv-phone");
 
@@ -626,16 +617,23 @@ function setupTelevisionSequence(
     portfolio?.classList.toggle("is-tv-exiting", owner === "exit");
     portfolio?.classList.toggle("is-tv-phone", owner === "phone");
   };
-  const showWork = (index: number) => {
-    if (previewOwner === "rows") onWorkPreview(index);
-  };
   const clearPreview = () => onWorkPreview(-1);
-
-  setupWorkPreview(showWork);
 
   // The pinner is a full viewport stage pinned at "top top"; the exit spacer
   // closes the pin. A 1px pinner used to leave the framing dependent on where
   // the pin landed, which is what pushed the photograph's ground out of frame.
+  //
+  // The pin deliberately does NOT light the screen. The 2022-2023 build only
+  // ever changed the picture from the row hover handler
+  // (`onMouseEnter={handleHover(work.imageUri)}`), so a television nobody has
+  // hovered yet stays a powered-off tube: phosphor glass, no programme. A
+  // later regression added both a pin `onEnter -> showWork(0)` and a scroll
+  // trigger per row, which is why the first project appeared before the
+  // visitor ever pointed at the list. Desktop preview ownership is therefore:
+  //   hover/focus (Partfolio rows) -> sticky picture
+  //   phone / exit beats (below)    -> screen blanked, hover ignored
+  // Mobile has no hover, so its row/screen-overlap preview lives in
+  // mobile-choreography.client.ts and replaces this entirely.
   ScrollTrigger.create({
     id: "tv-pin",
     trigger: ".tv-box-pinner",
@@ -646,10 +644,6 @@ function setupTelevisionSequence(
     pinSpacing: false,
     anticipatePin: 1,
     invalidateOnRefresh: true,
-    onEnter: () => showWork(0),
-    onEnterBack: () => {
-      if (lastWorkIndex >= 0) showWork(lastWorkIndex);
-    },
   });
 
   if (isMobile) {
@@ -688,7 +682,14 @@ function setupTelevisionSequence(
       },
       onLeaveBack: () => {
         setPreviewOwner("rows");
-        if (lastWorkIndex >= 0) onWorkPreview(lastWorkIndex);
+        // Scrolling back into the works restores only what the visitor
+        // actually hovered (recorded by the row handler in Partfolio.tsx).
+        // Nothing hovered yet -> the tube stays off, exactly as on arrival.
+        const hovered = Number.parseInt(
+          portfolio?.dataset.lastHoveredWork ?? "",
+          10,
+        );
+        onWorkPreview(Number.isNaN(hovered) ? -1 : hovered);
       },
     },
     defaults: { ease: "none" },
@@ -754,6 +755,9 @@ function setupTelevisionSequence(
   });
 
   exitTimeline
+    // The programme is off before anything else moves, even if the visitor
+    // scrubbed straight into the exit without passing the phone beat.
+    .to(".tv-showreel", { autoAlpha: 0, duration: 0.06 }, 0)
     .to(
       ".tv-contact-number",
       { autoAlpha: 0, yPercent: -26, duration: 0.1, ease: "power1.in" },
@@ -809,21 +813,33 @@ function setupContactCanvas(isMobile: boolean) {
       scrollTrigger: {
         id: "contact-canvas",
         trigger: ".contact-inner",
-        // Begins while the contact column is still rising into view, so the
-        // booth is already fading up before the visitor reaches the last
-        // screen, and finishes well before the page bottoms out.
-        start: "top 92%",
-        end: "top 42%",
+        // The booth belongs to the last screen, so it must not start moving
+        // while the television exit still owns the viewport. It begins once
+        // the contact screen has genuinely taken over (its top edge in the
+        // lower fifth of the viewport) and settles shortly after the screen
+        // docks - arriving *with* the headline lockup instead of pre-fading
+        // off-screen (the old "top 92%" start had spent most of the entrance
+        // before a single pixel of the booth was visible) or popping in late
+        // because the WebGL scene had not mounted yet (Contact now preloads
+        // the scene well ahead of this trigger).
+        start: "top 80%",
+        end: "top 18%",
         scrub: true,
         invalidateOnRefresh: true,
       },
       defaults: { ease: "none" },
     })
+    // Rise: a long, decelerating lift out of the lower edge of the screen,
+    // growing slightly as it comes towards the visitor.
     .fromTo(
       ".canvas-container",
-      { autoAlpha: 0, y: "7svh", scale: 0.9 },
-      { autoAlpha: 1, y: 0, scale: 1, duration: 1 },
-    );
+      { autoAlpha: 0, y: "11svh", scale: 0.92 },
+      { autoAlpha: 1, y: 0, scale: 1, duration: 0.82, ease: "power2.out" },
+    )
+    // Settle: one small overshoot and rest, so the arrival reads as a heavy
+    // object finding the floor rather than a fade that simply stops.
+    .to(".canvas-container", { y: "-0.7svh", duration: 0.09, ease: "sine.out" })
+    .to(".canvas-container", { y: 0, duration: 0.09, ease: "sine.inOut" });
 }
 
 // Locomotive's best-working scenes used scrub: true. Keep that direct

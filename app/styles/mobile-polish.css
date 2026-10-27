@@ -61,7 +61,9 @@
   .work-items-headline,
   .work-items-headline.zh {
     margin-bottom: 12px;
-    font-size: 11px;
+    /* Matches the works list's own title scale in partfolio.css; 11px made
+       the section title smaller than the captions under each work name. */
+    font-size: 15px;
   }
 
   .tv-exit-spacer {
