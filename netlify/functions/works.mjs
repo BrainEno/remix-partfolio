@@ -11,8 +11,8 @@ const equal = (a, b) => {
 const sign = (value, secret) => createHmac('sha256', secret).update(value).digest('hex');
 const databaseUrl = () => process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL;
 const configured = () => Boolean(databaseUrl());
-async function db() {
-  pool ??= new Pool({ connectionString: databaseUrl(), max: 2, connectionTimeoutMillis: 8000 });
+let initialization;
+async function initialize() {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -23,6 +23,12 @@ async function db() {
     if (result.rowCount) for (const [i, work] of seed.entries()) await client.query('INSERT INTO portfolio_works (position, data) VALUES ($1, $2)', [i, JSON.stringify(work)]);
     await client.query('COMMIT');
   } catch (e) { await client.query('ROLLBACK'); throw e; } finally { client.release(); }
+}
+async function db() {
+  pool ??= new Pool({ connectionString: databaseUrl(), max: 2, connectionTimeoutMillis: 8000 });
+  // Share schema initialization in a warm function instance; retry after failure.
+  initialization ??= initialize().catch(error => { initialization = undefined; throw error; });
+  await initialization;
   return pool;
 }
 function authorized(request) {
@@ -36,12 +42,15 @@ function validate(works) {
   const localized = v => v && text(v.zh) && text(v.en);
   return Array.isArray(works) && works.length <= 50 && works.every(w => {
     if (!w || !text(w.id, 100) || !text(w.year, 50) || !localized(w.title) || !localized(w.credit) || !w.image || !localized(w.image.alt) || !text(w.image.src, 2000)) return false;
-    return /^\/(?!\/)/.test(w.image.src) || /^https:\/\//i.test(w.image.src);
+    return /^\/(?![\/\\])/.test(w.image.src) || /^https:\/\//i.test(w.image.src);
   }) && new Set(works.map(w => w.id)).size === works.length;
 }
 export default async (request) => {
   const action = new URL(request.url).searchParams.get('action') || 'works';
-  if (!configured()) return json({ mode: 'demo' });
+  if (!configured()) {
+    if (request.method === 'GET' && (action === 'works' || action === 'status')) return json({ mode: 'demo' });
+    return json({ error: 'Database not configured' }, 503);
+  }
   try {
     if (action === 'status') { await db(); return json({ mode: 'database', authConfigured: Boolean(process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD !== 'preview123' && process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 32) }); }
     if (request.method === 'GET' && action === 'works') {

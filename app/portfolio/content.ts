@@ -90,7 +90,7 @@ export const portfolioContent = {
     },
   },
   works: {
-    heading: { zh: "參與作品", en: "Involved Works" },
+    heading: { zh: "開發項目", en: "Development Projects" },
     period: "2022 - 2026",
     tvFrame: {
       src: "/generated/tv-bg.webp",

@@ -6,7 +6,8 @@ test('unconfigured database only exposes preview mode, never accepts writes', as
   delete process.env.DATABASE_URL; delete process.env.NETLIFY_DATABASE_URL;
   for (const method of ['GET', 'PUT', 'POST']) {
     const response = await handler(new Request('https://example.com/.netlify/functions/works', { method }));
-    assert.deepEqual(await response.json(), { mode: 'demo' });
+    if (method === 'GET') assert.deepEqual(await response.json(), { mode: 'demo' });
+    else assert.equal(response.status, 503);
   }
 });
 test('configured but unreachable database fails closed instead of exposing demo', async () => {

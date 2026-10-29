@@ -20,14 +20,15 @@ export default function Adam() {
       if (!response.ok) throw new Error();
       const data = await response.json();
       if (data.mode !== "demo" && data.mode !== "database") throw new Error();
-      setMode(data.mode);
       if (data.mode === "database") {
         if (!data.authConfigured) setMessage("数据库已连接，请在 Netlify 配置 ADMIN_PASSWORD 和 SESSION_SECRET。 ");
         const r = await fetch(api);
         if (!r.ok) throw new Error();
         const result = await r.json();
+        if (result.mode !== "database" || !Array.isArray(result.works)) throw new Error();
         setWorks(result.works);
       }
+      setMode(data.mode);
     }).catch(() => {
       // Vite alone does not run Netlify Functions. Production never falls back
       // to demo when the API or a configured database is unavailable.
@@ -50,7 +51,8 @@ export default function Adam() {
   function update(index: number, field: string, value: string) {
     setWorks(current => current.map((work, i) => {
       if (i !== index) return work;
-      if (field === "title" || field === "credit") return { ...work, [field]: { zh: value, en: value } };
+      if (field === "titleZh" || field === "titleEn") return { ...work, title: { ...work.title, [field === "titleZh" ? "zh" : "en"]: value } };
+      if (field === "creditZh" || field === "creditEn") return { ...work, credit: { ...work.credit, [field === "creditZh" ? "zh" : "en"]: value } };
       if (field === "image") return { ...work, image: { ...work.image, src: value } };
       return { ...work, [field]: value };
     }));
@@ -78,7 +80,7 @@ export default function Adam() {
       {loggedIn && <div className="adam-editor">
         {works.map((work, i) => <article className="adam-work" key={work.id}>
           <div className="adam-work-head"><span>PROJECT / {String(i + 1).padStart(2, "0")}</span><button type="button" onClick={() => setWorks(works.filter((_, j) => i !== j))}>删除 ×</button></div>
-          <div className="adam-grid">{([['title','项目名称',work.title.en],['year','开始日期',work.year],['credit','技术栈',work.credit.en],['image','图片链接（https:// 或 /路径）',work.image.src]] as const).map(([field,label,value]) => <label key={field}>{label}<input value={value} onChange={e => update(i,field,e.target.value)} /></label>)}</div>
+          <div className="adam-grid">{([['titleZh','项目名称（中文）',work.title.zh],['titleEn','项目名称（英文）',work.title.en],['year','开始日期',work.year],['creditZh','技术栈（中文）',work.credit.zh],['creditEn','技术栈（英文）',work.credit.en],['image','图片链接（https:// 或 /路径）',work.image.src]] as const).map(([field,label,value]) => <label key={field}>{label}<input value={value} onChange={e => update(i,field,e.target.value)} /></label>)}</div>
         </article>)}
         <div className="adam-actions"><button type="button" onClick={() => setWorks([...works, { id: crypto.randomUUID(), title: { zh: "新项目", en: "New project" }, year: "2026", credit: { zh: "Web", en: "Web" }, image: { src: "/images/tree1.jpg", alt: { zh: "项目图片", en: "Project image" } } }])}>添加作品 +</button><button type="button" onClick={save}>保存更改 ↗</button></div>
       </div>}
