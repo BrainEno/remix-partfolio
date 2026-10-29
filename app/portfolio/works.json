@@ -1,0 +1,97 @@
+[
+  {
+    "id": "lyric-forge-ktv",
+    "title": {
+      "en": "lyric-forge-ktv",
+      "zh": "lyric-forge-ktv"
+    },
+    "year": "2026-04-22",
+    "image": {
+      "src": "/images/seeing.jpg",
+      "alt": {
+        "en": "lyric-forge-ktv project preview",
+        "zh": "lyric-forge-ktv 项目预览"
+      }
+    },
+    "credit": {
+      "en": "Flutter / Dart",
+      "zh": "Flutter / Dart"
+    }
+  },
+  {
+    "id": "no-wave",
+    "title": {
+      "en": "no-wave",
+      "zh": "no-wave"
+    },
+    "year": "2026-10-24",
+    "image": {
+      "src": "/images/plague.jpg",
+      "alt": {
+        "en": "no-wave project preview",
+        "zh": "no-wave 项目预览"
+      }
+    },
+    "credit": {
+      "en": "TypeScript / CSS",
+      "zh": "TypeScript / CSS"
+    }
+  },
+  {
+    "id": "remix-partfolio",
+    "title": {
+      "en": "remix-partfolio",
+      "zh": "remix-partfolio"
+    },
+    "year": "2022-11-11",
+    "image": {
+      "src": "/images/hairy-ape-post.jpg",
+      "alt": {
+        "en": "remix-partfolio project preview",
+        "zh": "remix-partfolio 项目预览"
+      }
+    },
+    "credit": {
+      "en": "React / TypeScript",
+      "zh": "React / TypeScript"
+    }
+  },
+  {
+    "id": "scribeforge",
+    "title": {
+      "en": "ScribeForge",
+      "zh": "ScribeForge"
+    },
+    "year": "2026-10-02",
+    "image": {
+      "src": "/images/tree1.jpg",
+      "alt": {
+        "en": "ScribeForge project preview",
+        "zh": "ScribeForge 项目预览"
+      }
+    },
+    "credit": {
+      "en": "Python / Dart",
+      "zh": "Python / Dart"
+    }
+  },
+  {
+    "id": "win7-book-management",
+    "title": {
+      "en": "win7-book-management",
+      "zh": "win7-book-management"
+    },
+    "year": "2026-09-29",
+    "image": {
+      "src": "/images/tree3.jpg",
+      "alt": {
+        "en": "win7-book-management project preview",
+        "zh": "win7-book-management 项目预览"
+      }
+    },
+    "credit": {
+      "en": "C# / Windows",
+      "zh": "C# / Windows"
+    }
+  }
+]

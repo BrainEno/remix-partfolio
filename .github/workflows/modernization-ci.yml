@@ -15,6 +15,17 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: portfolio_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d portfolio_test"
+          --health-interval 10s --health-timeout 5s --health-retries 5
     env:
       URL: http://127.0.0.1:3000
       PORT: 3000
@@ -48,6 +59,13 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+
+      - name: Verify works API and PostgreSQL persistence
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:test@127.0.0.1:5432/portfolio_test
+        run: |
+          node --test tests/works-api.test.mjs
+          node --test tests/works-postgres.test.mjs
 
       - name: Build
         run: npm run build
@@ -116,7 +134,20 @@ jobs:
         run: npx playwright install --with-deps webkit
 
       - name: Verify mobile scroll choreography in WebKit
-        run: npm run test:scroll
+        shell: bash
+        run: |
+          set +e
+          npm run test:scroll > /tmp/scroll-tests.log 2>&1
+          status=$?
+          cat /tmp/scroll-tests.log
+          if [ "$status" -ne 0 ]; then
+            details=$(tail -c 24000 /tmp/scroll-tests.log)
+            details="${details//'%'/'%25'}"
+            details="${details//$'\n'/'%0A'}"
+            details="${details//$'\r'/'%0D'}"
+            echo "::error::$details"
+          fi
+          exit "$status"
 
       - name: Smoke test Netlify Deploy Preview
         if: github.event_name == 'pull_request'

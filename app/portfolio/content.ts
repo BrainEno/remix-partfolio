@@ -1,64 +1,13 @@
 import type {
   LocalizedText,
   PortfolioContent,
-  PortfolioWork,
 } from "./types";
 
 export function localize(text: LocalizedText, lang: "zh" | "en") {
   return text[lang];
 }
 
-const works: readonly PortfolioWork[] = [
-  {
-    id: "seeing-you-through-the-river",
-    title: {
-      zh: "划过江水看见你",
-      en: "Seeing You Through The River",
-    },
-    year: "2022",
-    image: {
-      src: "/images/seeing.jpg",
-      alt: {
-        zh: "《划过江水看见你》项目画面",
-        en: "Seeing You Through The River project still",
-      },
-    },
-    credit: {
-      zh: "山一女性电影展作品",
-      en: "The ONE International Women's Film Festival",
-    },
-  },
-  {
-    id: "plague",
-    title: { zh: "鼠疫", en: "Plague" },
-    year: "2021",
-    image: {
-      src: "/images/plague.jpg",
-      alt: { zh: "《鼠疫》项目画面", en: "Plague project still" },
-    },
-    credit: { zh: "香港艺术节", en: "Hong Kong Art Festival" },
-  },
-  {
-    id: "hairy-ape",
-    title: { zh: "毛猿", en: "Hairy Ape" },
-    year: "2020",
-    image: {
-      src: "/images/hairy-ape-post.jpg",
-      alt: { zh: "《毛猿》项目画面", en: "Hairy Ape project still" },
-    },
-    credit: { zh: "江湖戏班", en: "Johoo Theatre" },
-  },
-  {
-    id: "wuhan-puzzle",
-    title: { zh: "武汉拼图", en: "Wuhan Puzzle" },
-    year: "2022",
-    image: {
-      src: "/images/tree1.jpg",
-      alt: { zh: "《武汉拼图》项目画面", en: "Wuhan Puzzle project still" },
-    },
-    credit: { zh: "那什么实验创作小组", en: "So What Original" },
-  },
-];
+import works from "./works.json";
 
 /**
  * EDIT THIS FILE to reuse the site as a portfolio template.
@@ -73,8 +22,8 @@ const works: readonly PortfolioWork[] = [
  */
 export const portfolioContent = {
   identity: {
-    displayName: "Sydney Zhao",
-    pageTitle: { zh: "趙 悉 尼", en: "Sydney Zhao" },
+    displayName: "BrainEno",
+    pageTitle: { zh: "BrainEno", en: "BrainEno" },
   },
   navigation: {
     intro: { zh: "簡介", en: "Intro" },
@@ -83,9 +32,9 @@ export const portfolioContent = {
   },
   hero: {
     headlines: [
-      { zh: "⾏為藝術", en: "Performance Art" },
-      { zh: "電影", en: "Movie" },
-      { zh: "戲劇", en: "Drama" },
+      { zh: "前端工程", en: "Frontend Dev" },
+      { zh: "網頁", en: "Web" },
+      { zh: "跨平台", en: "Flutter" },
     ],
     image: {
       src: "/images/figure.webp",
@@ -96,12 +45,12 @@ export const portfolioContent = {
     heading: { zh: "簡介", en: "Intro" },
     portrait: {
       src: "/images/profilephoto.jpg",
-      alt: { zh: "Sydney Zhao 肖像", en: "Sydney Zhao portrait" },
+      alt: { zh: "BrainEno 肖像", en: "BrainEno portrait" },
     },
-    portraitCredit: { zh: "Sydney Zhao", en: "Sydney Zhao" },
+    portraitCredit: { zh: "BrainEno", en: "BrainEno" },
     primaryText: {
-      zh: "趙悉尼是⻑駐武漢的演員和⾏為藝術家，畢業於美國賓夕法尼亞州狄⾦森學院並獲得經湾學學⼠學位，亦曾就讀美國戲劇學院劇院。曾在多部影視和戲劇作品中參與創作和表演，在多個藝術節進⾏⾏為藝術表演。主要表演經歷包括舞台劇《⿏疫（英⽂版）》（⾹港藝術節），《⽑猿》（江湖戲班），《武漢拼圖》（那甚麽實驗剑作⼩組）和電影《划過江⽔看⾒你》（⼭⼀⼥性電影展作品）。⾏為藝術作品曾參與「穀⾬⾏動」中國當代⾏為藝術城市聯合展演和「⽔泥公園」⾏為藝術節，擔任策展⼈策劃2020年⽔泥公園藝術節。",
-      en: "Sydney Zhao is an actor and a performance artist based in Wuhan. She holds a BA in economics from Dickinson College in Pennsylvania, USA and studied at the American Conservatory Theater. She has appeared in several theatre productions and art festivals. Her stage appearances include Plague (Hong Kong Art Festival), The Hairy Ape (Johoo Theatre), Wuhan Puzzle (So What Original) and Seeing You Through The River (The ONE International Women's Film Festival). Her performances were featured at Guyu Action [X-CFCA] and the Cement Park Art Festival (Sowerart), where at the latter she also worked as a curator.",
+      zh: "BrainEno 是前端工程師與 UI 設計師，曾任程序員，現在是一名自由職業 vibe coder。他善用最新的 AI 能力，融合設計品味與工程經驗，打造高品質、高度客製化的個人網站與應用服務，讓每一個想法都能成為獨特而實用的數位體驗。",
+      en: "BrainEno is a frontend engineer, UI designer and former programmer, now working as a freelance vibe coder. Combining design sensibility, engineering experience and the latest AI capabilities, he creates high-quality, highly customized personal websites and applications that turn ideas into distinctive, useful digital experiences.",
     },
     gallery: [
       {
@@ -128,21 +77,21 @@ export const portfolioContent = {
     accentImages: [
       {
         src: "/images/hairyApe.PNG",
-        alt: { zh: "作品照片", en: "Performance still" },
+        alt: { zh: "作品照片", en: "Project still" },
       },
       {
         src: "/images/show.png",
-        alt: { zh: "演出照片", en: "Show still" },
+        alt: { zh: "演出照片", en: "Creative work" },
       },
     ],
     secondaryText: {
-      zh: "趙悉尼以過程導向式的戲劇、影像和表演藝術，循着探索藝術、身體⾏為和⼼靈的旅程前進。⽬前正在計畫⼀項⻑期個⼈⾏為藝術項⽬，當中運⽤了⼯程師和物理學家費登奎斯的學說和依莎兰按摩艺术的部分理論。",
-      en: "She would continue her journey exploring art, human body movement and mind, through process-oriented action in the form of drama, dance and performance art. She is currently working on a performance art project which involves certain concepts of the Feldenkrais Method and of the healing arts of Esalen Massage.",
+      zh: "他相信，在 AI 賦能的時代，當技術不再成為想像力的瓶頸，品味便格外重要。AI 能實現各種程式功能，卻無法取代人的判斷與想像，也不能替我們做出關於品味的取捨。",
+      en: "He believes that in the age of AI, taste matters most when technology no longer limits imagination. AI can realize countless functions in code, but it cannot replace human judgment and imagination, or make our creative choices for us.",
     },
   },
   works: {
-    heading: { zh: "參與作品", en: "Involved Works" },
-    period: "2020 - 2022",
+    heading: { zh: "開發項目", en: "Development Projects" },
+    period: "2022 - 2026",
     tvFrame: {
       src: "/generated/tv-bg.webp",
       alt: { zh: "电视机框", en: "Television frame" },
@@ -151,10 +100,10 @@ export const portfolioContent = {
   },
   contact: {
     phone: "+86 - 1897 - 111 - 3243",
-    email: "sydzhao@outlook.com",
+    email: "nodeman24@outlook.com",
     headlines: ["CALL ME", "FOR THE", "MARQUEE MOON"],
     marquee: { zh: "Contact me —", en: "Contact me —" },
-    copyright: "© 2023 Sydney Zhao. All rights reserved.",
+    copyright: "© 2023 BrainEno. All rights reserved.",
     credit: {
       prefix: { zh: "Webdesign + WebDev by", en: "Webdesign + WebDev by" },
       name: "Bottom Think - BrainEno",

@@ -206,3 +206,7 @@ CI verifies:
 - Netlify Deploy Preview serves the static site without Functions.
 
 The landing-page choreography can continue to evolve independently without moving archive data into animation code, and the archive can grow independently without loading the animation runtime.
+
+## Netlify 数据库与作品管理
+
+访问 `/adam`（或 `/admin`）管理作品。无数据库时可使用公开预览密码 `preview123` 查看界面，数据不会保存。正式部署、PostgreSQL 配置、环境变量、安全注意事项和排错请参阅 [Netlify + PostgreSQL 中文部署指南](docs/netlify-postgres-zh.md)。

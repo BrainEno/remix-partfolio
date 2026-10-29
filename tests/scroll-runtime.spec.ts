@@ -890,6 +890,11 @@ test("the 3D booth enters by transform and never leaves its slot", async ({
         right: style.right,
         // Layout slot: transforms do not touch these, so a constant pair is
         // proof that the entrance is transform-only.
+        offsetParent: canvas.offsetParent?.className ?? "none",
+        canvasWidth: canvas.offsetWidth,
+        parentWidth: canvas.parentElement?.offsetWidth,
+        cssLeft: style.left,
+        cssRight: style.right,
         offsetLeft: canvas.offsetLeft,
         offsetTop: canvas.offsetTop,
         opacity: style.opacity,
@@ -926,7 +931,7 @@ test("the 3D booth enters by transform and never leaves its slot", async ({
   expect(after.position).toBe("absolute");
 
   // The layout slot never moves...
-  expect(during.offsetLeft).toBe(before.offsetLeft);
+  expect(during.offsetLeft, JSON.stringify({ before, during, after })).toBe(before.offsetLeft);
   expect(during.offsetTop).toBe(before.offsetTop);
   expect(after.offsetLeft).toBe(before.offsetLeft);
   expect(after.offsetTop).toBe(before.offsetTop);

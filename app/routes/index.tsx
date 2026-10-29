@@ -7,7 +7,7 @@ import Intro from "../components/Intro";
 import Partifolio from "../components/Partfolio";
 import { useSiteLanguage } from "../hooks/useSiteLanguage";
 import { localize, portfolioContent } from "../portfolio/content";
-import type { PortfolioSection } from "../portfolio/types";
+import type { PortfolioSection, PortfolioWork } from "../portfolio/types";
 import { setupMobileChoreography } from "../scroll/mobile-choreography.client";
 import {
   scrollToPortfolioSection,
@@ -17,7 +17,13 @@ import {
 export const links = () => [{ rel: "stylesheet", href: homeStylesUrl }];
 
 export default function Index() {
-  const works = portfolioContent.works.items;
+  const [works, setWorks] = useState<readonly PortfolioWork[]>(portfolioContent.works.items);
+  useEffect(() => {
+    fetch("/.netlify/functions/works")
+      .then((response) => { if (!response.ok) throw new Error("Works API unavailable"); return response.json(); })
+      .then((data) => { if (data.mode === "database" && Array.isArray(data.works)) setWorks(data.works); })
+      .catch((error) => console.error("Could not load database works", error));
+  }, []);
   const [section, setSection] = useState<PortfolioSection>("intro");
   const { language, setLanguage, languageReady } = useSiteLanguage();
   const [activeWorkIndex, setActiveWorkIndex] = useState(-1);
@@ -95,7 +101,7 @@ export default function Index() {
             <Intro lang={language} content={portfolioContent} />
             <Partifolio
               lang={language}
-              content={portfolioContent.works}
+              content={{ ...portfolioContent.works, items: works }}
               contactPhone={portfolioContent.contact.phone}
               activeWorkIndex={activeWorkIndex}
               onWorkPreview={handleWorkPreview}
