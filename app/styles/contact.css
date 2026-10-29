@@ -108,11 +108,13 @@
   /* Lock the slot before the lazy WebGL canvas mounts. With auto width,
      WebKit can use the canvas intrinsic width and shift the booth. */
   width: min(20svh, 184px);
+  min-width: min(20svh, 184px);
+  max-width: min(20svh, 184px);
   pointer-events: none;
   align-items: center;
   justify-content: center;
   background-color: transparent;
-  contain: layout paint;
+  contain: strict;
   will-change: transform, opacity;
 }
 
@@ -268,6 +270,8 @@
     height: 50svh;
     aspect-ratio: auto;
     width: min(100vw, 480px);
+    min-width: 0;
+    max-width: none;
     contain: strict;
   }
 
