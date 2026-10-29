@@ -1,0 +1,25 @@
+.adam { min-height: 100vh; background: #e8e5de; color: #1c1c1b; font-family: Inter, sans-serif; padding: 28px 3.125vw; }
+.adam-header { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid; padding-bottom:20px; font-size:12px; letter-spacing:.08em; }
+.adam-header a { color:inherit; font-size:25px; font-weight:700; text-decoration:none; letter-spacing:0; }
+.adam-body { max-width:1100px; margin: 10vh auto 0; }
+.adam-kicker,.adam-mode,.adam-work-head { font-size:12px; letter-spacing:.12em; }
+.adam h1 { font-family:"Inria Serif",serif; font-size:clamp(80px,15vw,190px); font-weight:400; line-height:.9; margin: .3em 0; }
+.adam h1 span { color:#8d4939; }
+.adam-lede { font-size:clamp(16px,2vw,22px); line-height:1.6; }
+.adam-mode { margin:36px 0; }
+.adam-message { background:#d8d3c8; padding:16px; line-height:1.5; }
+.adam-login,.adam-editor { border-top:1px solid; margin-top:30px; }
+.adam-login { padding:28px 0; max-width:600px; }
+.adam label { display:block; font-size:12px; letter-spacing:.05em; }
+.adam-login div { display:flex; margin-top:12px; gap:12px; }
+.adam input { width:100%; min-width:0; border:0; border-bottom:1px solid #333; border-radius:0; padding:12px 4px; background:transparent; color:inherit; font:inherit; font-size:16px; }
+.adam button { border:1px solid #1c1c1b; padding:14px 20px; background:#1c1c1b; color:#eee; cursor:pointer; white-space:nowrap; font:inherit; font-size:12px; }
+.adam button:hover { background:#8d4939; }
+.adam-work { padding:25px 0 35px; border-bottom:1px solid; }
+.adam-work-head { display:flex; justify-content:space-between; align-items:center; }
+.adam-work-head button { background:transparent; color:inherit; padding:8px 12px; }
+.adam-grid { display:grid; grid-template-columns:1fr 1fr; gap:25px; margin-top:25px; }
+.adam-grid input { display:block; }
+.adam-actions { display:flex; gap:12px; margin-top:30px; }
+.adam footer { border-top:1px solid; margin-top:100px; padding:24px 0; font-size:11px; letter-spacing:.1em; }
+@media(max-width:600px) { .adam-grid { grid-template-columns:1fr; } .adam-login div { flex-direction:column; } .adam-header span { font-size:10px; } }

@@ -28,6 +28,8 @@ export default {
   ssr: false,
   prerender: [
     "/",
+    "/adam",
+    "/admin",
     "/archive",
     "/lists",
     ...archiveItemPaths,
