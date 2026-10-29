@@ -19,7 +19,7 @@ test("template renders from config and persists language without navigation", as
 
   await page.locator('button[data-language="en"]').click();
   await expect(page.locator(".intro-headline-word.word-1 h1")).toHaveText(
-    "Performance Art"
+    "Frontend Dev"
   );
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await page.waitForTimeout(350);
@@ -37,7 +37,7 @@ test("template renders from config and persists language without navigation", as
     "true"
   );
   await expect(page.locator(".intro-headline-word.word-1 h1")).toHaveText(
-    "Performance Art"
+    "Frontend Dev"
   );
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   expect(pageErrors).toEqual([]);
