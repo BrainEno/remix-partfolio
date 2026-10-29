@@ -134,7 +134,20 @@ jobs:
         run: npx playwright install --with-deps webkit
 
       - name: Verify mobile scroll choreography in WebKit
-        run: npm run test:scroll
+        shell: bash
+        run: |
+          set +e
+          npm run test:scroll > /tmp/scroll-tests.log 2>&1
+          status=$?
+          cat /tmp/scroll-tests.log
+          if [ "$status" -ne 0 ]; then
+            details=$(tail -c 24000 /tmp/scroll-tests.log)
+            details="${details//'%'/'%25'}"
+            details="${details//$'\n'/'%0A'}"
+            details="${details//$'\r'/'%0D'}"
+            echo "::error::$details"
+          fi
+          exit "$status"
 
       - name: Smoke test Netlify Deploy Preview
         if: github.event_name == 'pull_request'
